@@ -1,0 +1,5 @@
+# esbuild necesita correr su script de instalación para bajar el binario nativo.
+# Sin esto Astro no arranca.
+allowBuilds:
+  esbuild: true
+  sharp: true

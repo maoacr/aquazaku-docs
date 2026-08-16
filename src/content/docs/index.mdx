@@ -1,0 +1,44 @@
+---
+title: Aquazaku
+description: Documentación técnica del sistema de gestión de Aquazaku.
+template: splash
+hero:
+  tagline: Documentación viva del sistema de gestión de Aquazaku — ventas, stock, clientes, proveedores y app mobile.
+  actions:
+    - text: Visión general
+      link: /empezar/vision-general/
+      icon: right-arrow
+    - text: Decisiones técnicas
+      link: /decisiones/
+      icon: document
+      variant: minimal
+---
+
+import { Card, CardGrid } from '@astrojs/starlight/components';
+
+<CardGrid stagger>
+	<Card title="Dominio" icon="open-book">
+		El negocio antes que el código: pacas, botellones, rutas, vendedores y
+		el ciclo de recarga. [Ver dominio](/dominio/)
+	</Card>
+	<Card title="Arquitectura" icon="setting">
+		Cómo están separadas las piezas del sistema y por qué.
+		[Ver arquitectura](/arquitectura/)
+	</Card>
+	<Card title="Backend y API" icon="puzzle">
+		Contratos, endpoints, autenticación y permisos por rol.
+		[Ver backend](/backend/)
+	</Card>
+	<Card title="Base de datos" icon="seti:db">
+		Modelo de datos, migraciones y decisiones de modelado.
+		[Ver base de datos](/base-de-datos/)
+	</Card>
+</CardGrid>
+
+## Cómo se usa esta documentación
+
+Esta documentación se escribe **a medida que se construye**, no después.
+Cada decisión técnica que se toma queda registrada como un ADR en
+[Decisiones técnicas](/decisiones/) — con contexto, alternativas y consecuencias.
+
+Si algo del sistema no está acá, no existe.
