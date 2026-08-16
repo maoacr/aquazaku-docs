@@ -10,13 +10,15 @@ sidebar:
 Aquazaku **produce y vende** agua. No es un revendedor: tiene planta de empaque.
 
 ```
-   AGUA A GRANEL          PRODUCCIÓN            VENTA
-   2 tanques × 2000 L  →  envasado diario  →  pos (mostrador)
-   red municipal          + tapas y sellos     seller (ruta)
-   tarifa plana
+  RED MUNICIPAL      AGUA CRUDA      PROCESO      AGUA LISTA     PRODUCTO
+  intermitente   →    13.000 L    →   ×0,70   →   2 × 2000 L  →  pos + seller
+  tarifa plana                     (30% rechazo)   + tapas
+                                                   + sellos
 ```
 
-La planta está en **Campo de la Cruz**.
+La planta está en **Campo de la Cruz**. El suministro municipal **no es continuo**:
+los 13.000 litros de almacenamiento son lo que garantiza el servicio cuando la red
+no da agua.
 
 Vende en dos formatos:
 
@@ -33,9 +35,10 @@ Hay tres cosas que hacen que este sistema no sea "un punto de venta más":
    inventario que un POS común no ve.
 2. **El préstamo identificado.** Una base tiene que poder reclamarse en su
    dirección exacta.
-3. **El balance de agua.** El sistema tiene que cuadrar litros en tanque contra
-   producto envasado — incluyendo el agua que se gasta lavando botellones y que
-   no termina en ningún producto.
+3. **El balance de agua.** El sistema tiene que cuadrar litros contra producto
+   envasado, atravesando dos pérdidas: el **30% que rechazan los filtros** y el
+   agua que se gasta lavando botellones. Con suministro intermitente, saber
+   cuántos días de producción quedan es el indicador crítico de la planta.
 
 ## Qué resuelve el sistema
 

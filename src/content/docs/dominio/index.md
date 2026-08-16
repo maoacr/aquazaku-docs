@@ -101,6 +101,19 @@ Ya confirmado por Aquazaku:
   1 tapa + 1 sello.
 - La planta está en **Campo de la Cruz**. El agua viene de la red municipal con
   **tarifa plana**: no tiene costo marginal, pero sigue siendo finita.
+- El suministro **no es continuo**. Aquazaku almacena **13.000 L de agua cruda**,
+  aparte de **2 tanques de 2000 L** de agua ya procesada. Total: 17.000 L.
+- El procesamiento **rinde 70%**: los filtros rechazan el 30% del flujo.
+  Utilizable real: **13.100 L**.
+- **No hay medidor ni regla** en los tanques: el nivel se estima a ojo en cuartos
+  ([RN-PRD-14](/dominio/produccion/)).
+- Pero **sí hay un caudalímetro en GPM** después de los filtros, antes de los
+  tanques de 2000 L: el volumen procesado se mide con `caudal × tiempo`.
+- Cortes de agua: **1 día** es lo habitual y se soporta; **5 días** es el peor
+  caso conocido. Ese peor caso es el que dimensiona el almacenamiento.
 
 Un supuesto sin marcar se convierte en un bug de negocio tres meses después.
+
+👉 Todas las preguntas abiertas están consolidadas en
+[Qué falta preguntar](/empezar/pendientes/).
 :::

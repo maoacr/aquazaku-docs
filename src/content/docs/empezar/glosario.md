@@ -63,11 +63,17 @@ Esa diferencia atraviesa stock, modo offline y rendición.
 
 | Término | Definición |
 | --- | --- |
-| **Planta de empaque** | Donde el agua a granel se convierte en producto. |
-| **Tanque** | Depósito de agua a granel. Aquazaku tiene **dos de 2000 L**. |
-| **Cierre de producción** | Registro diario de qué se envasó y cuántos botellones se recargaron. |
+| **Planta de empaque** | Donde el agua se procesa y se convierte en producto. Está en Campo de la Cruz. |
+| **Agua cruda** | Agua de la red municipal, sin procesar. Almacenamiento: **13.000 L**. |
+| **Agua procesada** | Agua ya filtrada, lista para envasar. **Dos tanques de 2000 L**, aparte del almacenamiento crudo. |
+| **Rechazo** | El **30%** del flujo que descartan los filtros. No se puede envasar. |
+| **Rendimiento** | Proporción de agua cruda que queda utilizable: **70%**. Si baja, los filtros necesitan mantenimiento. |
+| **Autonomía** | Días que la planta puede producir sin que llegue agua de la red. Objetivo: **≥ 5 días**, el peor corte conocido. |
+| **Cierre de producción** | Registro diario de qué se envasó y cuántos botellones se llenaron. |
 | **Agua de lavado** | Litros que consume alistar un botellón antes de rellenarlo. Se gasta y no genera producto. |
-| **Merma** | Diferencia entre el consumo calculado y la medición física del tanque. |
+| **Merma** | Diferencia entre el consumo calculado y la realidad del tanque. Hoy **no es cuantificable**: la medición es a ojo. |
+| **Banda de nivel** | Estimación visual del tanque en cuartos: vacío, ¼, ½, ¾, lleno. La única medición disponible. |
+| **Saldo calculado** | Litros deducidos de la aritmética de producción. Es la fuente de verdad, no el tanque. |
 
 ## Operación
 
