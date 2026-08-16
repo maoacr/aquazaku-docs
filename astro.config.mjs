@@ -4,6 +4,10 @@ import starlight from '@astrojs/starlight';
 
 // https://astro.build/config
 export default defineConfig({
+	// Dominio canónico final (servido por Cloudflare sobre Netlify).
+	// Se usa para el sitemap, las URLs canónicas y og:url — por eso va el dominio
+	// definitivo y no el de netlify.app, aunque todavía no esté activo.
+	site: 'https://aquazaku-docs.maoacr.com',
 	integrations: [
 		starlight({
 			title: 'Aquazaku Docs',
