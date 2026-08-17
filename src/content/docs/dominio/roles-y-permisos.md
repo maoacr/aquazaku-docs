@@ -15,8 +15,18 @@ una decisión de negocio, no una comodidad de implementación.
 | Rol | Quién es | Dónde opera | Cómo vende |
 | --- | --- | --- | --- |
 | `admin` | Dueño / administración | Web | — (supervisa) |
-| `seller` | Vendedor de ruta | **Mobile** | Va al cliente |
+| `seller` | Vendedor de ruta | **App móvil** | Va al cliente |
 | `pos` | Punto de venta fijo | Web / terminal | El cliente viene |
+
+:::note[El `seller` es un usuario de app móvil]
+El acceso web para el `seller` puede existir como respaldo —teléfono roto,
+consulta desde la oficina— pero **no es su superficie de trabajo**. La app móvil
+es la que se diseña y la que define sus flujos.
+
+Esto no es un detalle de implementación: condiciona el modo offline
+([RN-RUT-05](/dominio/rutas/)), la validación local de documentos
+([RN-CLI-11](/dominio/clientes/)) y toda la operación de ruta.
+:::
 
 La diferencia entre `seller` y `pos` no es de jerarquía: es de **contexto de
 operación**. Uno vende en la calle, sin señal, contra la carga de su vehículo.

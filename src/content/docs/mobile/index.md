@@ -5,7 +5,20 @@ sidebar:
   order: 1
 ---
 
-Documentación del proyecto `mobile/`: la app que usa el vendedor en la calle.
+Documentación del proyecto `mobile/`: la app que usa el `seller` en la calle.
+
+Es **su superficie de trabajo**, no una versión reducida de la web. El acceso web
+para el `seller` existe solo como respaldo —teléfono roto, consulta desde la
+oficina— y no define sus flujos.
+
+:::caution[Decisión técnica pendiente: nativa o PWA]
+No está decidido si `mobile/` será una app nativa, híbrida o una PWA. La elección
+depende sobre todo de **cuánto control se necesita sobre el almacenamiento local
+y la sincronización en segundo plano**, que es el corazón de esta app.
+
+Va como [ADR](/decisiones/) antes de escribir código. No bloquea el diseño de
+interfaz.
+:::
 
 ## Qué documentar acá
 
