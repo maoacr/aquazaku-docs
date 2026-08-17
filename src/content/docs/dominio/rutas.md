@@ -11,6 +11,16 @@ y donde el sistema demuestra si sirve o no.
 Aplica **solo al rol `seller`**. El `pos` vende desde un punto fijo y no abre ni
 rinde rutas — ver [Roles y permisos](/dominio/roles-y-permisos/).
 
+:::note[Una ruta agrupa direcciones, no clientes]
+La unidad que se asigna a una ruta es la **dirección**
+([RN-CLI-05](/dominio/clientes/)). Un cliente con locales en zonas distintas
+puede aparecer en más de una ruta.
+
+Hoy Aquazaku atiende a todos sin rutas armadas, por el volumen bajo. El modelo
+igual se construye por dirección desde el principio: hacerlo después obliga a
+migrar rutas ya en uso.
+:::
+
 ## El ciclo del día
 
 ```

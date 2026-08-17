@@ -27,13 +27,27 @@ después.
 
 | # | Pregunta | Impacta |
 | :-: | --- | --- |
-| 1 | **¿Cuántas bolsas trae la paca de 300 ml?** Asumimos 50, pero ese número venía de cuando la presentación era de 200 ml y no se reconfirmó. | Todo el balance de agua |
-| 2 | **¿La ruta se asigna al cliente o a la dirección?** Un cliente con locales en zonas distintas rompe la regla actual. | [RN-CLI-05](/dominio/clientes/), rutas |
-| 3 | **¿El saldo de botellones va por cliente o por dirección?** | [RN-ENV-04](/dominio/botellones-y-bases/) |
-| 4 | **¿Un botellón se distingue lleno de vacío en el inventario?** Hoy el sistema no lo sabría, y un vacío no se puede vender. | [RN-ENV-07](/dominio/botellones-y-bases/) |
-| 5 | **¿Cuál es la clave única de un cliente?** ¿Documento, teléfono, dirección? | [RN-CLI-01](/dominio/clientes/) |
-| 6 | **¿Existe venta a crédito o todo es de contado?** Si no hay crédito, se cae medio módulo de clientes. | Ventas, clientes |
-| 7 | ¿Los dos tanques de 2000 L se controlan por separado o como un pozo único? | [RN-PRD-02](/dominio/produccion/) |
+| 1 | **¿Existe venta a crédito o todo es de contado?** Si no hay crédito, se cae medio módulo de clientes. | Ventas, clientes |
+| 2 | **¿Se acepta la propuesta de `tipo_documento` explícito + DV calculado?** Es una propuesta nuestra, falta el visto bueno. | [RN-CLI-09](/dominio/clientes/) |
+| 3 | **¿Un cliente con documento `PENDIENTE` puede acceder a crédito?** Lo natural es que no. Documentado como supuesto. | [RN-CLI-10](/dominio/clientes/) |
+
+:::tip[Resueltas — 16 de agosto de 2026]
+- Paca de 300 ml = **50 bolsas** → 15 L. Balance de agua cerrado.
+- La ruta se asigna a la **dirección**, no al cliente ([RN-CLI-05](/dominio/clientes/)).
+- El saldo de botellones va por **cliente** ([RN-ENV-04](/dominio/botellones-y-bases/)).
+- Botellón lleno vs vacío: **fuera del alcance inicial**, se envasa bajo demanda
+  ([RN-ENV-07](/dominio/botellones-y-bases/)).
+- Identidad del cliente: **UUID** del sistema, documento como dato de búsqueda
+  ([RN-CLI-01](/dominio/clientes/)).
+- El documento **es único**: dos clientes nunca lo comparten ([RN-CLI-08](/dominio/clientes/)).
+- Los dos tanques de 2000 L son **separados**, no un pozo único. El techo por
+  tanda continua es 2.000 L, no 4.000 ([RN-PRD-02](/dominio/produccion/)).
+- El documento es **obligatorio**, pero se puede tomar dictado. Lo que varía es
+  su **estado de verificación** ([RN-CLI-10](/dominio/clientes/)).
+- El `seller` **sí puede registrar clientes** en la calle ([RN-CLI-10](/dominio/clientes/)).
+- La validación contra la **copia local** alcanza; **no** se construye pantalla de
+  fusión de duplicados ([RN-CLI-11](/dominio/clientes/)).
+:::
 
 ---
 
@@ -43,10 +57,10 @@ No son decisiones: son números que hay que ir a tomar.
 
 | # | Qué medir | Para qué |
 | :-: | --- | --- |
-| 8 | **Caudal en GPM** — y si la placa dice galón americano o imperial. Son 20% de diferencia. | [RN-PRD-18](/dominio/produccion/) |
-| 9 | **Tiempo de llenado de un tanque de 2.000 L** → de ahí sale el caudal real. | [RN-PRD-18](/dominio/produccion/) |
-| 10 | **Litros que consume lavar un botellón.** | [RN-PRD-05](/dominio/produccion/) |
-| 11 | **Consumo diario promedio en litros.** *Se autocalcula a las semanas de registrar cierres de producción — un estimado inicial alcanza.* | [RN-PRD-13](/dominio/produccion/) |
+| 4 | **Caudal en GPM** — y si la placa dice galón americano o imperial. Son 20% de diferencia. | [RN-PRD-18](/dominio/produccion/) |
+| 5 | **Tiempo de llenado de un tanque de 2.000 L** → de ahí sale el caudal real. | [RN-PRD-18](/dominio/produccion/) |
+| 6 | **Litros que consume lavar un botellón.** | [RN-PRD-05](/dominio/produccion/) |
+| 7 | **Consumo diario promedio en litros.** *Se autocalcula a las semanas de registrar cierres de producción — un estimado inicial alcanza.* | [RN-PRD-13](/dominio/produccion/) |
 
 ---
 
@@ -58,34 +72,41 @@ Cambian qué se construye y quién puede hacer qué.
 
 | # | Pregunta | Impacta |
 | :-: | --- | --- |
-| 12 | **¿Quién registra el cierre de producción?** Los tres roles no incluyen a nadie de planta. Si el operario no es `admin`, **falta un rol**. | [Roles](/dominio/roles-y-permisos/) |
-| 13 | ¿`pos` puede anular una venta del día, o siempre depende de `admin`? Es la fricción operativa más probable. | Ventas |
-| 14 | ¿`seller` puede dar de alta clientes en la calle? | Clientes |
-| 15 | ¿Quién carga la ruta por la mañana? | Rutas |
-| 16 | ¿Quién autoriza el préstamo de una base? | Bases |
-| 17 | ¿Cuántas personas van a tener rol `admin`? ¿Hace falta un `admin` de solo lectura para un contador? | Auditoría |
-| 18 | ¿Una misma persona puede ser `seller` unos días y `pos` otros? | [RN-ACC-01](/dominio/roles-y-permisos/) |
+| 8 | **¿Quién registra el cierre de producción?** Los tres roles no incluyen a nadie de planta. Si el operario no es `admin`, **falta un rol**. | [Roles](/dominio/roles-y-permisos/) |
+| 9 | ¿`pos` puede anular una venta del día, o siempre depende de `admin`? Es la fricción operativa más probable. | Ventas |
+| 10 | ¿Quién carga la ruta por la mañana? | Rutas |
+| 11 | ¿Quién autoriza el préstamo de una base? | Bases |
+| 12 | ¿Cuántas personas van a tener rol `admin`? ¿Hace falta un `admin` de solo lectura para un contador? | Auditoría |
+| 13 | ¿Una misma persona puede ser `seller` unos días y `pos` otros? | [RN-ACC-01](/dominio/roles-y-permisos/) |
+
+### Producción
+
+| # | Pregunta |
+| :-: | --- |
+| 14 | ¿Los tanques de agua procesada se **alternan** o hay uno principal y otro de reserva? No cambia el modelo de datos, sí la interfaz: elegir tanque en cada operación vs. proponer uno por defecto. |
+| 15 | Envasando bajo demanda, ¿el cierre de producción se registra **una vez al día** o **por cada tanda**? |
 
 ### Operación de ruta
 
 | # | Pregunta |
 | :-: | --- |
-| 19 | ¿La ruta es fija por `seller` o se arma cada día? |
-| 20 | ¿El `seller` puede vender a un cliente fuera de su ruta? |
-| 21 | ¿Quién autoriza un faltante? ¿Se le descuenta al `seller`? |
-| 22 | ¿Qué pasa si termina el día sin señal y no puede sincronizar? ¿La ruta queda abierta? |
-| 23 | ¿Se hace seguimiento de ubicación del `seller`? |
-| 24 | ¿Qué pasa si un cliente supera su límite de crédito en plena ruta? ¿Se bloquea o se permite? |
+| 16 | ¿La ruta es fija por `seller` o se arma cada día? |
+| 17 | ¿El `seller` puede vender a un cliente fuera de su ruta? |
+| 18 | ¿Quién autoriza un faltante? ¿Se le descuenta al `seller`? |
+| 19 | ¿Qué pasa si termina el día sin señal y no puede sincronizar? ¿La ruta queda abierta? |
+| 20 | ¿Se hace seguimiento de ubicación del `seller`? |
+| 21 | ¿Qué pasa si un cliente supera su límite de crédito en plena ruta? ¿Se bloquea o se permite? |
+| 22 | ¿Puede una dirección quedar sin ruta asignada? *(Hoy sí: compra en mostrador.)* |
 
 ### Activos retornables
 
 | # | Pregunta |
 | :-: | --- |
-| 25 | ¿Se cobra depósito o garantía por la base prestada? ¿Y por el botellón no devuelto? |
-| 26 | ¿Cómo se identifica físicamente una base — grabado, etiqueta, código de barras, QR? Define si el `seller` puede escanearla. |
-| 27 | ¿Hay tipos o modelos distintos de base? |
-| 28 | ¿Hay límite de botellones que un cliente puede tener? |
-| 29 | ¿Puede haber una dirección con base pero sin botellones, o al revés? |
+| 23 | ¿Se cobra depósito o garantía por la base prestada? ¿Y por el botellón no devuelto? |
+| 24 | ¿Cómo se identifica físicamente una base — grabado, etiqueta, código de barras, QR? Define si el `seller` puede escanearla. |
+| 25 | ¿Hay tipos o modelos distintos de base? |
+| 26 | ¿Hay límite de botellones que un cliente puede tener? |
+| 27 | ¿Puede haber una dirección con base pero sin botellones, o al revés? |
 
 ---
 

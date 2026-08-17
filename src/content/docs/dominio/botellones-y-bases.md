@@ -85,8 +85,8 @@ En todo momento:
 botellones en bodega
 + botellones en rutas
 + botellones en poder de clientes
-+ botellones dados de baja
-= total de botellones dados de alta
++ botellones descartados
+= total de botellones registrados
 ```
 
 Esta igualdad **siempre** se cumple. Si no cuadra, hay un bug o un movimiento sin
@@ -103,29 +103,43 @@ ruidosamente. Si se rompe en producción, se rompió el control de activos.
 
 ---
 
-### RN-ENV-07 — Un botellón tiene ubicación **y** estado
+### RN-ENV-07 — El estado lleno/vacío queda fuera del alcance inicial
 
-**Estado:** 🔴 Sin definir — surge de la producción, falta confirmar
+**Estado:** ✅ Confirmada — **no se modela por ahora**, a pedido de Aquazaku.
 
-Desde que existe la planta, "10 botellones en bodega" es una respuesta incompleta.
-¿Están llenos o vacíos? Son dos cosas muy distintas:
+Hoy se **empaca bajo demanda**: no hay stock de botellones llenos esperando, se
+llenan cuando hay venta. Con ese modo de operación, distinguir lleno de vacío no
+responde ninguna pregunta que hoy alguien se haga.
+
+Cuando el volumen crezca y se pase a envasar contra stock, la distinción sí va a
+hacer falta:
 
 | Estado | Qué significa |
 | --- | --- |
 | **Vacío** | Volvió del cliente. Espera lavado y llenado. |
 | **Lleno** | Sellado y listo para despachar. Ya consumió agua, tapa y sello. |
 
-Un botellón vacío en bodega **no se puede vender**. Uno lleno sí. Si el sistema
-solo cuenta unidades por ubicación, no puede responder la pregunta operativa más
-básica: *¿cuántos botellones tengo listos para salir mañana?*
+La pregunta que hoy no existe y mañana sí: *¿cuántos botellones tengo listos para
+salir mañana?*
 
-**Por qué importa:** el llenado es lo que consume agua, tapa y sello
-([RN-PRD-09](/dominio/produccion/)). Sin el estado, no hay forma de saber si un
-botellón ya pasó por producción o todavía no.
+:::tip[Por qué esta sí se puede postergar y la ruta no]
+Las dos son decisiones "para más adelante", pero tienen costos de migración muy
+distintos. Vale distinguirlas en vez de intentar adelantarse a todo:
 
-:::danger[Segunda dimensión del inventario]
-Esto convierte el control de botellones en una matriz de **ubicación × estado**,
-no en un solo contador:
+| Decisión | Postergarla cuesta |
+| --- | --- |
+| Ruta por dirección ([RN-CLI-05](/dominio/clientes/)) | **Caro** — migrar rutas ya en uso y repartir clientes |
+| Estado del botellón | **Barato** — agregar una columna y declarar todo el stock existente como un estado |
+
+Agregar `estado` después es una migración de una línea: todo lo que hay pasa a
+`lleno` o `vacío` según cómo se opere ese día. No se pierde información ni hay
+que reconstruir historia.
+
+Por eso una se adelanta y la otra no. **Anticiparse a todo también es un costo.**
+:::
+
+Cuando llegue el momento, el inventario pasa a ser una matriz de
+**ubicación × estado**:
 
 ```
               vacío    lleno
@@ -136,9 +150,6 @@ CLIENTES         —       63     ← siempre llenos al entregar
 
 El invariante de conservación ([RN-ENV-02](#rn-env-02--la-cantidad-de-botellones-se-conserva))
 sigue valiendo sobre el **total**, sin importar el estado.
-
-Confirmar con Aquazaku antes de modelar la tabla.
-:::
 
 ---
 
@@ -157,22 +168,25 @@ envases se desangre sin que nadie lo note.
 
 ---
 
-### RN-ENV-04 — Cada cliente tiene un saldo de botellones
+### RN-ENV-04 — El saldo de botellones va por cliente
 
-**Estado:** 🟡 Supuesto
+**Estado:** ✅ Confirmada
 
-El sistema sabe cuántos botellones tiene cada cliente en su poder. Ese saldo se
-mueve con cada entrega y cada retorno, nunca a mano.
+El sistema sabe cuántos botellones tiene cada cliente en su poder. El saldo es
+**a nivel cliente**, no por dirección. Se mueve con cada entrega y cada retorno,
+nunca a mano.
 
 **Por qué:** son botellones de Aquazaku que están afuera. Sin este saldo no se
 puede reclamar, ni cobrar depósito, ni detectar al cliente que acumula envases.
 
-:::caution[A confirmar]
-El saldo se lleva **a nivel cliente**, no por dirección. Si un cliente tiene
-bases en tres direcciones, el sistema sabe que tiene 8 botellones pero no en
-cuál de las tres están.
+Y alcanza con el nivel cliente **porque el botellón es fungible**: para reclamar
+ocho botellones no hace falta saber en cuál de sus tres locales están. Es la
+misma lógica que hace que no tengan ID ([RN-ENV-01](#rn-env-01--el-botellón-no-tiene-identificador-individual)).
 
-¿Alcanza? Para reclamar, probablemente sí. Confirmar con Aquazaku.
+:::note[Contraste con la base]
+La base sí se rastrea por dirección ([RN-BAS-03](#rn-bas-03--una-base-se-asigna-a-una-dirección-no-a-un-cliente)),
+porque hay que ir a buscarla a un lugar concreto. Dos activos, dos granularidades
+— y ahora también dos niveles de saldo.
 :::
 
 ---
@@ -182,7 +196,7 @@ cuál de las tres están.
 **Estado:** ✅ Confirmada
 
 Aquazaku compra botellones para ampliar o reponer su parque de envases. Esa
-compra es un **alta de activo retornable**, no una entrada de producto vendible.
+compra **registra un activo retornable nuevo**, no una entrada de producto vendible.
 
 **Por qué:** un botellón comprado no se vende nunca — se suma al total que hay
 que conservar ([RN-ENV-02](#rn-env-02--la-cantidad-de-botellones-se-conserva)).
@@ -190,17 +204,17 @@ Si entrara como producto al stock de bodega, el sistema creería que tiene
 mercadería que en realidad es un envase.
 
 :::note[Mismo criterio para las bases]
-La compra de bases también es alta de activo, y cada unidad entra con su
+La compra de bases también registra activos nuevos, y cada unidad entra con su
 [ID propio](#rn-bas-01--cada-base-tiene-un-identificador-único).
 :::
 
 ---
 
-### RN-ENV-05 — Dar de baja botellones requiere motivo
+### RN-ENV-05 — Descartar botellones requiere motivo
 
 **Estado:** 🟡 Supuesto
 
-Botellones rotos, perdidos o no recuperados se dan de baja indicando cantidad,
+Botellones rotos, perdidos o no recuperados se descartan indicando cantidad,
 motivo, responsable y fecha. Queda registrado como pérdida.
 
 **Por qué:** la baja silenciosa es la forma más fácil de tapar un faltante.
@@ -294,11 +308,11 @@ responder "¿dónde estuvo esta base?", el ID no está pagando su precio.
 
 ---
 
-### RN-BAS-06 — Dar de baja una base requiere motivo
+### RN-BAS-06 — Descartar una base requiere motivo
 
 **Estado:** 🟡 Supuesto
 
-Una base rota, perdida o no recuperada se da de baja con motivo, responsable y
+Una base rota, perdida o no recuperada se descarta con motivo, responsable y
 fecha. No desaparece del historial: cambia de estado.
 
 ---

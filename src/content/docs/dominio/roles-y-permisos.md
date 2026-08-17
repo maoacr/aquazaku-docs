@@ -96,7 +96,8 @@ de implementar — sobre todo las filas marcadas con ⚠️.
 | Permiso | `admin` | `seller` | `pos` |
 | --- | :-: | :-: | :-: |
 | `clientes:ver` | ✅ | 🟡 `ruta` | ✅ |
-| `clientes:crear` ⚠️ | ✅ | 🟡 `ruta` | ✅ |
+| `clientes:crear` | ✅ | 🟡 `ruta` | ✅ |
+| `clientes:verificar_documento` | ✅ | 🟡 `ruta` | ✅ |
 | `clientes:editar` | ✅ | ❌ | ❌ |
 | `clientes:habilitar_credito` | ✅ | ❌ | ❌ |
 
@@ -117,8 +118,8 @@ de implementar — sobre todo las filas marcadas con ⚠️.
 | `botellones:ver` | ✅ | 🟡 `ruta` | 🟡 `BODEGA` |
 | `botellones:entregar` | ✅ | 🟡 `ruta` | ✅ |
 | `botellones:recibir_retorno` | ✅ | 🟡 `ruta` | ✅ |
-| `botellones:dar_alta` | ✅ | ❌ | ❌ |
-| `botellones:dar_baja` | ✅ | ❌ | ❌ |
+| `botellones:registrar` | ✅ | ❌ | ❌ |
+| `botellones:descartar` | ✅ | ❌ | ❌ |
 
 ### Bases — por unidad identificada
 
@@ -127,8 +128,8 @@ de implementar — sobre todo las filas marcadas con ⚠️.
 | `bases:ver` | ✅ | 🟡 `ruta` | ✅ |
 | `bases:prestar` ⚠️ | ✅ | 🟡 `ruta` | ✅ |
 | `bases:retirar` | ✅ | 🟡 `ruta` | ✅ |
-| `bases:dar_alta` | ✅ | ❌ | ❌ |
-| `bases:dar_baja` | ✅ | ❌ | ❌ |
+| `bases:registrar` | ✅ | ❌ | ❌ |
+| `bases:descartar` | ✅ | ❌ | ❌ |
 
 :::note[Por qué son dos bloques y no uno]
 Botellones y bases se rastrean con granularidad distinta
@@ -194,7 +195,7 @@ rol** — y eso hay que resolverlo con Aquazaku antes de implementar
 ## La consecuencia de tener solo tres roles
 
 Con este modelo, **`admin` concentra todas las funciones de control**: ajusta
-stock, anula ventas, cambia precios, da de baja botellones y bases, y administra
+stock, anula ventas, cambia precios, descarta botellones y bases, y administra
 usuarios.
 
 Eso es perfectamente razonable en una operación chica. Pero hay que decirlo en
@@ -302,6 +303,6 @@ mantienen la referencia a él.
   Es la fricción operativa más probable del modelo.
 - ¿`pos` vende contra el stock de bodega directamente, o el punto de venta tiene
   su propia ubicación de stock?
-- ¿`seller` puede dar de alta clientes nuevos en la calle, o los crea la oficina?
+- ¿`seller` puede registrar clientes nuevos en la calle, o los crea la oficina?
 - ¿Quién carga la ruta del `seller` por la mañana — un `admin` siempre?
 - ¿Hay más de un punto de venta?

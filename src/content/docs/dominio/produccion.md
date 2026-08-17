@@ -39,8 +39,7 @@ El recorrido completo está en
 
 ## Presentaciones y equivalencia en litros
 
-**Estado:** ✅ Confirmada — son **dos tipos de paca distintos**, uno de bolsas de
-600 ml y otro de bolsas de 300 ml.
+**Estado:** ✅ Confirmada — presentaciones y unidades verificadas con Aquazaku.
 
 Esta tabla es **el corazón del cálculo**. Todo el balance de agua depende de ella.
 
@@ -49,15 +48,6 @@ Esta tabla es **el corazón del cálculo**. Todo el balance de agua depende de e
 | Paca de bolsas 600 ml | 600 ml | 20 | **12 L** |
 | Paca de bolsas 300 ml | 300 ml | 50 | **15 L** |
 | Botellón | 20 L | — | **20 L** |
-
-:::caution[Falta confirmar las unidades de la paca de 300 ml]
-Que la paca de 300 ml lleva **50 bolsas** viene de una versión anterior del dato,
-cuando esa presentación figuraba como de 200 ml. La presentación se corrigió;
-**el conteo de unidades no se volvió a confirmar**.
-
-Si son 50 bolsas → 15 L por paca. Si el conteo cambió con la presentación, este
-número está mal y el balance de agua completo se desvía con él.
-:::
 
 ### RN-PRD-01 — La equivalencia en litros es dato de configuración, no código
 
@@ -132,23 +122,56 @@ filtros. No es una pérdida evitable: es el costo de procesar.
 
 ---
 
-### RN-PRD-02 — El agua se controla en litros, en dos etapas
+### RN-PRD-02 — El agua se controla en litros, y cada tanque es una ubicación
 
-**Estado:** 🟡 Supuesto
+**Estado:** ✅ Confirmada — los dos tanques son **separados**, no un pozo único.
 
-El sistema lleva dos saldos separados: litros crudos almacenados y litros
-procesados disponibles para envasar.
+El sistema lleva **tres saldos independientes**:
 
-**Por qué:** un solo saldo no puede responder "¿cuánta agua tengo?", porque la
-respuesta depende de para qué. Para envasar mañana importa el agua procesada;
-para saber cuántos días aguanto sin suministro importa la cruda.
+| Saldo | Capacidad | Para qué sirve |
+| --- | --- | --- |
+| Agua cruda | 13.000 L | Autonomía: cuántos días aguanto sin suministro |
+| Tanque procesado **A** | 2.000 L | Qué puedo envasar ahora |
+| Tanque procesado **B** | 2.000 L | Qué puedo envasar ahora |
 
-:::caution[A confirmar]
-¿Los dos tanques de agua procesada se controlan **por separado** o como un pozo
-único de 4000 L?
+**Por qué separados:** un solo saldo no puede responder "¿cuánta agua tengo?",
+porque la respuesta depende de para qué. Y como los tanques no están unidos, cada
+uno es una **ubicación distinta** — la misma lógica que
+[`BODEGA` y `RUTA:{id}`](/dominio/stock/) para el producto.
 
-Si se alternan —uno en uso mientras el otro se llena— hacen falta dos saldos
-independientes. Si siempre están conectados, alcanza uno.
+:::danger[La consecuencia operativa: el techo por tanda es 2.000 L, no 4.000]
+Que haya 4.000 L de agua procesada **no significa** que se pueda hacer una tanda
+de 4.000 L.
+
+```
+Envasar 2.500 L  →  vacía el tanque A (2.000)
+                 →  y sigue con el B (500)
+                 →  hay que cambiar de tanque a mitad de la corrida
+```
+
+Si el envasado se alimenta de un tanque a la vez, el máximo continuo es **2.000 L**
+— unas 166 pacas de 600 ml, o 100 botellones. Pasado eso hay una operación manual
+de cambio.
+
+Es una restricción real de producción que un saldo único de 4.000 L habría
+escondido.
+:::
+
+**Consecuencia sobre el modelo:** toda operación de agua procesada declara su
+tanque.
+
+| Operación | Tiene que registrar |
+| --- | --- |
+| [Corrida de procesamiento](#rn-prd-18--la-corrida-de-procesamiento-se-mide-por-caudal-y-tiempo) | Tanque **destino** |
+| [Cierre de producción](#rn-prd-04--cada-día-se-registra-un-cierre-de-producción) | Tanque **origen** |
+
+:::caution[Falta un detalle operativo]
+¿Los tanques se **alternan** —uno en uso mientras el otro se llena o reposa— o
+hay uno principal y el otro es reserva?
+
+No cambia el modelo de datos, pero sí la interfaz: si se alternan, el operario
+elige tanque en cada operación; si hay uno principal, el sistema lo propone por
+defecto y solo se cambia por excepción.
 :::
 
 ---
@@ -252,6 +275,34 @@ bomba antes de cargar el parámetro.
 La conversión se hace **una sola vez, al ingresar el dato**. Adentro del sistema
 solo circulan litros. Dos sistemas de unidades conviviendo en el modelo es una
 fábrica de errores silenciosos.
+:::
+
+---
+
+### RN-PRD-20 — Hoy se envasa bajo demanda, no contra stock
+
+**Estado:** ✅ Confirmada
+
+Por el volumen actual de ventas, Aquazaku **empaca cuando hay demanda**. No hay
+producto terminado esperando en bodega: se envasa contra el pedido.
+
+| | Hoy — bajo demanda | Objetivo — contra stock |
+| --- | --- | --- |
+| Dispara el envasado | La venta | Un plan de producción |
+| Stock de terminado | Prácticamente cero | Sí, con mínimos |
+| Botellón lleno vs vacío | No hace falta distinguir | Sí ([RN-ENV-07](/dominio/botellones-y-bases/)) |
+
+**Por qué importa:** cambia qué significa el
+[cierre de producción](#rn-prd-04--cada-día-se-registra-un-cierre-de-producción).
+Bajo demanda, envasar y vender ocurren casi juntos, así que el cierre diario es
+más un **resumen del día** que un evento de planificación.
+
+:::caution[Pregunta que esto abre]
+Si se envasa contra cada pedido, ¿el cierre de producción se registra **una vez
+al día** juntando todo, o hay un registro **por cada tanda** que se envasa?
+
+Lo documentado hoy asume un cierre diario. Con volumen bajo alcanza; conviene
+confirmarlo antes de construir la pantalla.
 :::
 
 ---
@@ -615,7 +666,7 @@ Ese registro produce tres efectos simultáneos:
 | --- | --- |
 | ➖ Descuenta litros | Tanques |
 | ➖ Descuenta insumos | Tapas y sellos ([RN-PRD-09](#rn-prd-09--cada-botellón-llenado-consume-una-tapa-y-un-sello)) |
-| ➕ Da de alta producto | Bodega |
+| ➕ Ingresa producto | Bodega |
 
 **Por qué:** es el único evento que convierte litros en producto. Sin él, ni el
 agua ni el stock ni los insumos reflejan la realidad.

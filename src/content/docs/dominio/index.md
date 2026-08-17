@@ -96,7 +96,10 @@ Ya confirmado por Aquazaku:
 - Las bases se controlan **por ID**, se prestan y se asignan a una **dirección**.
 - Hay planta de empaque: dos tanques de 2000 L, cierre de producción diario, y el
   lavado de botellón consume agua sin generar producto.
-- Dos tipos de paca: bolsas de **600 ml** y bolsas de **300 ml**.
+- Dos tipos de paca: **20 bolsas de 600 ml** (12 L) y **50 bolsas de 300 ml** (15 L).
+- Identidad del cliente: **UUID** del sistema; el documento es dato de búsqueda.
+- La **ruta se asigna a la dirección**; el **saldo de botellones, al cliente**.
+- Hoy se **envasa bajo demanda**: no se distingue botellón lleno de vacío.
 - Tapas y sellos termoencogibles son **stock**: cada botellón llenado consume
   1 tapa + 1 sello.
 - La planta está en **Campo de la Cruz**. El agua viene de la red municipal con
