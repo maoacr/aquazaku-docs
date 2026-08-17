@@ -49,9 +49,46 @@ Asumimos que un cliente pertenece a una sola ruta. Falta confirmar con Aquazaku.
 :::
 ```
 
+## El vocabulario es el del negocio, no el de quien escribe
+
+Esta es la regla más importante de la página, y la más fácil de romper sin darse
+cuenta.
+
+Los términos del dominio tienen que ser los que usa **Aquazaku**, no los que le
+salen naturales a quien redacta. El español técnico está lleno de regionalismos
+que suenan neutros y no lo son.
+
+| ❌ No usar | ✅ Usar | Por qué |
+| --- | --- | --- |
+| Dar de alta | **Registrar** | "Alta" es rioplatense/peninsular; en Colombia se lee ambiguo |
+| Dar de baja | **Descartar** / **Desactivar** | Ídem, y "descartar" dice mejor qué pasa |
+| Fichar, empadronar | **Registrar** | — |
+| Remito | **Comprobante** | — |
+
+**Por qué importa tanto:** estos términos no se quedan en la documentación.
+Terminan siendo nombres de permisos, de tablas y de métodos:
+
+```
+botellones:dar_alta    ← quedaba así en el backend
+botellones:registrar   ← corregido
+```
+
+Si el equipo dice "registrar" y el código dice `darDeAlta`, cada lectura del
+código cuesta una traducción mental. Eso es exactamente lo que el
+[glosario](/empezar/glosario/) existe para evitar.
+
+:::tip[Ante la duda, preguntá]
+Si no estás seguro de que un término sea el que usa el negocio, **preguntalo**.
+Es más barato que renombrarlo cuando ya está en la base de datos.
+
+Cuando aparezca un término nuevo en una conversación con el cliente, va al
+glosario antes de escribir la clase.
+:::
+
 ## Estilo
 
-- Español, voseo, directo. Escribís para alguien que entra al proyecto mañana.
+- Español neutro para los términos del dominio; el resto de la prosa puede ser
+  directa y coloquial.
 - Frases cortas. Si una oración necesita dos comas para respirar, partila.
 - Mostrá el ejemplo antes que la teoría.
 - Si algo no está definido, decilo. "Pendiente" es información; el silencio no.
