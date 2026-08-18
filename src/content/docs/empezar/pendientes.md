@@ -49,6 +49,49 @@ después.
   fusión de duplicados ([RN-CLI-11](/dominio/clientes/)).
 :::
 
+:::tip[Resueltas — 18 de agosto de 2026]
+**🔴 Bloquean el modelo de datos** — todas:
+- **#1**: ¿Existe venta a crédito? **Sí, opt-in por cliente.** Plazos 30/60/90
+  disponibles siempre; tope opcional (default `null`); solo `admin` activa.
+  ([RN-CLI-12](/dominio/clientes/)).
+- **#2**: ¿Propuesta de `tipo_documento` + DV calculado? **Sí, aceptada.**
+  Tipos = `CC | NIT` solamente; el DV se calcula para NIT y se deshabilita
+  para CC. ([RN-CLI-09](/dominio/clientes/)).
+- **#3**: ¿Cliente `PENDIENTE` con crédito? **No puede, sin override.**
+  Invariante de backend obligatorio. ([RN-CLI-15](/dominio/clientes/)).
+  Bonus: el chequeo de límite en ruta (#21) ahora se entiende contra
+  `limite_monto` y solo bloquea si está seteado.
+
+**🟡 Roles** — bloque completo cerrado:
+- **#8**: ¿Quién registra cierre de producción? **`pos`** (en planta, hoy es la
+  única persona que opera la planta).
+- **#9**: ¿Quién anula? **Matriz por autor + fecha.** Ver
+  [RN-VEN-08](/dominio/ventas/). `seller` y `pos` solo anulan lo propio y
+  solo el día en curso; `admin` anula todo. **Comentario obligatorio** para
+  todos.
+- **#10**: ¿Quién carga la ruta del día? **El sistema la genera** con un
+  modelo de predicción que ordena clientes por probabilidad de necesitar
+  agua (incluido en el MVP).
+- **#11**: ¿Quién autoriza el préstamo de base? **`pos` es autónoma**,
+  único requisito = cliente verificado. Pos puede verificar Y entregar en
+  una sola operación. ([RN-BAS-07](/dominio/botellones-y-bases/)).
+- **#12**: ¿Cuántos `admin`, hace falta readonly? **4to rol `contador`**:
+  solo lectura + descarga de reportes PDF para temas tributarios en Colombia.
+  ([Roles y permisos](/dominio/roles-y-permisos/)).
+- **#13**: ¿Una persona puede ser `seller` y `pos`? **Sí, multi-rol por
+  usuario.** Hoy solo hay un usuario `pos`; el sistema soporta N roles
+  asignables por `admin`. La UI esconde módulos según el contexto
+  (mobile ≠ desktop), pero el backend autoriza por capacidad del rol.
+  ([RN-ACC-01](/dominio/roles-y-permisos/)).
+
+**Decisiones derivadas (fuera del 🔴/🟡 original) que se incorporaron:**
+- La verificación del documento la pueden hacer **los tres roles** (`seller`,
+  `pos`, `admin`), con métodos diferenciados. ([RN-CLI-14](/dominio/clientes/)).
+- El `seller` **no** es repartidor en Aquazaku: contacta clientes a distancia
+  (llamada/WhatsApp) y registra ventas. La planta prepara y los transportadores
+  informales externos entregan (no son usuarios del sistema).
+:::
+
 ---
 
 ## 🟠 Faltan mediciones en planta
@@ -68,16 +111,11 @@ No son decisiones: son números que hay que ir a tomar.
 
 Cambian qué se construye y quién puede hacer qué.
 
-### Roles
-
-| # | Pregunta | Impacta |
-| :-: | --- | --- |
-| 8 | **¿Quién registra el cierre de producción?** Los tres roles no incluyen a nadie de planta. Si el operario no es `admin`, **falta un rol**. | [Roles](/dominio/roles-y-permisos/) |
-| 9 | ¿`pos` puede anular una venta del día, o siempre depende de `admin`? Es la fricción operativa más probable. | Ventas |
-| 10 | ¿Quién carga la ruta por la mañana? | Rutas |
-| 11 | ¿Quién autoriza el préstamo de una base? | Bases |
-| 12 | ¿Cuántas personas van a tener rol `admin`? ¿Hace falta un `admin` de solo lectura para un contador? | Auditoría |
-| 13 | ¿Una misma persona puede ser `seller` unos días y `pos` otros? | [RN-ACC-01](/dominio/roles-y-permisos/) |
+:::tip[Roles — cerrado]
+Las 6 preguntas de roles (#8–#13) quedaron resueltas en la sesión del
+18-ago-2026. Ver el bloque de resueltas arriba. Las tres siguientes categorías
+siguen abiertas.
+:::
 
 ### Producción
 
@@ -90,12 +128,11 @@ Cambian qué se construye y quién puede hacer qué.
 
 | # | Pregunta |
 | :-: | --- |
-| 16 | ¿La ruta es fija por `seller` o se arma cada día? |
-| 17 | ¿El `seller` puede vender a un cliente fuera de su ruta? |
-| 18 | ¿Quién autoriza un faltante? ¿Se le descuenta al `seller`? |
+| 16 | ¿La ruta es fija por `seller` o se arma cada día? *(Nota: con la predicción para MVP, la "ruta" pasa a ser una lista priorizada de contactos, generada por el sistema. Aclarar si la dinámica de vendedor fijo / reasignable sigue vigente o se reemplaza.)* |
+| 17 | ¿El `seller` puede vender a un cliente fuera de su ruta? *(Misma nota: ahora la pregunta pasa a "¿puede agregar manualmente a un cliente que el sistema no le surfaceó?".)* |
+| 18 | ¿Quién autoriza un faltante? ¿Se le descuenta al `seller`? *(Hoy sin producto físico en la calle, "faltante" pasa a ser ventas registradas que la planta no pudo cumplir.)* |
 | 19 | ¿Qué pasa si termina el día sin señal y no puede sincronizar? ¿La ruta queda abierta? |
-| 20 | ¿Se hace seguimiento de ubicación del `seller`? |
-| 21 | ¿Qué pasa si un cliente supera su límite de crédito en plena ruta? ¿Se bloquea o se permite? |
+| 20 | ¿Se hace seguimiento de ubicación del `seller`? *(Menos crítico ahora: el seller no hace recorrido físico. Pregunta a redefinir — ¿se geolocaliza la visita al cliente en el momento del contacto?)* |
 | 22 | ¿Puede una dirección quedar sin ruta asignada? *(Hoy sí: compra en mostrador.)* |
 
 ### Activos retornables

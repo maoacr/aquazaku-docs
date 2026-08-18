@@ -35,7 +35,7 @@ cuadra. Es la base de toda la trazabilidad del sistema.
 
 ### RN-VEN-02 — Una venta confirmada no se edita
 
-**Estado:** 🟡 Supuesto
+**Estado:** ✅ Confirmada — regla consolidada.
 
 Una vez confirmada, una venta es inmutable. Si está mal, se **anula** y se
 registra una nueva. No existe "editar venta".
@@ -54,13 +54,13 @@ El costo de un campo editable es que nunca más vas a poder responder
 
 ### RN-VEN-03 — Anular una venta revierte todos sus efectos
 
-**Estado:** 🟡 Supuesto
+**Estado:** ✅ Confirmada — base consolidada, reglas complementarias abajo.
 
 Anular devuelve el producto al stock de la ubicación de origen, revierte el
 movimiento de envases y ajusta el saldo del cliente si fue a crédito.
 
-La anulación exige **motivo** y queda registrada con su responsable y fecha.
-La venta anulada no desaparece: cambia de estado.
+La anulación exige **motivo obligatorio** y queda registrada con su responsable
+y fecha. La venta anulada no desaparece: cambia de estado.
 
 **Por qué:** una anulación que no revierte el inventario genera faltantes
 fantasma que después nadie puede explicar.
@@ -81,13 +81,37 @@ historial y los reportes de meses cerrados cambian solos.
 
 ### RN-VEN-05 — Solo se vende a crédito a clientes habilitados
 
-**Estado:** 🟡 Supuesto
+**Estado:** ✅ Confirmada — modelo cerrado en [RN-CLI-12](/dominio/clientes/).
 
-Una venta a crédito requiere que el cliente tenga crédito habilitado y saldo
-disponible dentro de su límite. Si no, la venta es de contado o no procede.
+Una venta a crédito requiere que el cliente tenga crédito habilitado **y** esté
+verificado ([RN-CLI-15](/dominio/clientes/)). Si cualquiera de las dos
+condiciones falla, la venta es de contado o no procede.
 
-**Por qué:** es el control que evita que la cobranza se vuelva incobrable.
-Ver [RN-CLI-03](/dominio/clientes/).
+La verificación compuesta que el backend tiene que chequear es:
+
+```
+cliente.credito.habilitado == true
+  AND
+cliente.verificacion.estado == "verificado"
+  AND (
+    cliente.credito.limite_monto == null
+    OR  saldo_deuda + monto_venta <= cliente.credito.limite_monto
+  )
+```
+
+**Por qué:** es el control que evita que la cobranza se vuelva incobrable. Ver
+[RN-CLI-12](/dominio/clientes/) y [RN-CLI-15](/dominio/clientes/).
+
+:::note[Sobre el bloqueo en ruta — pregunta #21]
+La pregunta original de "¿qué pasa si el cliente supera el límite de crédito en
+plena ruta?" está ahora RESPONDIDA por construcción: el chequeo es contra
+`limite_monto` (que puede ser `null` = sin tope). Si `limite_monto == null`,
+no hay forma de bloquear — el sistema no tiene un número con el cual bloquear.
+
+Hoy, con la operación chica y los pocos clientes con crédito, se arranca con
+`null` en todos. Cuando un admin configure un tope para alguien específico,
+ese cliente sí queda sujeto al chequeo.
+:::
 
 ---
 
@@ -115,15 +139,50 @@ pagos parciales o un pago que cubre varias ventas.
 
 ---
 
+### RN-VEN-08 — Anulación de venta: solo el autor, comentario obligatorio
+
+**Estado:** ✅ Confirmada — cerrá la pregunta #9 de
+[Qué falta preguntar](/empezar/pendientes/).
+
+La anulación tiene **dos invariantes** además del comentario obligatorio que
+ya estaba en [RN-VEN-03](#rn-ven-03--anular-una-venta-revierte-todos-sus-efectos):
+
+1. **Solo el autor de la venta puede anularla** (entre `seller` y `pos`).
+   - `pos` **no** anula ventas hechas por `seller`.
+   - `seller` **no** anula ventas hechas por `pos`.
+   - El chequeo va sobre el `user_id` del autor original, sin importar bajo qué
+     rol se hizo la venta (los usuarios pueden tener más de un rol —
+     [RN-ACC-01](/dominio/roles-y-permisos/)).
+2. **`admin` puede anular cualquier venta**, sin importar el autor ni la fecha.
+
+**Matriz efectiva:**
+
+| Caso | Quién puede anular | Comentario obligatorio |
+| --- | --- | :-: |
+| Venta del día en curso, autor = `pos` | `pos` (autor) | ✅ |
+| Venta del día en curso, autor = `seller` | `seller` (autor) | ✅ |
+| Venta del día en curso, autor = `admin` | `admin` | ✅ |
+| Venta de día anterior, autor = `pos` | `admin` | ✅ |
+| Venta de día anterior, autor = `seller` | `admin` | ✅ |
+| Cualquier día, cualquier autor | `admin` | ✅ |
+
+**El comentario NO es un campo opcional.** Sin texto, la anulación no se puede
+guardar. Esto aplica igual para `admin` — quien tiene más permisos, también deja
+más rastro.
+
+**Por qué:** el comentario obligatorio es lo que hace que cualquier reversión
+quede en el log con motivo legible. Si en tres meses hay que responder
+"¿por qué desapareció esta venta del día?", la respuesta está en una fila del
+log, no en la memoria de alguien.
+
+---
+
 ## Preguntas abiertas
 
 Estas hay que responderlas con Aquazaku antes de implementar:
 
-- ¿Existe venta a crédito, o todo es de contado?
 - ¿Se emite comprobante fiscal? ¿Qué tipo?
 - ¿Hay descuentos o listas de precio distintas por tipo de cliente?
-- ¿Quién puede anular una venta y hasta cuándo? Hoy la matriz solo se lo permite
-  a `admin` — ¿es viable en la operación diaria del punto de venta?
 - ¿Se aceptan devoluciones de producto, o solo anulación de la venta completa?
 - ¿Una venta puede incluir el préstamo de una base, o el préstamo es una
   operación aparte? Ver [RN-BAS-02](/dominio/botellones-y-bases/).

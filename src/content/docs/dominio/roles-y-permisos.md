@@ -1,22 +1,23 @@
 ---
 title: Roles y permisos
-description: Modelo de autorización de Aquazaku — Admin, Seller y POS, qué puede hacer cada uno y sobre qué datos.
+description: Modelo de autorización de Aquazaku — Admin, Seller, POS y Contador, qué puede hacer cada uno y sobre qué datos.
 sidebar:
   order: 9
 ---
 
-## Los tres roles
+## Los cuatro roles
 
 **Estado:** ✅ Confirmada — definidos por Aquazaku.
 
-El sistema tiene exactamente **tres roles**. No hay más, y agregar uno nuevo es
-una decisión de negocio, no una comodidad de implementación.
+El sistema tiene exactamente **cuatro roles**. No hay más, y agregar uno nuevo
+es una decisión de negocio, no una comodidad de implementación.
 
-| Rol | Quién es | Dónde opera | Cómo vende |
+| Rol | Quién es | Dónde opera | Qué hace |
 | --- | --- | --- | --- |
-| `admin` | Dueño / administración | Web | — (supervisa) |
-| `seller` | Vendedor de ruta | **App móvil** | Va al cliente |
-| `pos` | Punto de venta fijo | Web / terminal | El cliente viene |
+| `admin` | Dueño / administración | Web (remoto, visita la planta cuando viaja) | Configuración, auditoría, ajustes sensibles |
+| `seller` | Vendedor | **App móvil** | Contacta clientes y registra ventas a distancia |
+| `pos` | Planta + mostrador | Web / terminal en la planta | Venta de mostrador, preparación de pedidos, despacho, cierre de producción |
+| `contador` | Contador externo o interno | Web, **solo lectura** | Genera reportes PDF para temas impositivos y legales |
 
 :::note[El `seller` es un usuario de app móvil]
 El acceso web para el `seller` puede existir como respaldo —teléfono roto,
@@ -29,11 +30,70 @@ Esto no es un detalle de implementación: condiciona el modo offline
 :::
 
 La diferencia entre `seller` y `pos` no es de jerarquía: es de **contexto de
-operación**. Uno vende en la calle, sin señal, contra la carga de su vehículo.
-El otro vende en el mostrador, con conexión, contra el stock de bodega.
+operación**. Uno contacta clientes por canal remoto. El otro opera la planta y
+atiende mostrador.
 
-Esa distinción atraviesa todo el sistema —stock por ubicación, modo offline,
-rendición— y por eso son dos roles y no uno con un flag.
+:::tip[Seller NO es repartidor]
+Es importante aclararlo para no caer en el modelo equivocado: en Aquazaku el
+`seller` **no visita con producto**, solo contacta clientes y registra ventas.
+La preparación del pedido y la entrega están a cargo del `pos` en la planta,
+con **transportadores informales externos** (no son usuarios del sistema). Ver
+[Operaciones](/dominio/operaciones/) cuando se redacte esa sección.
+:::
+
+### Por qué existe `contador` aparte de `admin`
+
+El `admin` es el dueño, vive en otra ciudad y concentra los permisos sensibles
+del sistema (anular ventas, ajustar stock, cambiar precios). Para temas
+tributarios en Colombia — DIAN, retenciones, ICA, etc. — hace falta entregarle
+reportes a un **contador externo** que no tiene por qué poder modificar nada.
+
+Un `admin` "de solo lectura" como flag sobre el mismo rol **no alcanza**:
+el contador necesita generar y descargar sus propios reportes sin heredar los
+permisos de modificación. Es un rol aparte, no un subconjunto.
+
+:::danger[El contador NO hereda los privilegios del admin]
+Esta separación es importante por **auditoría**: el dueño no debe ser quien se
+genera a sí mismo los reportes que va a presentar. Si el dueño es el contador,
+la trazabilidad se pierde.
+:::
+
+### Multi-rol por usuario
+
+**Estado:** ✅ Confirmada — cerrá la pregunta #13 de
+[Qué falta preguntar](/empezar/pendientes/).
+
+Un mismo usuario puede tener **N roles asignados** a la vez. Esto cubre el caso
+futuro en que una persona ejerza varias funciones (ej. operador de planta que
+también venda en la calle).
+
+```
+usuario = {
+  id: uuid,
+  email: string,
+  roles: ["pos", "seller"],   // cualquiera de los cuatro; asignable por admin
+  ...
+}
+```
+
+**Todo se audita bajo el mismo `user_id`**, sin importar bajo qué rol se actuó.
+La auditoría registra `rol_ejercido` además del `user_id`, así que se puede
+responder "¿qué hizo este usuario como seller?" o "¿qué hizo como pos?"
+filtrando el log.
+
+### Multi-rol por usuario ≠ UI multi-rol
+
+Que un usuario tenga permisos de `pos` y `seller` **no significa que la app
+muestre todos los módulos a la vez**. Regla de UI:
+
+- **App móvil**: por defecto **no muestra** módulos típicos de `pos` (cierre
+  de producción, despacho, entrega de bases, configuración). Es una regla de
+  UX, no de permisos.
+- **Web (desktop)**: muestra los módulos según los roles que el usuario tiene.
+
+El backend **no conoce el device** — autoriza por capacidad del rol, sin mirar
+si la petición viene desde mobile o web. Ocultar un botón no es seguridad
+([RN-ACC-02](#rn-acc-02--la-ui-oculta-la-api-prohíbe)).
 
 ---
 
@@ -85,61 +145,67 @@ en el frontend y en esta documentación. Una sola fuente de verdad.
 
 **Leyenda:** ✅ alcance `todo` · 🟡 alcance limitado (se indica) · ❌ sin acceso
 
-:::caution[Los roles están confirmados; el detalle de la matriz no]
-Que existan `admin`, `seller` y `pos` viene de Aquazaku. **La asignación
-celda por celda todavía es un borrador nuestro.** Repasala con el cliente antes
-de implementar — sobre todo las filas marcadas con ⚠️.
+:::caution[La matriz es un borrador]
+Que existan los cuatro roles viene de Aquazaku. **La asignación celda por celda
+sigue siendo un borrador nuestro.** Repasala con el cliente antes de implementar
+— sobre todo las filas marcadas con ⚠️.
+
+Los permisos agregados o modificados en esta sesión corresponden a las
+decisiones tomadas en [Qué falta preguntar](/empezar/pendientes/): la fila
+`ventas:anular` se reformuló según [RN-VEN-08](/dominio/ventas/),
+`bases:prestar` se reformuló según [RN-BAS-07](/dominio/botellones-y-bases/), y
+`produccion:registrar_cierre` ahora se delega a `pos` por [RN-PRD-04](/dominio/produccion/).
 :::
 
 ### Ventas y cobros
 
-| Permiso | `admin` | `seller` | `pos` |
-| --- | :-: | :-: | :-: |
-| `ventas:ver` | ✅ | 🟡 `propio` | 🟡 `propio` |
-| `ventas:crear` | ✅ | 🟡 `ruta` | ✅ |
-| `ventas:anular` ⚠️ | ✅ | ❌ | ❌ |
-| `cobros:ver` | ✅ | 🟡 `propio` | 🟡 `propio` |
-| `cobros:registrar` | ✅ | 🟡 `ruta` | ✅ |
+| Permiso | `admin` | `seller` | `pos` | `contador` |
+| --- | :-: | :-: | :-: | :-: |
+| `ventas:ver` | ✅ | 🟡 `propio` | 🟡 `propio` | 🟡 `todo` |
+| `ventas:crear` | ✅ | ✅ | ✅ | ❌ |
+| `ventas:anular` ⚠️ | ✅ | 🟡 `propio + día_en_curso` | 🟡 `propio + día_en_curso` | ❌ |
+| `cobros:ver` | ✅ | 🟡 `propio` | 🟡 `propio` | 🟡 `todo` |
+| `cobros:registrar` | ✅ | ✅ | ✅ | ❌ |
 
 ### Clientes
 
-| Permiso | `admin` | `seller` | `pos` |
-| --- | :-: | :-: | :-: |
-| `clientes:ver` | ✅ | 🟡 `ruta` | ✅ |
-| `clientes:crear` | ✅ | 🟡 `ruta` | ✅ |
-| `clientes:verificar_documento` | ✅ | 🟡 `ruta` | ✅ |
-| `clientes:editar` | ✅ | ❌ | ❌ |
-| `clientes:habilitar_credito` | ✅ | ❌ | ❌ |
+| Permiso | `admin` | `seller` | `pos` | `contador` |
+| --- | :-: | :-: | :-: | :-: |
+| `clientes:ver` | ✅ | ✅ | ✅ | 🟡 `todo` |
+| `clientes:crear` | ✅ | ✅ | ✅ | ❌ |
+| `clientes:verificar_documento` | ✅ | ✅ | ✅ | ❌ |
+| `clientes:editar` | ✅ | ❌ | ❌ | ❌ |
+| `clientes:habilitar_credito` | ✅ | ❌ | ❌ | ❌ |
 
 ### Stock de producto
 
-| Permiso | `admin` | `seller` | `pos` |
-| --- | :-: | :-: | :-: |
-| `stock:ver` | ✅ | 🟡 `ruta` | 🟡 `BODEGA` |
-| `stock:cargar_ruta` ⚠️ | ✅ | ❌ | ❌ |
-| `stock:ajustar` | ✅ | ❌ | ❌ |
-| `insumos:ver` | ✅ | ❌ | ❌ |
-| `insumos:ajustar` | ✅ | ❌ | ❌ |
+| Permiso | `admin` | `seller` | `pos` | `contador` |
+| --- | :-: | :-: | :-: | :-: |
+| `stock:ver` | ✅ | 🟡 `todo` | 🟡 `BODEGA` | 🟡 `todo` |
+| `stock:cargar_ruta` ⚠️ | ✅ | ❌ | ✅ | ❌ |
+| `stock:ajustar` | ✅ | ❌ | 🟡 `cantidades` (con motivo) | ❌ |
+| `insumos:ver` | ✅ | ❌ | ✅ | 🟡 `todo` |
+| `insumos:ajustar` | ✅ | ❌ | 🟡 `cantidades` (con motivo) | ❌ |
 
 ### Botellones — por cantidad
 
-| Permiso | `admin` | `seller` | `pos` |
-| --- | :-: | :-: | :-: |
-| `botellones:ver` | ✅ | 🟡 `ruta` | 🟡 `BODEGA` |
-| `botellones:entregar` | ✅ | 🟡 `ruta` | ✅ |
-| `botellones:recibir_retorno` | ✅ | 🟡 `ruta` | ✅ |
-| `botellones:registrar` | ✅ | ❌ | ❌ |
-| `botellones:descartar` | ✅ | ❌ | ❌ |
+| Permiso | `admin` | `seller` | `pos` | `contador` |
+| --- | :-: | :-: | :-: | :-: |
+| `botellones:ver` | ✅ | ✅ | ✅ | 🟡 `todo` |
+| `botellones:entregar` | ✅ | ❌ | ✅ | ❌ |
+| `botellones:recibir_retorno` | ✅ | ❌ | ✅ | ❌ |
+| `botellones:registrar` | ✅ | ❌ | ✅ | ❌ |
+| `botellones:descartar` | ✅ | ❌ | ✅ (con motivo) | ❌ |
 
 ### Bases — por unidad identificada
 
-| Permiso | `admin` | `seller` | `pos` |
-| --- | :-: | :-: | :-: |
-| `bases:ver` | ✅ | 🟡 `ruta` | ✅ |
-| `bases:prestar` ⚠️ | ✅ | 🟡 `ruta` | ✅ |
-| `bases:retirar` | ✅ | 🟡 `ruta` | ✅ |
-| `bases:registrar` | ✅ | ❌ | ❌ |
-| `bases:descartar` | ✅ | ❌ | ❌ |
+| Permiso | `admin` | `seller` | `pos` | `contador` |
+| --- | :-: | :-: | :-: | :-: |
+| `bases:ver` | ✅ | ✅ | ✅ | 🟡 `todo` |
+| `bases:prestar` ⚠️ | ✅ | ❌ | ✅ (con cliente verificado) | ❌ |
+| `bases:retirar` | ✅ | ❌ | ✅ | ❌ |
+| `bases:registrar` | ✅ | ❌ | ✅ | ❌ |
+| `bases:descartar` | ✅ | ❌ | ✅ (con motivo) | ❌ |
 
 :::note[Por qué son dos bloques y no uno]
 Botellones y bases se rastrean con granularidad distinta
@@ -153,100 +219,97 @@ falta modelar.
 
 ### Producción y agua
 
-| Permiso | `admin` | `seller` | `pos` |
-| --- | :-: | :-: | :-: |
-| `produccion:ver` | ✅ | ❌ | ❌ |
-| `produccion:registrar_cierre` ⚠️ | ✅ | ❌ | ❌ |
-| `tanques:ver` | ✅ | ❌ | ❌ |
-| `tanques:registrar_reposicion` | ✅ | ❌ | ❌ |
-| `tanques:ajustar` | ✅ | ❌ | ❌ |
-| `configuracion:equivalencias` | ✅ | ❌ | ❌ |
+| Permiso | `admin` | `seller` | `pos` | `contador` |
+| --- | :-: | :-: | :-: | :-: |
+| `produccion:ver` | ✅ | ❌ | ✅ | 🟡 `todo` |
+| `produccion:registrar_cierre` | ✅ | ❌ | ✅ | ❌ |
+| `tanques:ver` | ✅ | ❌ | ✅ | ❌ |
+| `tanques:registrar_reposicion` | ✅ | ❌ | ✅ | ❌ |
+| `tanques:ajustar` | ✅ | ❌ | ❌ | ❌ |
+| `configuracion:equivalencias` | ✅ | ❌ | ✅ | ❌ |
 
-:::caution[Falta un actor]
-Hoy solo `admin` puede registrar el cierre de producción, porque los tres roles
-confirmados no incluyen a nadie de planta.
-
-Si quien envasa no es un `admin`, o el cierre lo carga un operario, **falta un
-rol** — y eso hay que resolverlo con Aquazaku antes de implementar
-[RN-PRD-04](/dominio/produccion/).
+:::tip[¿Quién registra el cierre de producción? — pregunta #8 cerrada]
+La persona que opera la planta **es** el `pos`. El cierre de producción lo
+registra `pos` directamente, sin pedir autorización a `admin`. Quedó resuelto
+en la sesión del 18-ago-2026 y ya no hace falta tratarlo como abierto.
 :::
 
 ### Proveedores y compras
 
-| Permiso | `admin` | `seller` | `pos` |
-| --- | :-: | :-: | :-: |
-| `proveedores:ver` | ✅ | ❌ | ❌ |
-| `proveedores:crear` | ✅ | ❌ | ❌ |
-| `compras:crear` | ✅ | ❌ | ❌ |
-| `compras:recibir` ⚠️ | ✅ | ❌ | ❌ |
+| Permiso | `admin` | `seller` | `pos` | `contador` |
+| --- | :-: | :-: | :-: | :-: |
+| `proveedores:ver` | ✅ | ❌ | 🟡 `todo` | 🟡 `todo` |
+| `proveedores:crear` | ✅ | ❌ | ❌ | ❌ |
+| `compras:crear` | ✅ | ❌ | ✅ | ❌ |
+| `compras:recibir` ⚠️ | ✅ | ❌ | ✅ | ❌ |
 
 ### Rutas
 
-| Permiso | `admin` | `seller` | `pos` |
-| --- | :-: | :-: | :-: |
-| `rutas:ver` | ✅ | 🟡 `propio` | ❌ |
-| `rutas:abrir` ⚠️ | ✅ | ❌ | ❌ |
-| `rutas:rendir` | ✅ | 🟡 `propio` | ❌ |
-| `rutas:cerrar_con_faltante` | ✅ | ❌ | ❌ |
+| Permiso | `admin` | `seller` | `pos` | `contador` |
+| --- | :-: | :-: | :-: | :-: |
+| `rutas:ver` | ✅ | 🟡 `propio` | 🟡 `todo` | 🟡 `todo` |
+| `rutas:abrir` | ✅ | ✅ | ❌ | ❌ |
+| `rutas:rendir` | ✅ | 🟡 `propio` | ❌ | ❌ |
+| `rutas:cerrar_con_faltante` | ✅ | ❌ | ❌ | ❌ |
 
 ### Administración
 
-| Permiso | `admin` | `seller` | `pos` |
-| --- | :-: | :-: | :-: |
-| `productos:ver` | ✅ | ✅ | ✅ |
-| `productos:editar_precios` | ✅ | ❌ | ❌ |
-| `usuarios:*` | ✅ | ❌ | ❌ |
-| `reportes:operativos` | ✅ | ❌ | ❌ |
-| `reportes:financieros` | ✅ | ❌ | ❌ |
-| `configuracion:*` | ✅ | ❌ | ❌ |
+| Permiso | `admin` | `seller` | `pos` | `contador` |
+| --- | :-: | :-: | :-: | :-: |
+| `productos:ver` | ✅ | ✅ | ✅ | 🟡 `todo` |
+| `productos:editar_precios` | ✅ | ❌ | ❌ | ❌ |
+| `usuarios:*` | ✅ | ❌ | ❌ | ❌ |
+| `reportes:operativos` | ✅ | ❌ | 🟡 `prep` | ✅ |
+| `reportes:financieros` | ✅ | ❌ | ❌ | ✅ |
+| `reportes:descargar_pdf` | ✅ | ❌ | 🟡 `operativos` | ✅ |
+| `configuracion:*` | ✅ | ❌ | ❌ | ❌ |
 
 ---
 
-## La consecuencia de tener solo tres roles
+## La consecuencia de tener `admin` con super-poderes
 
-Con este modelo, **`admin` concentra todas las funciones de control**: ajusta
-stock, anula ventas, cambia precios, descarta botellones y bases, y administra
-usuarios.
+Con este modelo, **`admin` concentra las funciones de control sensibles**:
+ajusta stock, anula ventas, cambia precios, descarta botellones y bases, y
+administra usuarios. Ningún otro rol puede tocar nada de esto.
 
-Eso es perfectamente razonable en una operación chica. Pero hay que decirlo en
-voz alta, porque tiene una consecuencia directa:
+Eso es perfectamente razonable en una operación chica, sobre todo porque **el
+dueño es el único `admin`** y vive en otra ciudad (viaja a Tasajera cada cierto
+tiempo). Pero hay que decirlo en voz alta:
 
 :::danger[Sin separación de funciones, la auditoría es el único control]
-En un sistema con más roles, el control es estructural: quien vende no puede
-ajustar el stock, así que no puede tapar un faltante.
+En un sistema con más roles, el control sería estructural: quien vende no
+podría ajustar el stock, así que no podría tapar un faltante.
 
-Acá no existe esa barrera. `admin` puede hacer todo y corregir la evidencia de
-haberlo hecho. Lo único que queda en pie es el **registro de auditoría**
+Acá no existe esa barrera. `admin` puede hacerlo todo y corregir la evidencia
+de haberlo hecho. Lo único que queda en pie es el **registro de auditoría**
 ([RN-ACC-04](#rn-acc-04--toda-acción-sensible-queda-auditada)).
 
-Por eso la auditoría deja de ser un "nice to have" y pasa a ser un requisito de
-primer orden. Si se implementa tarde o a medias, el sistema no controla nada.
+**El rol `contador` no resuelve esto**, pero ayuda: alguien externo mira la
+información sin poder modificarla, y cada descarga de reporte PDF queda en el
+log. La auditoría gana un testigo.
 :::
-
-Las dos preguntas que hay que hacerle a Aquazaku:
-
-1. ¿Cuántas personas van a tener rol `admin`? Si son varias, ¿está bien que
-   todas puedan anular ventas y ajustar stock?
-2. ¿Hace falta un `admin` de solo lectura, para un contador externo o para el
-   dueño que quiere mirar sin poder romper nada?
 
 ---
 
 ## Reglas de acceso
 
-### RN-ACC-01 — Un usuario tiene exactamente un rol
+### RN-ACC-01 — Un usuario puede tener varios roles a la vez
 
-**Estado:** 🟡 Supuesto
+**Estado:** ✅ Confirmada — cerrá la pregunta #13 de
+[Qué falta preguntar](/empezar/pendientes/).
 
-No hay acumulación de roles: un usuario es `admin`, `seller` **o** `pos`.
+Un usuario puede tener **N roles** asignados a la vez, configurado por `admin`.
+Hoy el operario de planta tiene solo `pos`; una futura persona híbrida podría
+tener `["pos", "seller"]`.
 
-**Por qué:** la combinación de roles multiplica los casos a probar y hace que
-nadie pueda responder "¿qué ve exactamente esta persona?".
+**Por qué:** la operación futura de Aquazaku puede incluir personas que
+atiendan mostrador y salgan a ruta según el día. Prohibirlo en el modelo
+implica crear dos usuarios para la misma persona — feo y propenso a errores.
 
-:::caution[Caso a validar]
-¿Puede una misma persona atender el mostrador algunos días y salir a ruta otros?
-Si la respuesta es sí, este modelo necesita revisión — o esa persona tiene dos
-usuarios, que es una solución fea pero honesta.
+:::tip[Multi-rol NO es lo mismo que UI multi-rol]
+El usuario puede tener permisos de `pos` y `seller`. Pero la app muestra los
+módulos según el contexto y el rol ejercido: en mobile, por defecto se ocultan
+los módulos de `pos`. Ver la sección "Multi-rol por usuario" arriba.
 :::
 
 ---
@@ -309,10 +372,6 @@ mantienen la referencia a él.
 
 ## Preguntas abiertas
 
-- ¿`pos` puede anular una venta del día, o siempre tiene que pedírselo a `admin`?
-  Es la fricción operativa más probable del modelo.
 - ¿`pos` vende contra el stock de bodega directamente, o el punto de venta tiene
   su propia ubicación de stock?
-- ¿`seller` puede registrar clientes nuevos en la calle, o los crea la oficina?
-- ¿Quién carga la ruta del `seller` por la mañana — un `admin` siempre?
 - ¿Hay más de un punto de venta?

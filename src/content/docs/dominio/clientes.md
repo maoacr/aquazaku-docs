@@ -54,7 +54,7 @@ lo que nadie comprobó.
 
 ### RN-CLI-09 — El tipo de documento es explícito; el dígito de verificación se calcula
 
-**Estado:** 🟡 Supuesto — propuesta de diseño sobre datos confirmados.
+**Estado:** ✅ Confirmada — el modelo fue aceptado, con los detalles del campo CC y NIT.
 
 En Colombia conviven dos identificadores:
 
@@ -162,12 +162,21 @@ el texto oficial antes de liberar a producción.
 ```
 tipo_documento   CC | NIT      ← explícito, elegido por el usuario
 numero           string        ← sin DV
-dv               derivado      ← calculado, nunca capturado
+dv               derivado      ← calculado, nunca capturado (solo NIT)
 ```
 
 **El DV no se almacena como dato de entrada.** Se calcula. Si el usuario tiene el
 NIT completo a mano y escribe el dígito, se usa para **validar** — si no coincide
 con el calculado, hubo un error de tipeo y se avisa en el momento.
+
+#### El DV solo aplica a NIT
+
+Para cédulas (CC) no se calcula ni se captura un DV: el sistema lo trata como
+dato irrelevante y el campo queda `disabled` en el form. La cédula ya trae su
+último dígito embebido en el número — pedirlo aparte solo agregaría confusión.
+
+Para NIT, sí se calcula (algoritmo de arriba). La diferencia es por diseño, no
+por descuido: cada tipo tiene su forma de validación natural.
 
 :::danger[Por qué el tipo NO se infiere de un campo vacío]
 Una alternativa considerada era usar dos campos y deducir el tipo según si el
@@ -252,16 +261,8 @@ trazabilidad es la que hace que el flag signifique algo — si nadie responde po
 él, todos lo marcan siempre y deja de servir.
 :::
 
-:::caution[Pregunta que esto abre]
-¿Un cliente con documento `PENDIENTE` puede **acceder a crédito**?
-
-La respuesta natural es que no: extender crédito a una identidad sin comprobar es
-justamente el riesgo que el crédito intenta acotar
-([RN-CLI-04](#rn-cli-04--el-crédito-es-una-habilitación-explícita-con-límite)).
-
-Documentado como **supuesto**: se requiere `VERIFICADO` para habilitar crédito.
-Confirmar con Aquazaku.
-:::
+Ver [RN-CLI-14](#rn-cli-14--cualquier-puede-verificar-el-código-de-verificación-queda-auditado)
+para quién puede llevar a un cliente de `PENDIENTE` a `VERIFICADO`.
 
 ---
 
@@ -449,13 +450,118 @@ del `seller` y la asignación de clientes a rutas.
 
 ---
 
+## Crédito
+
+### RN-CLI-12 — El crédito es opt-in por cliente; plazos 30/60/90 días
+
+**Estado:** ✅ Confirmada — modelo cerrado con Aquazaku.
+
+El crédito **no es default**. La mayoría de los clientes paga al contado
+(efectivo al repartidor o transferencia bancaria). Solo clientes seleccionados
+lo tienen.
+
+Cuando un cliente tiene crédito habilitado, el sistema permite registrar
+ventas con **pago a 30, 60 o 90 días**, y los tres plazos están disponibles
+siempre (no se eligen individualmente por cliente).
+
+```
+cliente.credito = {
+  habilitado:        boolean,           // solo admin lo prende/apaga
+  limite_monto:      number | null,     // null = sin tope (default)
+  plazos_permitidos: [30, 60, 90],      // siempre los 3
+}
+```
+
+**Por qué sin tope por defecto:** en la operación actual de Aquazaku, pocos
+clientes tienen crédito y los que lo tienen son confiables. Forzar un tope
+numérico ahora implica inventar el número. **Default `null`, admin
+configura cuando quiera.** El bloqueo de ruta
+([RN-VEN-08](/dominio/ventas/) — antes pregunta #21) solo aplica cuando
+`limite_monto != null`.
+
+### RN-CLI-13 — El documento se exige al registrar, sin excepciones
+
+**Estado:** ✅ Confirmada.
+
+No se registra un cliente sin documento. El `seller` puede tomar el número
+**dictado de viva voz** y la app lo acepta — pero el dato existe desde el
+primer momento, no se rellena después.
+
+**Por qué:** confundir "dato presente" con "dato verificado" lleva a clientes
+registrados sin documento que después nadie sabe a qué número apuntar. Para
+eso existe [RN-CLI-10](#rn-cli-10--el-documento-tiene-estado-de-verificación)
+(estado de verificación) — el documento se exige, la verificación puede
+esperar.
+
+---
+
+## Verificación
+
+### RN-CLI-14 — Cualquiera de los tres roles puede verificar; el código de verificación queda auditado
+
+**Estado:** ✅ Confirmada — ampliado desde RN-CLI-10.
+
+Pasar un cliente de `PENDIENTE` a `VERIFICADO` lo pueden hacer `seller`, `pos`
+o `admin`. El sistema registra `verificado_por: user_id` (el rol se infiere
+del usuario en la tabla `usuarios`) y deja en el log **quién, cuándo y con
+qué método**.
+
+```
+cliente.verificacion = {
+  estado:         "pendiente" | "verificado",
+  verificado_por: user_id | null,
+  verificado_en:  timestamp | null,
+  metodo:         "seller_manual" | "pos_manual" | "admin_oficial" | null,
+}
+```
+
+**Métodos según el rol:**
+
+| Método | Quién | Cuándo |
+| --- | --- | --- |
+| `seller_manual` | `seller` | Cotejó el documento físico en la calle |
+| `pos_manual` | `pos` | Cotejó el documento físico en el mostrador |
+| `admin_oficial` | `admin` | Validó contra documento oficial o comunicación posterior |
+
+La diferencia entre los primeros y el último es de **confianza**: los primeros
+son verificación inmediata/fáctica en el momento, el tercero es ratificación
+formal diferida.
+
+**`pos` puede verificar Y entregar la base en una sola operación** — ver
+[RN-BAS-07](/dominio/botellones-y-bases/) sobre el préstamo de bases. Esa
+combinación es el camino de menor fricción para nuevos clientes y un
+diferenciador de Aquazaku.
+
+### RN-CLI-15 — El crédito exige verificación; sin estado no se puede activar
+
+**Estado:** ✅ Confirmada.
+
+Un cliente con `cliente.verificacion.estado == "pendiente"` **no puede tener**
+`cliente.credito.habilitado == true`. No hay override de admin que valga: el
+toggle de crédito aparece bloqueado hasta que el cliente esté verificado.
+
+**Guard de backend obligatoria** (no solo en UI): cualquier endpoint que
+habilite crédito o registre una venta a plazo debe chequear la condición
+compuesta:
+
+```
+cliente.credito.habilitado == true
+    AND
+cliente.verificacion.estado == "verificado"
+```
+
+Si cualquiera falla, el backend rechaza — sin importar lo que la UI haya
+permitido.
+
+**Por qué:** extender crédito a una identidad sin comprobar es justamente el
+riesgo que el crédito intenta acotar. Sin este invariante, la verificación
+pierde todo su valor: el que más necesita crédito es el que más urgente tiene
+saltarse la verificación.
+
+---
+
 ## Preguntas abiertas
 
-- **¿El número de documento es único?** Sabemos que se filtra por él, no que
-  identifique. Ver la recomendación en
-  [RN-CLI-01](#rn-cli-01--la-identidad-del-cliente-es-un-uuid-no-su-documento).
 - ¿Se distinguen tipos de cliente (hogar vs. comercio) con precios distintos?
-- ¿Qué pasa cuando un cliente supera su límite de crédito en plena ruta?
-  ¿El `seller` puede vender igual, o el sistema lo bloquea?
 - ¿Se cobra depósito o garantía por la base prestada?
 - ¿Puede una dirección quedar sin ruta asignada? (Hoy sí: compra en mostrador.)

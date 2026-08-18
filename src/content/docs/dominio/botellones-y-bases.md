@@ -317,6 +317,48 @@ fecha. No desaparece del historial: cambia de estado.
 
 ---
 
+### RN-BAS-07 — La entrega de bases es autónoma: `pos` decide, basta con cliente verificado
+
+**Estado:** ✅ Confirmada — cerrá la pregunta #11 de
+[Qué falta preguntar](/empezar/pendientes/).
+
+Entregar una base **es un diferenciador competitivo** de Aquazaku, así que la
+fricción tiene que ser mínima para clientes ya verificados.
+
+**Reglas:**
+
+| Estado del cliente | ¿Se entrega base? | Comentario |
+| --- | --- | --- |
+| `VERIFICADO` | ✅ sí, `pos` decide de forma autónoma | No hace falta pedir permiso a `admin` |
+| `PENDIENTE` | ❌ no, hasta verificar | — |
+
+**`pos` puede verificar Y entregar la base en una sola operación.** Si un cliente
+nuevo llega a la planta con su documento, `pos` lo coteja (acto `pos_manual` en
+[RN-CLI-14](/dominio/clientes/)), marca el cliente como `VERIFICADO` en el
+mismo momento, y entrega la base. **Esta es la vía de menor fricción** y es
+la que se va a ofrecer como onboarding por defecto.
+
+**Por qué:** cualquier cliente nuevo que pida base ya está dando una señal de
+intención seria. Frenar la entrega hasta que un `admin` valide (que vive en
+otra ciudad) perdería la venta. La verificación por `pos` en el momento es
+suficiente — `admin_oficial` puede llegar después si hace falta afinar algo.
+
+:::danger[Invariante general — cliente no verificado no recibe activos]
+Esta regla es la misma que ya teníamos para crédito
+([RN-CLI-15](/dominio/clientes/)): ningún activo (crédito, base) se entrega a
+un cliente no verificado. La verificación es el "desbloqueo" genérico que
+habilita operaciones sensibles.
+:::
+
+:::note[Permisos derivados]
+En la [matriz de roles](/dominio/roles-y-permisos/) esto queda como
+`bases:prestar` con `pos` ✅ sin restricción de ruta, con la salvedad de que
+el backend igual valida `cliente.verificacion.estado == "verificado"` antes de
+ejecutar la operación. No es solo una regla de UI.
+:::
+
+---
+
 ## Preguntas abiertas
 
 - ¿Se cobra depósito o garantía por la base prestada? ¿Y por el botellón no devuelto?
@@ -325,5 +367,3 @@ fecha. No desaparece del historial: cambia de estado.
 - ¿Hay tipos o modelos distintos de base?
 - ¿Hay un límite de botellones que un cliente puede tener en su poder?
 - ¿Puede haber una dirección con base pero sin botellones, o viceversa?
-- ¿Quién autoriza el préstamo de una base — solo `admin`, o el `seller` puede
-  dejar una base nueva en la calle?
