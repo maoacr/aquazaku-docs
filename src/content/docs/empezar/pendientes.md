@@ -25,11 +25,10 @@ avanzando sobre supuestos.
 Sin esto no se puede diseñar el esquema. Equivocarse acá significa migrar datos
 después.
 
-| # | Pregunta | Impacta |
-| :-: | --- | --- |
-| 1 | **¿Existe venta a crédito o todo es de contado?** Si no hay crédito, se cae medio módulo de clientes. | Ventas, clientes |
-| 2 | **¿Se acepta la propuesta de `tipo_documento` explícito + DV calculado?** Es una propuesta nuestra, falta el visto bueno. | [RN-CLI-09](/dominio/clientes/) |
-| 3 | **¿Un cliente con documento `PENDIENTE` puede acceder a crédito?** Lo natural es que no. Documentado como supuesto. | [RN-CLI-10](/dominio/clientes/) |
+:::tip[Bloque cerrado — 18 de agosto de 2026]
+Las 3 preguntas de este bloque quedaron resueltas. Ver el bloque
+"Resueltas — 18 de agosto de 2026" más abajo para el detalle de cada una.
+:::
 
 :::tip[Resueltas — 16 de agosto de 2026]
 - Paca de 300 ml = **50 bolsas** → 15 L. Balance de agua cerrado.
