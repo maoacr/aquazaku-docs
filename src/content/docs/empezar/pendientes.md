@@ -89,6 +89,68 @@ Las 3 preguntas de este bloque quedaron resueltas. Ver el bloque
 - El `seller` **no** es repartidor en Aquazaku: contacta clientes a distancia
   (llamada/WhatsApp) y registra ventas. La planta prepara y los transportadores
   informales externos entregan (no son usuarios del sistema).
+
+**🟡 Producción** — bloque cerrado:
+- **#14**: ¿Tanques alternados o principal+reserva? **En paralelo** — ambos
+  tanques funcionan simultáneamente (se llenan juntos, se vacían juntos).
+  Capacidad efectiva 4.000 L. Tope individual 2.000 L se mantiene por tanque.
+  ([RN-PRD-21](/dominio/produccion/)).
+- **#15**: ¿Cierre de producción por tanda o por día? **Una vez al día**, al
+  final del día operativo, registrando litros por tanque + timestamp +
+  operario. ([RN-PRD-22](/dominio/produccion/)).
+
+**🟡 Ruta** — bloque cerrado. Modelo demanda-dirigido, no cobertura-dirigido:
+- **#16**: ¿Ruta fija por `seller` o diaria? **La lista diaria la genera el
+  sistema**, combinación de predicción algorítmica + callbacks manuales. Todos
+  los sellers ven la misma lista (global).
+- **#17**: ¿`seller` puede contactar fuera de la lista? **Sí**, con tres
+  mecanismos: predictor fallback (7+ días warning, 10+ días prioritario),
+  baja-frecuencia vía panel admin (admin asigna), referidos (seller llama
+  informal, registra si hay interés).
+- **#18**: ¿Quién autoriza un faltante? Sistema valida stock al escribir
+  cantidad de venta → bloquea si excede. Faltante es responsabilidad operativa,
+  **NO se descuenta al seller**. Si pasa, llamar al cliente y reprogramar;
+  cancelación de venta + reembolso es último recurso.
+- **#19**: ¿Qué pasa si termina el día sin señal? **Conectividad asumida**;
+  offline es contingency. `pending_sync` con auto-retry. Caso extremo: seller
+  llama a admin/otro seller por teléfono, esa persona registra en el sistema;
+  el registro local se reconcilia al subir y se cancela como
+  `cargado_por_otra_via`. NO se construye PWA full offline-first para MVP.
+- **#20**: ¿Geolocalización del `seller`? **No en MVP.** Se difiere hasta
+  que exista un rol `cliente` con login propio.
+- **#22**: ¿Puede una dirección quedar sin ruta? **Sí, sin problema.** El
+  cliente puede seguir comprando por WhatsApp al `pos`; el sistema lo
+  registra y la predicción lo recupera cuando sea prioritario.
+
+**🟡 Retornables** — bloque cerrado:
+- **#23**: ¿Se cobra depósito por base/botellón? **Botellones sin garantía
+  nunca** (modelo stock puro). **Bases sin depósito al prestar**, pero SÍ
+  recargo si se dañan en cualquier momento del ciclo. El cliente siempre
+  responde por la integridad de la base. Genera un 4° saldo en el cliente
+  (`cargos_pendientes`).
+- **#24**: ¿Cómo se identifica físicamente la base? **Sticker pegado con ID
+  textual/numérico**, asociación manual al cliente en el sistema. Sin QR/barcode
+  en MVP — typing manual.
+- **#25**: ¿Hay tipos de base? **No — todas las bases son iguales.** Un solo
+  tipo, sin SKU.
+- **#26**: ¿Límite de botellones por cliente? **Sin tope duro en MVP.**
+  Acumulación atípica se maneja caso por caso vía aprobación del `admin`. El
+  sistema siempre sabe cuántos botellones tiene cada cliente.
+- **#27**: ¿Dirección con base sin botellones, o viceversa? **Sí, puede
+  pasar.** Default onboarding = base + primer pedido juntos, pero los ciclos de
+  vida son independientes y cualquier combinación es válida.
+
+**Correcciones del modelo operativo (revisiones importantes):**
+- El `seller` **NO es repartidor** — contacta clientes a distancia (llamada,
+  WhatsApp) y registra ventas. La planta prepara y los transportadores
+  informales externos entregan (NO son usuarios del sistema).
+- El **canal WhatsApp es el primario** de pedidos. El outreach del `seller` es
+  el secundario — rescata clientes que no se acuerdan de pedir. El sistema no
+  obliga al cliente a estar en la cola para comprar.
+- La **lista diaria se genera por predicción** (incluida en el MVP), no por un
+  humano. Modelo determinístico: media + desviación del intervalo entre compras,
+  ajustado por duración esperada del botellón. Fallback por tiempo absoluto
+  cuando no hay historial (7d warning, 10d prioritario).
 :::
 
 ---
@@ -110,39 +172,14 @@ No son decisiones: son números que hay que ir a tomar.
 
 Cambian qué se construye y quién puede hacer qué.
 
-:::tip[Roles — cerrado]
-Las 6 preguntas de roles (#8–#13) quedaron resueltas en la sesión del
-18-ago-2026. Ver el bloque de resueltas arriba. Las tres siguientes categorías
-siguen abiertas.
+:::tip[Bloque cerrado — 18 de agosto de 2026]
+Las 20 preguntas de esta sección (#8–#27, exceptuando 🟠 #4–#7 mediciones)
+quedaron resueltas en la sesión del 18-ago-2026. Ver el bloque "Resueltas"
+arriba para el detalle de cada una.
+
+Roles, Producción, Ruta y Retornables — todos cerrados. Quedan solo 🟠
+mediciones (por falta de datos de planta) y 🟢 refinamientos.
 :::
-
-### Producción
-
-| # | Pregunta |
-| :-: | --- |
-| 14 | ¿Los tanques de agua procesada se **alternan** o hay uno principal y otro de reserva? No cambia el modelo de datos, sí la interfaz: elegir tanque en cada operación vs. proponer uno por defecto. |
-| 15 | Envasando bajo demanda, ¿el cierre de producción se registra **una vez al día** o **por cada tanda**? |
-
-### Operación de ruta
-
-| # | Pregunta |
-| :-: | --- |
-| 16 | ¿La ruta es fija por `seller` o se arma cada día? *(Nota: con la predicción para MVP, la "ruta" pasa a ser una lista priorizada de contactos, generada por el sistema. Aclarar si la dinámica de vendedor fijo / reasignable sigue vigente o se reemplaza.)* |
-| 17 | ¿El `seller` puede vender a un cliente fuera de su ruta? *(Misma nota: ahora la pregunta pasa a "¿puede agregar manualmente a un cliente que el sistema no le surfaceó?".)* |
-| 18 | ¿Quién autoriza un faltante? ¿Se le descuenta al `seller`? *(Hoy sin producto físico en la calle, "faltante" pasa a ser ventas registradas que la planta no pudo cumplir.)* |
-| 19 | ¿Qué pasa si termina el día sin señal y no puede sincronizar? ¿La ruta queda abierta? |
-| 20 | ¿Se hace seguimiento de ubicación del `seller`? *(Menos crítico ahora: el seller no hace recorrido físico. Pregunta a redefinir — ¿se geolocaliza la visita al cliente en el momento del contacto?)* |
-| 22 | ¿Puede una dirección quedar sin ruta asignada? *(Hoy sí: compra en mostrador.)* |
-
-### Activos retornables
-
-| # | Pregunta |
-| :-: | --- |
-| 23 | ¿Se cobra depósito o garantía por la base prestada? ¿Y por el botellón no devuelto? |
-| 24 | ¿Cómo se identifica físicamente una base — grabado, etiqueta, código de barras, QR? Define si el `seller` puede escanearla. |
-| 25 | ¿Hay tipos o modelos distintos de base? |
-| 26 | ¿Hay límite de botellones que un cliente puede tener? |
-| 27 | ¿Puede haber una dirección con base pero sin botellones, o al revés? |
 
 ---
 

@@ -359,11 +359,177 @@ ejecutar la operación. No es solo una regla de UI.
 
 ---
 
+### RN-BAS-08 — Daño a la base = recargo automático al cliente, en cualquier momento del ciclo
+
+**Estado:** ✅ Confirmada — cerrá la pregunta #23 de
+[Qué falta preguntar](/empezar/pendientes/).
+
+**Botellones**: sin garantía nunca. Se intercambian, no se venden. El sistema
+solo sabe cuántos tiene el cliente ([RN-ENV-04](#rn-env-04--el-saldo-de-botellones-va-por-cliente)).
+Sin depósito, sin recargo por daño.
+
+**Bases**: **sin garantía al prestar**, pero **SÍ recargo si se daña** la base
+en cualquier momento del ciclo de vida del cliente. No solo al darlo de baja
+— en cualquier visita que el operario lo evidencie.
+
+#### Mecánica del recargo
+
+```
+base = {
+  id_interno: uuid,
+  id_sticker: string,                   // el ID impreso en el sticker físico
+  estado: "sana" | "danada",            // (NUEVO — agregado en RN-BAS-08)
+  danada_por: user_id | null,           // (NUEVO)
+  danada_en: timestamp | null,          // (NUEVO)
+  recargo_generado_id: venta_id | null, // (NUEVO)
+  asignada_a: direccion_id | null,
+  ...
+}
+```
+
+**Cuando se evidencia daño**:
+
+1. `pos` o `admin` registra el estado `danada` con motivo y timestamp.
+2. El sistema crea automáticamente una **venta con `tipo = "DANO_BASE"`** y
+   `motivo = "..."` por el valor de reposición de la base (configurable por
+   SKU/tipo, hoy un solo valor único).
+3. La venta se registra con el medio de pago que se acuerde con el cliente
+   (contado o crédito si está habilitado y verificado).
+4. El cargo va al `cliente.cargos_pendientes` (4° saldo de
+   [RN-CLI-06](/dominio/clientes/)).
+
+:::tip[Registrable como venta con motivo específico]
+El recargo **es una venta**, no un ajuste manual. Eso preserva la auditoría
+unificada del sistema de ventas. La única diferencia es el tipo (`DANO_BASE`)
+y el motivo obligatorio — que ya es regla para todo el sistema.
+
+Medio de pago:
+- **Efectivo**: se cobra en el momento.
+- **Transferencia**: se recibe manualmente.
+- **Crédito**: si el cliente tiene crédito habilitado y verificado, se suma a
+  su deuda — automáticamente.
+:::
+
+:::danger[Cuidado con daño frecuente]
+Si un mismo cliente daña muchas bases, el sistema debe exponer al `admin` el
+historial de cargos para que DECIDA si inactiva al cliente. **No es castigo
+automático** — es visibilidad para una decisión manual.
+:::
+
+---
+
+### RN-BAS-09 — Una sola clase de base, sin SKU
+
+**Estado:** ✅ Confirmada — cerrá la pregunta #25 de
+[Qué falta preguntar](/empezar/pendientes/).
+
+Todas las bases de Aquazaku son **iguales**. No hay tipos, modelos, ni SKUs
+distintos. Esto simplifica:
+
+- **Schema**: la tabla `bases` no necesita atributo `tipo_base`.
+- **Sticker**: el ID del sticker es puramente único, no codifica tipo.
+- **Reportes**: no hay "base tipo X" vs. "tipo Y" — todas son iguales para
+  análisis.
+- **Evolución**: si en el futuro apareciera un segundo modelo, hay que volver a
+  esta conversación — no es un toggle.
+
+---
+
+### RN-BAS-10 — Sticker pegado con ID es el método actual de identificación
+
+**Estado:** ✅ Confirmada — cerrá la pregunta #24 de
+[Qué falta preguntar](/empezar/pendientes/).
+
+Las bases se identifican con un **sticker pegado** que tiene un ID
+textual/numérico. La asignación base ↔ cliente + dirección se hace
+**manualmente** en el sistema cuando el `pos` entrega o retira.
+
+```
+base.id_interno = uuid          // clave primaria del sistema
+base.id_sticker = string        // el ID que está impreso en el sticker físico
+```
+
+**Flujo del `pos`** al entregar una base:
+
+1. Elige cliente + dirección en el sistema.
+2. Tipea el `id_sticker` que está pegado a la base que va a entregar.
+3. El sistema valida que ese `id_sticker` existe y no está ya asignado a otra
+   dirección.
+4. Se crea la asignación `dirección → base`.
+
+:::tip[Recomendación operativa]
+Que el `admin` use stickers durables (resistentes a sol/agua/rozamiento). Un
+sticker ilegible es un riesgo de trazabilidad — si la base vuelve y no se puede
+leer su ID, hay que abrirla como base nueva o documentar el reasignado.
+:::
+
+**Futuras mejoras (no MVP)**: integrar escaneo de QR/barcode desde la cámara
+del celular para eliminar el tipeo manual.
+
+---
+
+### RN-BAS-11 — Sin tope duro de botellones por cliente; admin aprueba casos atípicos
+
+**Estado:** ✅ Confirmada — cerrá la pregunta #26 de
+[Qué falta preguntar](/empezar/pendientes/).
+
+En la operación actual de Aquazaku, los clientes **no suelen acumular
+botellones en exceso** — el intercambio natural lo previene. Si en algún caso
+atípico un cliente acumula muchos, el `admin` evalúa y aprueba el caso.
+
+```
+cliente.botellones_en_su_poder = number   // siempre conocido
+cliente.botellones_acumulacion_aprobada = {
+  aprobado: bool,
+  aprobado_por: user_id | null,
+  aprobado_en: timestamp | null,
+  motivo: string | null,
+}
+```
+
+- **Default**: el cliente puede acumular sin límite (es raro que pase).
+- **Casos atípicos**: el `admin` registra la aprobación (informational/auditable,
+  no es un toggle funcional).
+- El sistema continúa trackeando el saldo real; la aprobación es trazabilidad,
+  no cap.
+
+**Por qué no hace falta cap en MVP**: el modelo de stock se conserva
+([RN-ENV-02](#rn-env-02--la-cantidad-de-botellones-se-conserva)). Si un cliente
+acumula mucho, el sistema lo sabe — y el `pos` y `admin` lo ven. La prevención
+es visibilidad, no bloqueo.
+
+---
+
+### RN-BAS-12 — Base y botellones son activos independientes
+
+**Estado:** ✅ Confirmada — cerrá la pregunta #27 de
+[Qué falta preguntar](/empezar/pendientes/).
+
+La conjunción **base + botellones NO es obligatoria** en el sistema. El
+default para onboarding es que aparezcan juntos (cliente nuevo → base +
+primer pedido), pero los ciclos de vida son **independientes** y cualquier
+combinación es válida después.
+
+| Estado de una dirección | Válido |
+| --- | --- |
+| Tiene base + botellones | ✅ (típico post-onboarding) |
+| Solo base (sin botellones aún) | ✅ (cliente nuevo) |
+| Solo botellones (sin base) | ✅ (compró pacas, o devolvió base) |
+| Ninguno | ✅ (no ha comprado nunca) |
+
+**Implicaciones de UX**:
+
+- **Onboarding de cliente nuevo**: ofrecer flujo combinado "verificar →
+  entregar base → primer pedido" como atajo sugerido. NO obligatorio.
+- **Gestión posterior**: el sistema trata cada activo por su cuenta. Se puede
+  devolver/devolver base sin tocar botellones, y viceversa.
+- **Reportes**: las direcciones se analizan individualmente — cuántas tienen
+  base, cuántas tienen botellones, cuántas tienen ambos.
+
+---
+
 ## Preguntas abiertas
 
-- ¿Se cobra depósito o garantía por la base prestada? ¿Y por el botellón no devuelto?
-- ¿Cómo se identifica físicamente una base — grabado, etiqueta, código de barras,
-  QR? Define si el `seller` puede escanearla desde la app.
-- ¿Hay tipos o modelos distintos de base?
-- ¿Hay un límite de botellones que un cliente puede tener en su poder?
-- ¿Puede haber una dirección con base pero sin botellones, o viceversa?
+(Las preguntas 🟡 de Retornables #23, #24, #25, #26, #27 quedaron todas
+cerradas en la sesión del 18-ago-2026. Los nuevos RN son BAS-08, BAS-09,
+BAS-10, BAS-11, BAS-12.)

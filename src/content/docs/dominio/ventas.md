@@ -177,6 +177,67 @@ log, no en la memoria de alguien.
 
 ---
 
+### RN-VEN-09 — Stock validado en tiempo real al escribir la cantidad; faltante nunca es responsabilidad del `seller`
+
+**Estado:** ✅ Confirmada — cerrá la pregunta #18 de
+[Qué falta preguntar](/empezar/pendientes/).
+
+Hay tres capas, en orden de prevención → contingencia → último recurso:
+
+| Capa | Mecanismo |
+| --- | --- |
+| **Prevención** | Alertas de stock bajo → `pos` arranca producción con margen para no caer. |
+| **Validación en tiempo real** | Al escribir la cantidad en la venta, comparar contra stock disponible. Si excede, **bloquear** con `Danger`. |
+| **Resolución (raro)** | Si igual pasó: llamar al cliente y reprogramar entrega. |
+| **Cancelación (último recurso)** | Solo si el cliente no acepta reprogramar. Generar reembolso. |
+| **Devolución de fondos** | Outcome posible al anular: registra el reembolso (medio-dependiente). |
+
+#### Validación al escribir
+
+El sistema debe **reservar** el stock por algunos minutos cuando un `seller` o
+`pos` empieza a registrar una venta, para evitar race conditions entre dos
+vendedores escribiendo a la vez.
+
+```
+stock_reservado = {
+  cliente_id, sku_cantidad,
+  expires_at: now() + 5min,
+  ...
+}
+```
+
+Mientras la reserva está vigente, el segundo `seller` que intente vender la
+misma unidad recibe el `Danger` por stock insuficiente. Esto convierte la
+concurrencia en serialización transparente.
+
+#### Refund como outcome
+
+La anulación de venta ahora puede tener el outcome "reembolso" además de los
+existentes. La implementación depende del medio de pago:
+
+| Medio de pago | Refund |
+| --- | --- |
+| **Efectivo** | Manual — se devuelve la plata; el sistema registra el movimiento |
+| **Transferencia** | Integración futura con banco (no MVP) |
+| **Crédito** | Automático — revierte el saldo pendiente del cliente |
+
+#### Accountability
+
+**`seller` NO responde por faltante.** Es un riesgo operativo del sistema de
+stock, no del vendedor. La prevención es responsabilidad:
+- Del **sistema**: alertas de stock que funcionen.
+- Del **`pos`**: arrancar producción a tiempo.
+
+Castigar al seller no resuelve la causa — solo esconde el síntoma.
+
+:::tip[Catalogo de alertas]
+Una página `/admin/alertas` muestra los SKUs bajo umbral con acción directa
+(arrancar producción / contactar proveedor). Esto es lo que evita llegar a la
+capa de validación.
+:::
+
+---
+
 ## Preguntas abiertas
 
 Estas hay que responderlas con Aquazaku antes de implementar:
@@ -184,5 +245,3 @@ Estas hay que responderlas con Aquazaku antes de implementar:
 - ¿Se emite comprobante fiscal? ¿Qué tipo?
 - ¿Hay descuentos o listas de precio distintas por tipo de cliente?
 - ¿Se aceptan devoluciones de producto, o solo anulación de la venta completa?
-- ¿Una venta puede incluir el préstamo de una base, o el préstamo es una
-  operación aparte? Ver [RN-BAS-02](/dominio/botellones-y-bases/).

@@ -157,22 +157,21 @@ Es una restricción real de producción que un saldo único de 4.000 L habría
 escondido.
 :::
 
+:::tip[Pero los dos pueden operar en paralelo]
+Cada tanque individualmente sigue topeado a 2.000 L por corrida. Sin embargo,
+**ambos tanques funcionan en paralelo**: se llenan juntos y se vacían juntos, no
+uno de reserva. Eso da una capacidad efectiva del sistema de **4.000 L en proceso
+simultáneo**, manteniendo la restricción individual. Ver
+[RN-PRD-21](#rn-prd-21--los-tanques-se-operan-en-paralelo-no-en-alternancia) abajo.
+:::
+
 **Consecuencia sobre el modelo:** toda operación de agua procesada declara su
 tanque.
 
 | Operación | Tiene que registrar |
 | --- | --- |
-| [Corrida de procesamiento](#rn-prd-18--la-corrida-de-procesamiento-se-mide-por-caudal-y-tiempo) | Tanque **destino** |
-| [Cierre de producción](#rn-prd-04--cada-día-se-registra-un-cierre-de-producción) | Tanque **origen** |
-
-:::caution[Falta un detalle operativo]
-¿Los tanques se **alternan** —uno en uso mientras el otro se llena o reposa— o
-hay uno principal y el otro es reserva?
-
-No cambia el modelo de datos, pero sí la interfaz: si se alternan, el operario
-elige tanque en cada operación; si hay uno principal, el sistema lo propone por
-defecto y solo se cambia por excepción.
-:::
+| [Corrida de procesamiento](#rn-prd-18--la-corrida-de-procesamiento-se-mide-por-caudal-y-tiempo) | Tanque **destino** (puede ser los dos) |
+| [Cierre de producción](#rn-prd-04--cada-día-se-registra-un-cierre-de-producción) | Litros por **cada** tanque (A + B) |
 
 ---
 
@@ -297,12 +296,66 @@ producto terminado esperando en bodega: se envasa contra el pedido.
 Bajo demanda, envasar y vender ocurren casi juntos, así que el cierre diario es
 más un **resumen del día** que un evento de planificación.
 
-:::caution[Pregunta que esto abre]
-Si se envasa contra cada pedido, ¿el cierre de producción se registra **una vez
-al día** juntando todo, o hay un registro **por cada tanda** que se envasa?
+---
 
-Lo documentado hoy asume un cierre diario. Con volumen bajo alcanza; conviene
-confirmarlo antes de construir la pantalla.
+### RN-PRD-21 — Los tanques se operan en paralelo, no en alternancia
+
+**Estado:** ✅ Confirmada — cerrá la pregunta #14 de
+[Qué falta preguntar](/empezar/pendientes/).
+
+Los dos tanques de 2000 L **funcionan en paralelo**: se llenan juntos, se
+vacían juntos. No hay alternancia ni un tanque principal + reserva.
+
+| | Significa |
+| --- | --- |
+| **Capacidad efectiva del sistema** | 4.000 L en proceso simultáneo (2 × 2.000) |
+| **Tope por tanda individual** | Sigue siendo 2.000 L POR tanque ([RN-PRD-02](/dominio/produccion/)) |
+| **Decisión del operario** | Ninguna activa — el operario (`pos`) usa el tanque que tenga agua disponible |
+| **UI** | Mostrar el nivel de los **dos** tanques lado a lado, no un único "nivel del sistema" |
+| **Cierre de producción** | Registra litros procesados por **cada** tanque (A + B), no un único número de salida |
+
+:::tip[Por qué se documenta igual que la restricción individual]
+Cada tanque conserva su tope de 2.000 L por corrida — no se puede romper esa
+restricción para "ahorrar tiempo". Pero el conjunto opera a 4.000 L porque
+ambos procesan a la vez. Es 2 + 2, no 4.
+:::
+
+**Por qué importa:** un solo saldo de "tanques" escondería la asimetría operativa
+entre los dos. Si en algún momento uno solo se usa, el modelo sigue siendo capaz
+de representarlo.
+
+---
+
+### RN-PRD-22 — El cierre de producción es diario, no por tanda
+
+**Estado:** ✅ Confirmada — cerrá la pregunta #15 de
+[Qué falta preguntar](/empezar/pendientes/).
+
+El registro de cierre de producción se hace **una vez al día**, al final del día
+operativo. No se registra por cada tanda individual.
+
+| Datos registrados | |
+| --- | --- |
+| Total de litros procesados ese día (suma de tanque A + B) | |
+| Timestamp del cierre | |
+| `user_id` del `pos` que lo registra | |
+
+**Lo que conscientemente NO se registra** (a cambio de simplicidad):
+- Duración de cada tanda individual
+- Caudal por tanda
+- Comparativa entre tanques a nivel tanda
+
+**Por qué es aceptable perder esa granularidad:** con el volumen actual de
+Aquazaku y la operación bajo demanda, el agregado diario alcanza para derivar
+el consumo promedio y el balance de agua. Si en algún momento hace falta
+trazabilidad fina por tanda, se agrega un registro intermedio **opcional** sin
+romper el cierre diario.
+
+:::note[Impacto sobre el caudal real]
+La pregunta 🟠 #5 ("tiempo de llenado del tanque") ya **no se puede derivar de
+los cierres automáticos**. Tendrá que ser una medición manual que el operario
+registre informalmente, o se conecta al caudalímetro físico que ya existe en la
+planta — a verificar en una ronda posterior.
 :::
 
 ---
@@ -845,19 +898,15 @@ motivo y responsable.
 
 ## Preguntas abiertas
 
-- **¿Cuál es el valor del caudal en GPM, y es galón americano o imperial?**
-  En medición por Aquazaku.
-- **¿Cuánto tarda en llenarse un tanque de 2.000 L?** En medición. De ahí sale el
-  caudal real: `2.000 ÷ minutos`.
-- **¿Cuál es el consumo diario promedio en litros?** Sin él no hay autonomía ni
-  semáforo. Se calcula solo una vez que el sistema registre cierres de producción.
-- ¿Cuántos litros consume lavar un botellón? Hay que medirlo.
-- ¿Quién registra el encendido y apagado de la planta, y cómo?
-- ¿Los dos tanques se controlan por separado o como un pozo único?
-- **¿Cuántas bolsas trae la paca de 300 ml?** Asumido 50, sin reconfirmar tras el
-  cambio de presentación. De ese número depende todo el balance.
-- ¿Se controlan las **bolsas** como insumo, además de tapas y sellos?
-- ¿Se vende la bolsa suelta, o siempre la paca completa?
-- ¿Hay control de lote o fecha de envasado por producción?
-- ¿La producción se registra una vez al día, o por turno o por lote?
-- ¿Puede haber producto envasado que se descarte por control de calidad?
+- **🟠 Mediciones de planta (requieren ir a la planta):**
+  - ¿Cuál es el valor del caudal en GPM, y es galón americano o imperial?
+  - ¿Cuánto tarda en llenarse un tanque de 2.000 L?
+  - ¿Cuál es el consumo diario promedio en litros? *(Se autocalcula a las pocas semanas de registrar cierres de producción.)*
+  - ¿Cuántos litros consume lavar un botellón?
+- 🟢 Refinamientos que quedaron en producción:
+  - ¿Quién registra el encendido y apagado de la planta, y cómo?
+  - **¿Cuántas bolsas trae la paca de 300 ml?** Asumido 50, sin reconfirmar tras el cambio de presentación.
+  - ¿Se controlan las **bolsas** como insumo, además de tapas y sellos?
+  - ¿Se vende la bolsa suelta, o siempre la paca completa?
+  - ¿Hay control de lote o fecha de envasado por producción?
+  - ¿Puede haber producto envasado que se descarte por control de calidad?

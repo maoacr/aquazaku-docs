@@ -394,17 +394,22 @@ bien. Cuando haga falta separar, ya está.
 
 ---
 
-### RN-CLI-06 — Un cliente tiene tres saldos distintos
+### RN-CLI-06 — Un cliente tiene cuatro saldos distintos
 
 **Estado:** ✅ Confirmada — granularidades verificadas con Aquazaku.
 
-La ficha del cliente lleva tres cuentas que **no se mezclan**:
+La ficha del cliente lleva cuatro cuentas que **no se mezclan**:
 
 | Saldo | Unidad | Granularidad |
 | --- | --- | --- |
 | Deuda | Dinero | Cliente |
 | Botellones en su poder | Cantidad | **Cliente** |
 | Bases prestadas | Lista de IDs | **Dirección** |
+| **Cargos pendientes** *(NUEVO)* | Dinero | **Cliente** |
+
+El cuarto saldo nace de [RN-BAS-08](/dominio/botellones-y-bases/) — recargos
+generados por daño a una base. Son **distintos de la deuda** porque no nacen
+de una venta a crédito, sino de un daño evidenciado a un activo retornable.
 
 :::tip[Por qué cada uno va a un nivel distinto]
 No es inconsistencia, es que cada cosa se reclama distinto:
@@ -414,11 +419,14 @@ No es inconsistencia, es que cada cosa se reclama distinto:
 - La **base** hay que ir a buscarla a un lugar concreto. Sin dirección, el
   préstamo no es reclamable.
 - La **ruta** también va por dirección, porque el `seller` visita lugares.
+- Los **cargos por daño** son por cliente, no por dirección — el daño es
+  responsabilidad del cliente, sin importar en cuál de sus locales esté la
+  base dañada.
 :::
 
-**Por qué:** son tres deudas distintas. Un cliente puede estar al día con la
-plata, deberte quince botellones y tener dos bases sin devolver. Un solo campo
-"estado de cuenta" no dice nada útil.
+**Por qué:** son cuatro deudas distintas. Un cliente puede estar al día con la
+plata, deberte quince botellones, tener dos bases sin devolver y un cargo
+pendiente por base dañada. Un solo campo "estado de cuenta" no dice nada útil.
 
 Ver [Botellones y bases](/dominio/botellones-y-bases/).
 
