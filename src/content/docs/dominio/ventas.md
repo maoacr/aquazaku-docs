@@ -238,10 +238,202 @@ capa de validación.
 
 ---
 
+### RN-VEN-10 — Devoluciones aceptadas sin cargo al cliente
+
+**Estado:** ✅ Confirmada — cerrá la pregunta 🟢
+"¿Se aceptan devoluciones de producto, o solo anulación de la venta completa?"
+de [Qué falta preguntar](/empezar/pendientes/).
+
+Devolución y anulación son **dos flujos distintos**. La anulación
+([RN-VEN-08](#rn-ven-08--anulación-de-venta-solo-el-autor-comentario-obligatorio))
+cancela una venta entera; la devolución **no** la cancela — solo ajusta
+inventario (y opcionalmente, el saldo deudor).
+
+```
+devolucion = {
+  id: uuid,
+  venta_origen_id: venta_id,
+  unidades: [{ sku, lote_id, cantidad }, ...],
+  motivo: string,                          // descripción libre del cliente
+  registrado_por: user_id,                 // pos
+  registrado_en: timestamp,
+  estado_producto: "sano" | "danado" | "vencido",
+  // si "vencido": descarte automático
+  // si "sano": vuelve al stock del mismo lote (FIFO)
+  // si "danado": dispara flujo de descarte (clasificar causa)
+}
+```
+
+**Qué pasa con cada estado**:
+
+| Estado del producto devuelto | Acción del sistema |
+| --- | --- |
+| `sano` | Vuelve al stock del mismo lote. Sigue su vida normal hasta vencimiento. |
+| `vencido` | Descarte directo sin clasificar causa (el vencimiento es objetivo). |
+| `danado` | Dispara la clasificación de causa ya existente (`falla_produccion` / `mal_manejo_cliente`) — ver [RN-STK-XX](#) sobre descarte. |
+
+**Política de costo**: el cliente **no paga nada** por la devolución — sin
+recargo, sin costo de envío, sin fee de re-stock. La operación asume el costo
+interno como parte del costo de venta.
+
+**Por qué importa distinguir de la anulación**:
+
+- Una anulación [RN-VEN-08] es un evento único que cancela la venta entera.
+- Una devolución es un evento que **no cancela la venta** — solo ajusta
+  inventario y, opcionalmente, el saldo deudor (si la venta fue a crédito).
+- Una venta puede tener **múltiples devoluciones parciales** sobre sus unidades,
+  hasta que todas vuelvan o se decida no más.
+
+---
+
+### RN-VEN-11 — Factura electrónica: capturar intención desde MVP, integración con Factus post-MVP
+
+**Estado:** ✅ Confirmada — cerrá la pregunta 🟢
+"¿Se emite comprobante fiscal?" de
+[Qué falta preguntar](/empezar/pendientes/).
+
+Hoy no se emite factura electrónica. El sistema captura desde el día uno
+la intención del cliente; la integración con un proveedor DIAN se difiere a
+post-MVP. El usuario eligió **Factus** (plataforma colombiana de facturación
+electrónica) como proveedor preferido.
+
+```
+venta = {
+  ...,
+  requiere_factura_electronica: bool,        // NUEVO - en la venta, no después
+  factura_electronica_id: string | null,    // NUEVO - id del proveedor DIAN
+  factura_electronica_pdf_url: url | null,  // NUEVO - link al PDF
+  factura_electronica_cufe: string | null,  // NUEVO - código único de firma
+  ...
+}
+```
+
+**MVP**:
+- El campo `requiere_factura_electronica` se pregunta al cliente al registrar
+  la venta (o el `pos` lo pregunta por WhatsApp).
+- Si es `true`, el sistema persiste el deseo en la venta.
+- **No hay integración con proveedor DIAN en MVP**.
+
+**Post-MVP — integración con Factus**:
+
+Para activarla harán falta:
+1. Registro en Factus (cuenta comercial, ambiente de pruebas + producción).
+2. Obtener **Resolución de Facturación DIAN** (autorización oficial para numerar).
+3. Certificar el sistema en ambiente de pruebas DIAN antes de producción.
+4. Definir cómo se manda el JSON de la venta a la API de Factus.
+5. Manejar reintentos (la API puede estar caída).
+6. Almacenar el `cufe` resultante (código único de firma electrónica) por venta.
+
+Alternativas si Factus no funciona: Carvajal, Siigo, Alegra, World Office.
+
+**Por qué capturar desde MVP**: sin el campo, perdemos la información de qué
+ventas querían factura. Con el campo, basta con procesar los `true`
+históricos cuando llegue la integración. El `contador` también se beneficia
+desde el día uno: cuando llegue el reporte de "facturas pendientes de
+emitir", ya tiene los datos.
+
+---
+
+### RN-VEN-12 — Precios segmentados por tipo de cliente
+
+**Estado:** ✅ Confirmada — cerrá la pregunta 🟢
+"¿Hay descuentos o listas de precio por tipo de cliente?" de
+[Qué falta preguntar](/empezar/pendientes/).
+
+Cada SKU tiene **dos precios**, uno por tipo de cliente:
+
+```
+producto_sku = {
+  ...,
+  precio_residencial: number,
+  precio_comercial: number,
+  precio_minimo: number,                    // piso absoluto - ver RN-VEN-13
+  ...
+}
+
+venta = {
+  ...,
+  tipo_cliente_al_momento: "residencial" | "comercial",  // snapshot al vender
+  precio_lista_aplicado: number,            // según el tipo al momento de la venta
+  ...
+}
+```
+
+El precio aplicado se elige según `cliente.tipo` **al momento de la venta**.
+Se congela en la venta como snapshot — si después se cambia el tipo del
+cliente, las ventas históricas no se reescriben (mismo principio que
+[RN-VEN-04](#rn-ven-04--el-precio-se-congela-en-el-comprobante)).
+
+Ver [RN-CLI-16](/dominio/clientes/) sobre el atributo `cliente.tipo`.
+
+---
+
+### RN-VEN-13 — Códigos de descuento administrativos con piso absoluto
+
+**Estado:** ✅ Confirmada — cerrá la pregunta 🟢
+"¿Hay descuentos o listas de precio por tipo de cliente?" de
+[Qué falta preguntar](/empezar/pendientes/).
+
+Además de los precios segmentados ([RN-VEN-12](#rn-ven-12--precios-segmentados-por-tipo-de-cliente)),
+hay un sistema de **códigos de descuento** administrados por `admin` que se
+aplican al registrar la venta:
+
+```
+codigo_descuento = {
+  codigo: string,                       // "VERANO2026"
+  tipo_descuento: "porcentaje" | "monto_fijo",
+  valor: number,
+  aplica_a_skus: [sku] | null,          // null = todos
+  puede_bajar_a_minimo: bool,
+  fecha_vigencia_desde: date,
+  fecha_vigencia_hasta: date,
+  usos_maximos: number | null,          // null = ilimitado
+  usos_realizados: number,
+  creado_por: user_id,                  // admin
+  ...
+}
+
+venta = {
+  ...,
+  descuento_codigo_id: codigo_id | null,
+  descuento_monto: number,              // monto descontado al precio de lista
+  precio_final: number,                 // respetando precio_minimo del SKU
+  ...
+}
+```
+
+**Cálculo del precio en una venta**:
+
+```
+1. precio_lista = SKU.precio_residencial o SKU.precio_comercial
+                  (según cliente.tipo al momento de la venta)
+2. descuento = 0 (sin código) o el valor que aplique
+3. precio_final = max(precio_lista - descuento, SKU.precio_minimo)
+```
+
+**El piso absoluto** (`precio_minimo`) es la red de seguridad: un código mal
+definido no puede dejar una venta a $0 o negativa. Si un cliente tiene un
+código válido pero el resultado caería por debajo del piso, se cobra el piso
+y el sistema avisa al `pos` que el código fue aplicado parcialmente.
+
+**Módulo admin** (`/admin/promociones`):
+
+- Crear / listar / desactivar códigos.
+- Definir SKUs aplicables (o todos).
+- Definir vigencia temporal.
+- Definir uso máximo (por código o por cliente).
+- Ver contador de usos en tiempo real.
+
+**Por qué el piso y no un toggle "puede llegar a 0"**:
+
+- El piso es explícito y auditable. Configurarlo requiere decisión humana.
+- Un toggle es silencioso y propenso a olvidarse.
+
+---
+
 ## Preguntas abiertas
 
-Estas hay que responderlas con Aquazaku antes de implementar:
-
-- ¿Se emite comprobante fiscal? ¿Qué tipo?
-- ¿Hay descuentos o listas de precio distintas por tipo de cliente?
-- ¿Se aceptan devoluciones de producto, o solo anulación de la venta completa?
+*Todas las preguntas 🟢 de Ventas quedaron cerradas en la sesión del
+18-ago-2026. Las nuevas reglas son RN-VEN-10 (devoluciones),
+RN-VEN-11 (factura electrónica), RN-VEN-12 (precios segmentados) y
+RN-VEN-13 (códigos de descuento).*

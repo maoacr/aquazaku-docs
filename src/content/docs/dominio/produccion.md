@@ -896,6 +896,86 @@ motivo y responsable.
 
 ---
 
+### RN-PRD-23 — El cierre diario genera un lote con vencimiento a 30 días
+
+**Estado:** ✅ Confirmada — cerrá la pregunta 🟢
+"¿Hay control de lotes o vencimiento?" de
+[Qué falta preguntar](/empezar/pendientes/).
+
+Al cerrar la producción del día, el sistema genera **un lote por cierre** con
+un identificador y la fecha de vencimiento calculada.
+
+```
+cierre_produccion = {
+  ...,
+  lote_generado: "YYYY-MM-DD-L1",      // generado por el sistema
+  fecha_empaque: date,                  // = día del cierre
+  ...
+}
+
+producto_unidad = {
+  sku: ...,
+  lote_id: lote_id,
+  fecha_empaque: date,
+  fecha_vencimiento: date,             // fecha_empaque + 30 días
+  ...
+}
+```
+
+**Reglas**:
+
+- **Vencimiento automático**: 30 días desde empaque. Lo calcula el sistema al cerrar.
+- **Impresión física**: el `pos` imprime y adhiere el lote + vencimiento al empaque físico. El sistema genera el formato legible.
+- **FIFO en bodega**: el sistema ofrece al vendedor las unidades con vencimiento más próximo primero.
+- **Vencidos se bloquean** de la venta (ver [RN-STK-04](/dominio/stock/) sobre stock con vencimiento).
+
+Ver [RN-STK-04](/dominio/stock/) para las reglas completas de stock con lote/vencimiento.
+
+---
+
+### RN-PRD-24 — El encendido y apagado de la planta lo registra el `pos`
+
+**Estado:** ✅ Confirmada — cerrá la pregunta 🟢
+"¿Quién registra el encendido y apagado de la planta, y cómo?" de
+[Qué falta preguntar](/empezar/pendientes/).
+
+El operario de planta (**`pos`**) registra cada corrida de procesamiento —
+desde el encendido hasta el apagado. Esos eventos alimentan el cálculo del
+caudal y el mantenimiento predictivo.
+
+```
+corrida_procesamiento = {
+  id: uuid,
+  started_at: timestamp,
+  ended_at: timestamp | null,             // null mientras está activa
+  tanque_destino: "A" | "B",
+  registrado_por: user_id,                // siempre pos
+  ...
+}
+```
+
+**Cálculos derivados**:
+
+```
+duracion = ended_at − started_at
+litros_procesados = caudal_gpm × galones_a_litros × duracion_en_minutos
+```
+
+El cálculo del caudal depende del 🟠 #4 ("valor del caudal en GPM"). Sin ese
+dato, la corrida se registra igual pero el sistema no puede derivar los litros
+procesados automáticamente.
+
+**Mantenimiento predictivo** (propuesta ya anotada):
+
+- Si los filtros se deterioran, `duracion` sube mes a mes.
+- El sistema puede graficarlo sin sensor extra.
+- Compatible con la regla del caudalímetro post-filtros ([RN-PRD-18](#rn-prd-18--la-corrida-de-procesamiento-se-mide-por-caudal-y-tiempo)).
+
+**Por qué importa**: el mismo user_id que vende opera la planta. Auditoría
+consistente entre la cara POS y la cara de producción.
+
+---
+
 ## Preguntas abiertas
 
 - **🟠 Mediciones de planta (requieren ir a la planta):**
@@ -904,7 +984,6 @@ motivo y responsable.
   - ¿Cuál es el consumo diario promedio en litros? *(Se autocalcula a las pocas semanas de registrar cierres de producción.)*
   - ¿Cuántos litros consume lavar un botellón?
 - 🟢 Refinamientos que quedaron en producción:
-  - ¿Quién registra el encendido y apagado de la planta, y cómo?
   - **¿Cuántas bolsas trae la paca de 300 ml?** Asumido 50, sin reconfirmar tras el cambio de presentación.
   - ¿Se controlan las **bolsas** como insumo, además de tapas y sellos?
   - ¿Se vende la bolsa suelta, o siempre la paca completa?

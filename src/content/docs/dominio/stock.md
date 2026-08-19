@@ -142,11 +142,127 @@ paca de 600, `50 bolsas de 300 ml` para una de 300.
 
 ---
 
+## Lotes y vencimiento
+
+### RN-STK-04 — Cada cierre de producción genera un lote, vencimiento automático a 30 días
+
+**Estado:** ✅ Confirmada — cerrá la pregunta 🟢
+"¿Hay control de lotes o vencimiento?" de
+[Qué falta preguntar](/empezar/pendientes/).
+
+```
+cierre_produccion_diario = {
+  ...,
+  lote_generado: "YYYY-MM-DD-L1",      // generado por el sistema al cerrar
+  fecha_empaque: date,
+  ...
+}
+
+producto_unidad = {
+  sku: ...,
+  lote_id: lote_id,
+  fecha_empaque: date,
+  fecha_vencimiento: date,             // = fecha_empaque + 30 días
+  ...
+}
+```
+
+**Reglas**:
+
+- **Vencimiento automático**: `vencimiento = empaque + 30 días`. No se tipea a mano — lo calcula el sistema.
+- **Lote generado al cerrar la producción**: el formato `YYYY-MM-DD-L1` (fecha + secuencia) sale del sistema y se imprime en la bolsa física por el `pos`.
+- **Trazabilidad**: cada venta registra el `lote_id` vendido. Si hay recall o producto defectuoso, se identifica a qué clientes se les vendió.
+- **FIFO en bodega**: las ventas sacan primero el producto con vencimiento más próximo (lote más viejo).
+- **Vencidos se bloquean automáticamente**: el stock con `fecha_vencimiento < hoy` no se ofrece para la venta.
+
+**Por qué importa**: anticipar la trazabilidad desde el MVP. Si en el futuro hay un recall, poder decir "esta venta se hizo con el lote X, esos clientes son los afectados" es invaluable.
+
+---
+
+## Devoluciones y descarte
+
+### RN-STK-05 — Devoluciones vuelven al stock si están sanas; vencidas o dañadas se descartan
+
+**Estado:** ✅ Confirmada — cerrá la pregunta 🟢
+"¿Se aceptan devoluciones de producto, o solo anulación de la venta completa?"
+de [Qué falta preguntar](/empezar/pendientes/).
+
+Ver [RN-VEN-10](/dominio/ventas/) para el flujo de la venta con devolución. Esta regla cubre el lado del stock:
+
+| Estado del producto devuelto | Acción de stock |
+| --- | --- |
+| `sano` | Vuelve al mismo lote en `BODEGA`. Sigue su vida normal. |
+| `vencido` | Descarte directo sin clasificar causa (vencimiento es objetivo). |
+| `danado` | Dispara el flujo de descarte con clasificación de causa (RN-STK-06). |
+
+---
+
+### RN-STK-06 — Descarte de producto: selectivo por unidad, causa obligatoria, sin castigo automático
+
+**Estado:** ✅ Confirmada — cerrá la pregunta 🟢
+"¿Puede descartarse producto ya envasado por calidad?" de
+[Qué falta preguntar](/empezar/pendientes/).
+
+Una unidad dañada o vencida se puede descartar **sin destruir el lote entero**.
+Solo las unidades afectadas.
+
+```
+descarte = {
+  id: uuid,
+  unidades: [{ sku, lote_id, fecha_vencimiento, ... }, ...],
+  causa: "falla_produccion" | "mal_manejo_cliente" | "otro" | "vencido",
+  registrado_por: user_id,                  // pos o admin
+  registrado_en: timestamp,
+  observaciones: string,
+  reemplazo_generado_id: venta_id | null,   // si causa == falla_produccion
+  cliente_afectado_id: cliente_id | null,   // si aplica
+}
+```
+
+**Política por causa**:
+
+| Causa | ¿Reemplazo al cliente? | ¿Quién paga? | Sistema registra |
+| --- | :-: | --- | --- |
+| `falla_produccion` | ✅ sí | Aquazaku | Descarte + reposición |
+| `mal_manejo_cliente` | ❌ no | Cliente asume | Descarte + entrada al historial del cliente |
+| `vencido` | ❌ no | Nadie | Descarte (sin clasificar) |
+| `otro` | depende de revisión admin | depende | Descarte + flag para revisión |
+
+**El `pos` o `admin` debe clasificar la causa obligatoriamente** al registrar. Sin clasificar, no se descarta.
+
+**Patrón compartido con [RN-BAS-08](/dominio/botellones-y-bases/)** (recargo por daño de base):
+
+- El sistema hace **visible** el historial de descarte por `mal_manejo_cliente` per cliente.
+- **El admin decide** si inactiva al cliente. NO es castigo automático.
+- Visibilidad sin automatización: el poder de decisión queda en el humano.
+
+---
+
+## Una sola bodega
+
+### RN-STK-07 — La planta de Campo de la Cruz es la única bodega y el único punto de venta
+
+**Estado:** ✅ Confirmada — cerrá las preguntas 🟢
+"¿Hay más de un punto de venta?" y "¿Hay más de una bodega?" de
+[Qué falta preguntar](/empezar/pendientes/).
+
+```
+stock_locations = ["BODEGA"]   // una sola
+```
+
+**Implicaciones**:
+
+- No hay modelo multi-bodega. No hay transferencias entre bodegas.
+- No hay stock itinerante (porque no hay `seller` con carga de camión — el `seller` solo contacta, ver [modelo operativo](/empezar/pendientes/)).
+- `pos` vende directo desde `BODEGA` ([RN-STK-01](#rn-stk-01--el-stock-de-producto-se-controla-por-ubicación)).
+- Si en algún momento Aquazaku abre una segunda planta o vende en otra ciudad, esta regla se reabre como decisión explícita — no es un toggle.
+
+---
+
 ## Preguntas abiertas
 
-- ¿Hay más de una bodega? ¿La planta de empaque y la bodega son el mismo lugar?
-  Si los insumos viven en planta y el producto en bodega, son dos ubicaciones.
-- ¿Se define un stock mínimo de tapas y sellos que dispare alerta de reposición?
+- ¿Se controlan las **bolsas** como insumo, además de tapas y sellos?
+- ¿Se define stock mínimo de tapas y sellos que dispare alerta de reposición?
+- ¿Se compran insumos de tratamiento de agua? ¿Se controlan o son gasto?
+- ¿Se lleva cuenta corriente con proveedores o se paga contra entrega?
 - ¿Cada cuánto se hace inventario físico?
-- ¿El producto envasado queda disponible para venta el mismo día, o hay un
-  tiempo de reposo o control de calidad antes?

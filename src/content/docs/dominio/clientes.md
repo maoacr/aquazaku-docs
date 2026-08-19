@@ -568,8 +568,46 @@ saltarse la verificación.
 
 ---
 
+### RN-CLI-16 — El cliente tiene un tipo con lista de precios propia
+
+**Estado:** ✅ Confirmada — cerrá las preguntas 🟢
+"¿Hay descuentos o listas de precio por tipo de cliente?" y
+"¿Se distinguen clientes hogar y comercio?" de
+[Qué falta preguntar](/empezar/pendientes/).
+
+Cada cliente pertenece a uno de dos tipos:
+
+| Tipo | Lista de precios aplicable |
+| --- | --- |
+| `residencial` | `precio_residencial` por SKU |
+| `comercial` | `precio_comercial` por SKU |
+
+```
+cliente = {
+  ...,
+  tipo: "residencial" | "comercial",   // NUEVO - atributo persistente del cliente
+  ...
+}
+```
+
+El tipo se setea al crear el cliente y **se puede cambiar después** (un cliente
+pasa de residencial a comercial cuando abre un negocio, por ejemplo). Pero el
+tipo **vigente al momento de la venta** se congela en la venta misma como
+snapshot — ver [RN-VEN-12](/dominio/ventas/) sobre precios segmentados.
+
+**Por qué importa**:
+- Sin el atributo, la segmentación de precios no es posible.
+- Congelar el tipo al momento de la venta protege reportes y arqueos históricos
+  ante cambios retroactivos.
+
+**Precios mínimos absolutos**: cada SKU tiene además un `precio_minimo` que es
+el piso que cualquier código de descuento puede alcanzar — ver
+[RN-VEN-13](/dominio/ventas/).
+
+---
+
 ## Preguntas abiertas
 
-- ¿Se distinguen tipos de cliente (hogar vs. comercio) con precios distintos?
-- ¿Se cobra depósito o garantía por la base prestada?
+- ¿Se cobra depósito o garantía por la base prestada? *(Cerrada — no se cobra;
+  ver [RN-BAS-08](/dominio/botellones-y-bases/)).*
 - ¿Puede una dirección quedar sin ruta asignada? (Hoy sí: compra en mostrador.)

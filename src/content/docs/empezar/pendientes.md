@@ -42,31 +42,13 @@ No son decisiones: son números que hay que ir a tomar.
 
 Se pueden dejar para después sin frenar el diseño.
 
-### Ventas
-
-- ¿Se emite comprobante fiscal? ¿De qué tipo?
-- ¿Hay descuentos o listas de precio por tipo de cliente?
-- ¿Se distinguen clientes hogar y comercio?
-- ¿Se aceptan devoluciones de producto, o solo anulación de la venta completa?
-- ¿El préstamo de una base va dentro de la venta o es una operación aparte?
-
 ### Stock y compras
 
-- ¿Hay más de una bodega? ¿La planta y la bodega son el mismo lugar?
-- ¿Hay más de un punto de venta?
 - ¿Se controlan las bolsas como insumo, además de tapas y sellos?
 - ¿Se define stock mínimo de tapas y sellos con alerta de reposición?
 - ¿Se compran insumos de tratamiento de agua? ¿Se controlan o son gasto?
 - ¿Se lleva cuenta corriente con proveedores o se paga contra entrega?
-- ¿Hay control de lotes o vencimiento?
 - ¿Cada cuánto se hace inventario físico?
-
-### Producción
-
-- ¿Quién registra el encendido y apagado de la planta, y cómo?
-- ¿El producto envasado se puede vender el mismo día, o hay reposo o control de calidad?
-- ¿Se vende la bolsa suelta o siempre la paca completa?
-- ¿Puede descartarse producto ya envasado por calidad?
 
 ---
 
