@@ -984,8 +984,8 @@ consistente entre la cara POS y la cara de producción.
   - ¿Cuál es el consumo diario promedio en litros? *(Se autocalcula a las pocas semanas de registrar cierres de producción.)*
   - ¿Cuántos litros consume lavar un botellón?
 - 🟢 Refinamientos que quedaron en producción:
-  - **¿Cuántas bolsas trae la paca de 300 ml?** Asumido 50, sin reconfirmar tras el cambio de presentación.
-  - ¿Se controlan las **bolsas** como insumo, además de tapas y sellos?
-  - ¿Se vende la bolsa suelta, o siempre la paca completa?
-  - ¿Hay control de lote o fecha de envasado por producción?
-  - ¿Puede haber producto envasado que se descarte por control de calidad?
+  - *(Todas las preguntas 🟢 de producción quedaron cerradas. Los RN-* agregados son RN-PRD-23 — lote + vencimiento 30 días — y RN-PRD-24 — encendido/apagado de planta.)*
+
+## Preguntas abiertas por cierre
+
+*(Las únicas preguntas abiertas son las 4 mediciones 🟠 de arriba, que requieren ir a la planta. Cierre total de 🟡 y 🟢 logrado en la sesión del 18-ago-2026.)*

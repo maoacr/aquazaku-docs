@@ -42,13 +42,8 @@ No son decisiones: son números que hay que ir a tomar.
 
 Se pueden dejar para después sin frenar el diseño.
 
-### Stock y compras
-
-- ¿Se controlan las bolsas como insumo, además de tapas y sellos?
-- ¿Se define stock mínimo de tapas y sellos con alerta de reposición?
-- ¿Se compran insumos de tratamiento de agua? ¿Se controlan o son gasto?
-- ¿Se lleva cuenta corriente con proveedores o se paga contra entrega?
-- ¿Cada cuánto se hace inventario físico?
+*(A la fecha de la última sesión de planning, todas las preguntas 🟢 cerradas.
+Solo quedan las 4 mediciones 🟠 que requieren ir a la planta.)*
 
 ---
 
