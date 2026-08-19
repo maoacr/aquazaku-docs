@@ -1,27 +1,40 @@
 ---
 title: Arquitectura
-description: Cómo se separan las piezas del sistema Aquazaku y por qué.
+description: "Cómo está construido el sistema Aquazaku: roadmap de implementación, contrato entre proyectos y catálogo de módulos."
 sidebar:
   order: 1
 ---
 
-Acá va el **cómo está construido** el sistema: límites entre módulos, flujo de datos,
-qué habla con qué y por dónde.
+Esta sección describe el **estado actual** del sistema: qué proyecto vive
+dónde, cómo se conectan, en qué orden se construye y qué módulos lo componen.
 
-## Qué documentar en esta sección
+El **porqué** de cada decisión arquitectónica vive en
+[Decisiones técnicas](/decisiones/) — los ADR describen cómo llegamos hasta
+acá; esta sección describe dónde estamos parados.
 
-- Diagrama de contexto: quién usa el sistema y qué sistemas externos toca.
-- Separación por proyecto (`api`, `web`, `mobile`) y el contrato entre ellos.
-- Capas dentro de cada proyecto y la regla de dependencia entre capas.
-- Flujos críticos de punta a punta: una venta, una recarga, un cierre de ruta.
+## Qué hay en esta sección
+
+| Página | Qué cubre |
+| --- | --- |
+| [Roadmap de desarrollo](/arquitectura/roadmap/) | Orden y criterios para construir el sistema, módulo por módulo. Incluye principios rectores, dependencias, estado actual y decisiones abiertas. |
+| [Catálogo de módulos](/arquitectura/modulos/) | Índice rápido de cada módulo con propósito, roles, dependencias y link al doc de dominio. Útil para no scrollear el roadmap entero. |
 
 ## Qué NO va acá
 
-El **porqué** de cada decisión va en [Decisiones técnicas](/decisiones/), no acá.
-Esta sección describe el estado actual; los ADR describen cómo llegamos a él.
+- El **dominio del negocio** (reglas de producción, ventas, clientes,
+  envases) vive en [Dominio](/dominio/). Esta sección solo **apunta** a esos
+  documentos — no los copia.
+- Las **decisiones técnicas con alternativas evaluadas** (por qué Supabase y no
+  Firebase, por qué Postgres y no Mongo, etc.) viven en
+  [Decisiones técnicas](/decisiones/) como ADR numerados. El roadmap **enumera
+  qué se decide**, no **cómo se decide**.
+- El **cómo se ve cada pantalla** vive en [`/claude-design/`](https://github.com/maoacr/aquazaku/tree/main/claude-design) como referencia visual — los
+  mockups no son código de producción y no se versionan en este sitio de docs.
 
-:::note[Sin definir todavía]
-La arquitectura se define cuando arranque el proyecto `api/`. Hasta entonces esta
-página es un contenedor vacío a propósito — no inventamos arquitectura antes de
-entender el dominio.
+:::tip[Cómo usar esta sección]
+Si venís a implementar un módulo: arrancá por el
+[roadmap](/arquitectura/roadmap/), fijate en qué fase está y qué módulos
+necesita tener terminados antes. Después saltá al doc de dominio
+correspondiente para entender las reglas, y al catálogo de módulos para ver
+los links cruzados.
 :::
