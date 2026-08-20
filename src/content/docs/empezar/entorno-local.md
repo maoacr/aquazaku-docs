@@ -98,12 +98,102 @@ node -v && pnpm -v
 Esperado: `accepting connections`, la lista de extensiones con `citext` y
 `pgcrypto`, `200`, `4.x`, `v22.x`, `11.x`.
 
-## Parar los servicios
+## Gestionar los servicios
+
+Postgres y Mailpit se instalaron con `brew services`, o sea que Homebrew les
+creó un **LaunchAgent**: arrancan solos cuando iniciás sesión en la Mac y
+sobreviven a un reinicio.
+
+Fue una decisión, no un accidente. Casi toda task de M0 en adelante toca la base
+—migrations, seeds, tests de integración— y un servicio que hay que prender a
+mano es un servicio que un día olvidás prender y te comés diez minutos
+debuggeando un `ECONNREFUSED` que no era un bug.
+
+### Estado
+
+```bash
+brew services list
+```
+
+Buscá `postgresql@16` y `mailpit` en `started`.
+
+### Prender, parar, reiniciar
+
+```bash
+brew services start postgresql@16
+```
 
 ```bash
 brew services stop postgresql@16
-brew services stop mailpit
 ```
+
+```bash
+brew services restart postgresql@16
+```
+
+Lo mismo con `mailpit`. `stop` además desactiva el LaunchAgent: el servicio deja
+de arrancar solo hasta que hagas `start` de nuevo.
+
+### Correr uno sin dejarlo instalado como servicio
+
+Útil si querés el proceso en primer plano, ver sus logs en vivo, o simplemente no
+dejar nada corriendo de fondo:
+
+```bash
+LC_ALL="en_US.UTF-8" /usr/local/opt/postgresql@16/bin/postgres -D /usr/local/var/postgresql@16
+```
+
+```bash
+/usr/local/opt/mailpit/bin/mailpit
+```
+
+Se cortan con `Ctrl+C` y no queda nada arrancando al iniciar sesión.
+
+## Puertos: quién usa qué
+
+| Puerto | Quién | Vive |
+|---|---|---|
+| 5432 | Postgres | permanente (LaunchAgent) |
+| 1025 | Mailpit — SMTP | permanente (LaunchAgent) |
+| 8025 | Mailpit — UI web | permanente (LaunchAgent) |
+| 3001 | `api/` (`pnpm dev`) | solo mientras lo corrés |
+| 3000 | `web/` (`pnpm dev`) | solo mientras lo corrés |
+
+Los tres primeros están ocupados siempre y está bien. Los dos últimos deberían
+estar **libres** cuando no estás desarrollando: si aparecen ocupados, quedó un
+dev server colgado de una sesión anterior.
+
+### Ver qué está escuchando
+
+```bash
+for p in 3000 3001 5432 1025 8025; do printf '%-6s %s\n' "$p" "$(lsof -nP -iTCP:$p -sTCP:LISTEN 2>/dev/null | awk 'NR==2 {print $1" (pid "$2")"; f=1} END {if (!f) print "libre"}')"; done
+```
+
+Salida esperada con todo en orden y sin desarrollar:
+
+```
+3000   libre
+3001   libre
+5432   postgres (pid 33676)
+1025   mailpit (pid 33762)
+8025   mailpit (pid 33762)
+```
+
+### Liberar un puerto de dev colgado
+
+```bash
+lsof -nP -iTCP:3000 -sTCP:LISTEN -t | xargs kill
+```
+
+Cambiá `3000` por `3001` para `api/`. **Nunca** apliques esto a 5432, 1025 ni
+8025: esos son servicios gestionados, y se paran con `brew services stop`, que
+además desregistra el LaunchAgent.
+
+:::caution[Falso positivo al buscar procesos]
+Si buscás procesos con `pgrep -fl aquazaku` van a aparecer varios
+`Cursor Helper`. No son servidores: matchean solo porque el workspace del editor
+se llama así. Fijate en los puertos, no en el nombre del proceso.
+:::
 
 ## Versiones de librerías
 
