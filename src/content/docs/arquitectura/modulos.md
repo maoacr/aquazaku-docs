@@ -17,9 +17,26 @@ las reglas de negocio de cada módulo, ver [Dominio](/dominio/).
   (`todo` / `propio` / `ruta` / `BODEGA` / read-only).
 - **Roles:** todos (`admin`, `seller`, `pos`, `contador`).
 - **Depende de:** —
-- **Doc de dominio:** [Roles y permisos](/dominio/roles-y-permisos/) — RN-ACC-01 a 05.
+- **Doc de dominio:** [Roles y permisos](/dominio/roles-y-permisos/) — RN-ACC-01 a 07.
 - **Spec de diseño:** [`/superpowers/specs/2026-08-19-auth-rbac-design.md`](/superpowers/specs/2026-08-19-auth-rbac-design)
-- **Estado:** ✅ diseñado (pendiente implementación).
+- **Estado:** ✅ **implementado** (20-ago-2026). Las 15 tasks del plan cerradas y
+  verificadas de punta a punta en el browser.
+- **Qué quedó construido:**
+  - `api/` — 349 tests. Schema con `audit_log` inmutable, matriz de permisos con
+    alcances, middleware de sesión y permisos, Better-Auth sobre schema propio,
+    recuperación de contraseña con Resend y Mailpit, rate limit, ABM de usuarios
+    y consulta de auditoría con paginación por cursor.
+  - `web/` — 176 tests. Helper BFF, login, recuperación y cambio de contraseña,
+    shell con menú por rol, y los módulos de usuarios y auditoría.
+  - Colección Bruno versionada: 12 requests, 32 aserciones, corriendo en CI
+    contra un servidor real.
+- **Reglas de negocio descubiertas al implementar:**
+  [RN-ACC-06](/dominio/roles-y-permisos/) (siempre queda un admin activo) y
+  [RN-ACC-07](/dominio/roles-y-permisos/) (un cambio de roles hace efecto en el
+  acto).
+- **ADR nuevos:** [ADR-0004](/decisiones/0004-audit-log-inmutable) (bitácora
+  inmutable con dos capas) y [ADR-0005](/decisiones/0005-scopes-fail-closed)
+  (los alcances fallan cerrados).
 - **Notas:**
   - Multi-rol por usuario sin switch — todos los roles asignados están activos simultáneamente.
   - Matriz de permisos resuelta (sesión M0 del 19-ago-2026) — ver [ADR-0003](/decisiones/0003-roles-permisos-matriz).
