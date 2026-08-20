@@ -448,6 +448,61 @@ mantienen la referencia a él.
 
 ---
 
+### RN-ACC-06 — Siempre tiene que quedar un administrador activo
+
+**Estado:** ✅ Confirmada (implementación de M0, 20-ago-2026)
+
+El sistema **rechaza** cualquier operación que dejaría cero administradores
+activos:
+
+- quitarle el rol `admin` al único que lo tiene,
+- desactivar al único administrador activo.
+
+Un administrador **desactivado no cuenta** como respaldo: si contara, el sistema
+quedaría en manos de una cuenta que no puede entrar.
+
+**Por qué:** hoy el dueño es el único `admin`
+([ver arriba](#la-consecuencia-de-tener-admin-con-super-poderes)). Sin esta
+regla, un click de más en la pantalla de usuarios —la que existe justamente para
+editar usuarios— lo deja sin el rol, y **nadie queda con permiso para
+devolvérselo**. El sistema pasa a ser inadministrable y solo se recupera
+metiendo mano directamente en la base de datos.
+
+No es un escenario rebuscado. Es el error más fácil de cometer en esa pantalla.
+
+**Cómo se comporta:** la API responde `409` con el código `ULTIMO_ADMIN` y un
+mensaje que dice qué hacer ("asignale el rol admin a otra persona antes"). El
+intento fallido **queda auditado**: alguien tratando de quitarse el rol admin es
+exactamente el tipo de cosa que hay que poder ver después.
+
+**Qué NO hace:** no impide que un admin se quite el rol a sí mismo si hay otro
+administrador activo. Delegar y salir es una operación legítima.
+
+---
+
+### RN-ACC-07 — Un cambio de roles hace efecto en el acto
+
+**Estado:** ✅ Confirmada (implementación de M0, 20-ago-2026)
+
+Cuando un admin le cambia los roles a alguien, el cambio rige **desde el
+siguiente request**, sin necesidad de que la persona vuelva a iniciar sesión. Y
+sin cerrarle la sesión: sigue trabajando, con los permisos nuevos.
+
+**Por qué:** los roles se congelan dentro de la sesión al iniciar sesión
+([RN-ACC-01](#rn-acc-01--un-usuario-puede-tener-varios-roles-a-la-vez)), que es
+lo que evita consultar la base en cada request. Sin actualizarlos al cambiarlos,
+quitarle el rol `admin` a alguien lo dejaría administrando **siete días más**,
+hasta que le venza la sesión.
+
+**Por qué no se cierra la sesión:** cerrarla también resolvería el problema, pero
+echaría a la persona del sistema cada vez que un admin le toca un rol. Un trámite
+administrativo no debería interrumpirle el trabajo a nadie.
+
+**Excepción:** desactivar a un usuario **sí** le cierra las sesiones. Ahí no hay
+trabajo que preservar.
+
+---
+
 ## Preguntas abiertas
 
 - ¿`pos` vende contra el stock de bodega directamente, o el punto de venta tiene
