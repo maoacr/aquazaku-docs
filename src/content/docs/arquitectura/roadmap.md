@@ -158,7 +158,7 @@ porque todo lo demás lo necesita, no porque sea el más visible.
 
 | # | Módulo | Propósito (una línea) | Roles que lo usan | Depende de | Estado |
 | :-: | --- | --- | --- | --- | --- |
-| M0 | **Auth + RBAC** | Identidad, login, permisos por rol y alcance | Todos | — | 🟡 por arrancar |
+| M0 | **Auth + RBAC** | Identidad, login, permisos por rol y alcance | Todos | — | ✅ diseñado |
 | M1 | **Productos y catálogo** | Qué se vende: pacas 600ml/300ml, botellones con sus unidades y conversiones | `admin`, `pos`, `seller`, `contador` | M0 | 🔲 pendiente |
 | M2 | **Stock de producto terminado** | Lotes, vencimiento 30d, FIFO, bloqueo de vencidos, alertas de stock crítico | `admin`, `pos`, `seller`, `contador` | M0, M1 | 🔲 pendiente |
 | M3 | **Insumos** | Tapas, sellos, bolsas por kg con stock mínimo configurable (default 200/200) | `admin`, `pos` | M0 | 🔲 pendiente |

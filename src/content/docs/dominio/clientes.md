@@ -505,7 +505,7 @@ esperar.
 
 ## Verificación
 
-### RN-CLI-14 — Cualquiera de los tres roles puede verificar; el código de verificación queda auditado
+### RN-CLI-14 — Cualquiera de los cuatro roles operativos puede verificar; el código de verificación queda auditado
 
 **Estado:** ✅ Confirmada — ampliado desde RN-CLI-10.
 

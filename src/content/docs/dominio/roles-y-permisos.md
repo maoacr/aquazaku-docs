@@ -76,20 +76,25 @@ usuario = {
 }
 ```
 
-**Todo se audita bajo el mismo `user_id`**, sin importar bajo qué rol se actuó.
-La auditoría registra `rol_ejercido` además del `user_id`, así que se puede
-responder "¿qué hizo este usuario como seller?" o "¿qué hizo como pos?"
-filtrando el log.
+**Todos los roles asignados están activos simultáneamente. NO existe switch-role
+ni `active_role`.** Un usuario con `["pos", "seller"]` ve y opera ambos módulos
+sin elegir uno. La decisión de diseño completa está en
+[ADR-0003](/decisiones/0003-roles-permisos-matriz/).
+
+**Todo se audita bajo el mismo `user_id`**. La auditoría registra
+`rol_ejercido` como **array** (los roles bajo los que se ejecutó la acción
+específica), así que se puede responder "¿qué hizo este usuario como seller?"
+o "¿qué hizo como pos?" filtrando el log.
 
 ### Multi-rol por usuario ≠ UI multi-rol
 
 Que un usuario tenga permisos de `pos` y `seller` **no significa que la app
-muestre todos los módulos a la vez**. Regla de UI:
+muestre los módulos según un rol activo**. Regla de UI:
 
-- **App móvil**: por defecto **no muestra** módulos típicos de `pos` (cierre
-  de producción, despacho, entrega de bases, configuración). Es una regla de
-  UX, no de permisos.
-- **Web (desktop)**: muestra los módulos según los roles que el usuario tiene.
+- **Web (desktop)**: muestra los módulos para los que el usuario tiene al
+  menos un rol con permiso. Sin selector de rol, sin switch.
+- **App móvil** (post-MVP): la lógica de UI mobile se define aparte, pero la
+  regla sigue siendo "permisos del backend, UI mobile decide qué mostrar".
 
 El backend **no conoce el device** — autoriza por capacidad del rol, sin mirar
 si la petición viene desde mobile o web. Ocultar un botón no es seguridad
@@ -145,16 +150,14 @@ en el frontend y en esta documentación. Una sola fuente de verdad.
 
 **Leyenda:** ✅ alcance `todo` · 🟡 alcance limitado (se indica) · ❌ sin acceso
 
-:::caution[La matriz es un borrador]
-Que existan los cuatro roles viene de Aquazaku. **La asignación celda por celda
-sigue siendo un borrador nuestro.** Repasala con el cliente antes de implementar
-— sobre todo las filas marcadas con ⚠️.
+:::tip[Estado de la matriz]
+Las celdas marcadas ⚠️ fueron **resueltas en la sesión de M0** (sesión del
+19-ago-2026). La asignación celda por celda está documentada en
+[ADR-0003](/decisiones/0003-roles-permisos-matriz/). La matriz que ves abajo es
+la versión ejecutable que se codifica en `api/src/modules/authz/matrix.ts`.
 
-Los permisos agregados o modificados en esta sesión corresponden a las
-decisiones tomadas en [Qué falta preguntar](/empezar/pendientes/): la fila
-`ventas:anular` se reformuló según [RN-VEN-08](/dominio/ventas/),
-`bases:prestar` se reformuló según [RN-BAS-07](/dominio/botellones-y-bases/), y
-`produccion:registrar_cierre` ahora se delega a `pos` por [RN-PRD-04](/dominio/produccion/).
+La matriz del doc y la del código son **la misma fuente de verdad** — un cambio
+acá se refleja en el código y viceversa.
 :::
 
 ### Ventas y cobros
@@ -163,9 +166,22 @@ decisiones tomadas en [Qué falta preguntar](/empezar/pendientes/): la fila
 | --- | :-: | :-: | :-: | :-: |
 | `ventas:ver` | ✅ | 🟡 `propio` | 🟡 `propio` | 🟡 `todo` |
 | `ventas:crear` | ✅ | ✅ | ✅ | ❌ |
-| `ventas:anular` ⚠️ | ✅ | 🟡 `propio + día_en_curso` | 🟡 `propio + día_en_curso` | ❌ |
-| `cobros:ver` | ✅ | 🟡 `propio` | 🟡 `propio` | 🟡 `todo` |
+| `ventas:anular` | ✅ `todo` | 🟡 `propio` + status=pendiente | 🟡 `propio` + status=pendiente | ❌ |
+| `ventas:anular_verificada` | ✅ `todo` (motivo obligatorio) | ❌ | � | ❌ |
+| `ventas:verificar_pago` | ✅ `todo` | 🟡 `propio` | 🟡 `propio` | ❌ |
+| `ventas:gestionar_cuentas_pendientes` | ✅ `todo` | ❌ | ❌ | ❌ |
+| `cobros:ver` | ✅ | � `propio` | 🟡 `propio` | 🟡 `todo` |
 | `cobros:registrar` | ✅ | ✅ | ✅ | ❌ |
+
+:::note[State machine de ventas — implementado en M2]
+Las nuevas reglas `ventas:anular` (restringida a status pendiente),
+`ventas:anular_verificada`, `ventas:verificar_pago` y
+`ventas:gestionar_cuentas_pendientes` son consecuencia del state machine
+completo de ventas (pago total → pendiente de verificación → verificado, pago
+parcial → parcial_verificado con saldo, > 7 días → vencida). El state machine
+en sí se implementa en M2; en M0 la matriz ya tiene las reglas declaradas
+para que cuando llegue M2 estén listas.
+:::
 
 ### Clientes
 
@@ -174,18 +190,25 @@ decisiones tomadas en [Qué falta preguntar](/empezar/pendientes/): la fila
 | `clientes:ver` | ✅ | ✅ | ✅ | 🟡 `todo` |
 | `clientes:crear` | ✅ | ✅ | ✅ | ❌ |
 | `clientes:verificar_documento` | ✅ | ✅ | ✅ | ❌ |
-| `clientes:editar` | ✅ | ❌ | ❌ | ❌ |
-| `clientes:habilitar_credito` | ✅ | ❌ | ❌ | ❌ |
+| `clientes:editar` | ✅ | ❌ | ❌ | � |
+| `clientes:habilitar_credito` | ✅ | ❌ | � | ❌ |
 
 ### Stock de producto
 
 | Permiso | `admin` | `seller` | `pos` | `contador` |
 | --- | :-: | :-: | :-: | :-: |
 | `stock:ver` | ✅ | 🟡 `todo` | 🟡 `BODEGA` | 🟡 `todo` |
-| `stock:cargar_ruta` ⚠️ | ✅ | ❌ | ✅ | ❌ |
+| `stock:cargar_ruta` | ✅ `todo` | ❌ | ✅ `todo` | ❌ |
 | `stock:ajustar` | ✅ | ❌ | 🟡 `cantidades` (con motivo) | ❌ |
 | `insumos:ver` | ✅ | ❌ | ✅ | 🟡 `todo` |
 | `insumos:ajustar` | ✅ | ❌ | 🟡 `cantidades` (con motivo) | ❌ |
+
+:::note[Cargar stock a ruta es solo del `pos`]
+Confirmado en la sesión de M0: un usuario con **solo** rol `seller` no puede
+cargar stock a una ruta (no tiene sentido — el seller no está en la planta).
+Si el usuario tiene `["pos", "seller"]`, sí puede porque su rol `pos` lo
+habilita.
+:::
 
 ### Botellones — por cantidad
 
@@ -202,10 +225,17 @@ decisiones tomadas en [Qué falta preguntar](/empezar/pendientes/): la fila
 | Permiso | `admin` | `seller` | `pos` | `contador` |
 | --- | :-: | :-: | :-: | :-: |
 | `bases:ver` | ✅ | ✅ | ✅ | 🟡 `todo` |
-| `bases:prestar` ⚠️ | ✅ | ❌ | ✅ (con cliente verificado) | ❌ |
+| `bases:prestar` | ✅ `todo` | ❌ | ✅ con cliente verificado | ❌ |
 | `bases:retirar` | ✅ | ❌ | ✅ | ❌ |
 | `bases:registrar` | ✅ | ❌ | ✅ | ❌ |
 | `bases:descartar` | ✅ | ❌ | ✅ (con motivo) | ❌ |
+
+:::note[Prestar base requiere cliente verificado]
+Constraint de negocio ([RN-CLI-11](/dominio/clientes/)): el préstamo de una
+base exige que el cliente haya pasado la verificación de documento. Vive en la
+capa de servicio, no en la matriz — la matriz dice "puede prestar", el servicio
+chequea "el cliente está verificado".
+:::
 
 :::note[Por qué son dos bloques y no uno]
 Botellones y bases se rastrean con granularidad distinta
@@ -241,7 +271,13 @@ en la sesión del 18-ago-2026 y ya no hace falta tratarlo como abierto.
 | `proveedores:ver` | ✅ | ❌ | 🟡 `todo` | 🟡 `todo` |
 | `proveedores:crear` | ✅ | ❌ | ❌ | ❌ |
 | `compras:crear` | ✅ | ❌ | ✅ | ❌ |
-| `compras:recibir` ⚠️ | ✅ | ❌ | ✅ | ❌ |
+| `compras:recibir` | ✅ `todo` | ❌ | ✅ solo si compra=pendiente y proveedor=activo | ❌ |
+
+:::note[Recibir compra tiene precondiciones]
+`pos` solo puede recibir una compra si está en estado `pendiente` y su
+proveedor está `activo`. Es una validación de la capa de servicio
+(chequea ambos antes de confirmar la recepción).
+:::
 
 ### Rutas
 
@@ -250,19 +286,27 @@ en la sesión del 18-ago-2026 y ya no hace falta tratarlo como abierto.
 | `rutas:ver` | ✅ | 🟡 `propio` | 🟡 `todo` | 🟡 `todo` |
 | `rutas:abrir` | ✅ | ✅ | ❌ | ❌ |
 | `rutas:rendir` | ✅ | 🟡 `propio` | ❌ | ❌ |
-| `rutas:cerrar_con_faltante` | ✅ | ❌ | ❌ | ❌ |
+| `rutas:cerrar_con_faltante` | ✅ | ❌ | � | ❌ |
 
 ### Administración
 
 | Permiso | `admin` | `seller` | `pos` | `contador` |
 | --- | :-: | :-: | :-: | :-: |
-| `productos:ver` | ✅ | ✅ | ✅ | 🟡 `todo` |
+| `productos:ver` | ✅ | ✅ | ✅ | � `todo` |
 | `productos:editar_precios` | ✅ | ❌ | ❌ | ❌ |
-| `usuarios:*` | ✅ | ❌ | ❌ | ❌ |
+| `usuarios:*` | ✅ | ❌ | � | ❌ |
+| `auditoria:ver` | ✅ `todo` | ❌ | ❌ | ✅ `todo` (read-only) |
 | `reportes:operativos` | ✅ | ❌ | 🟡 `prep` | ✅ |
 | `reportes:financieros` | ✅ | ❌ | ❌ | ✅ |
 | `reportes:descargar_pdf` | ✅ | ❌ | 🟡 `operativos` | ✅ |
 | `configuracion:*` | ✅ | ❌ | ❌ | ❌ |
+
+:::note[Auditoría consultable desde M0]
+`auditoria:ver` se implementa en M0 como parte del módulo de Auth + RBAC: el
+admin puede consultar el log completo, el contador tiene acceso read-only para
+descargar reportes. La UI vive en `/admin/auditoria` y `/contador/auditoria`.
+El PDF export y las agregaciones van en M13.
+:::
 
 ---
 
@@ -346,16 +390,27 @@ va a ser el de reportes.
 
 ### RN-ACC-04 — Toda acción sensible queda auditada
 
-**Estado:** 🟡 Supuesto
+**Estado:** ✅ Confirmada (sesión M0 del 19-ago-2026)
 
 Anulaciones, ajustes de stock, bajas de botellones y bases, préstamo y retiro de
 bases, cambios de precio, habilitación de crédito y cierres con faltante
-registran **quién, cuándo y por qué**.
+registran **quién, cuándo, bajo qué rol y por qué**. La consulta de la
+auditoría es accesible desde la UI por admin (vista completa) y contador
+(read-only para temas impositivos/DIAN).
 
 **Por qué:** con `admin` concentrando todo el poder de corrección, la auditoría
 es el único mecanismo de control que queda. Todas las reglas de inmutabilidad
 del dominio ([RN-VEN-02](/dominio/ventas/), [RN-RUT-04](/dominio/rutas/))
-dependen de que exista.
+dependen de que exista. La consulta UI cierra el ciclo: sin forma de ver la
+auditoría, no es control, es solo un log oculto.
+
+**Implementación:** `audit_log` append-only (REVOKE + trigger en Postgres),
+escritura automática desde `authz/middleware.ts` (allow/deny) y desde la capa
+de servicio de cada módulo (acciones sensibles). La UI vive en
+`/admin/auditoria` y `/contador/auditoria` con filtros por usuario, módulo,
+acción y rango de fechas. Detalles en
+[ADR-0001](/decisiones/0001-stack-m0) y
+[spec de M0](/superpowers/specs/2026-08-19-auth-rbac-design).
 
 ---
 

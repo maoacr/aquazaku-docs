@@ -14,15 +14,21 @@ las reglas de negocio de cada módulo, ver [Dominio](/dominio/).
 ## M0 — Auth + RBAC
 
 - **Propósito:** identidad del usuario, login, permisos por rol y por alcance
-  (`todo` / `propio` / `ruta` / read-only).
+  (`todo` / `propio` / `ruta` / `BODEGA` / read-only).
 - **Roles:** todos (`admin`, `seller`, `pos`, `contador`).
 - **Depende de:** —
 - **Doc de dominio:** [Roles y permisos](/dominio/roles-y-permisos/) — RN-ACC-01 a 05.
-- **Estado:** � por arrancar (primer módulo).
+- **Spec de diseño:** [`/superpowers/specs/2026-08-19-auth-rbac-design.md`](/superpowers/specs/2026-08-19-auth-rbac-design)
+- **Estado:** ✅ diseñado (pendiente implementación).
 - **Notas:**
-  - Multi-rol por usuario (`roles: ["pos", "seller"]`).
+  - Multi-rol por usuario sin switch — todos los roles asignados están activos simultáneamente.
+  - Matriz de permisos resuelta (sesión M0 del 19-ago-2026) — ver [ADR-0003](/decisiones/0003-roles-permisos-matriz).
+  - Patrón BFF-native en web/ desde el inicio — ver [ADR-0002](/decisiones/0002-bff-pattern).
+  - Stack: Node 20 + Fastify + Drizzle + Postgres + Better-Auth + Next.js — ver [ADR-0001](/decisiones/0001-stack-m0).
+  - Defensa en profundidad: skill del proyecto + helper module + ESLint rule.
   - Alcance se aplica en una sola capa de datos (no repetido por endpoint).
   - La UI oculta módulos, la API prohíbe.
+  - Auditoría consultable desde M0 (`/admin/auditoria`, `/contador/auditoria`).
 
 ## M1 — Productos y catálogo
 

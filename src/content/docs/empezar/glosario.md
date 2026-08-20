@@ -44,7 +44,7 @@ Se rastrea por **cantidad** lo que se intercambia (el botellón).
 
 ## Roles
 
-Los tres roles del sistema. Confirmados por Aquazaku — ver
+Los cuatro roles del sistema. Confirmados por Aquazaku — ver
 [Roles y permisos](/dominio/roles-y-permisos/).
 
 | Término | Identificador | Definición |
@@ -52,11 +52,26 @@ Los tres roles del sistema. Confirmados por Aquazaku — ver
 | **Admin** | `admin` | Administración. Supervisa, corrige y configura. Opera en web. |
 | **Seller** | `seller` | Vendedor de ruta. Va al cliente, opera desde la app mobile, sin señal. |
 | **POS** | `pos` | Punto de venta fijo. El cliente viene al mostrador. |
+| **Contador** | `contador` | Contador externo o interno. **Solo lectura**. Genera reportes PDF para temas impositivos y legales (DIAN). NO hereda permisos del `admin`. |
 
 :::tip[Por qué Seller y POS son roles distintos]
 No es jerarquía, es **contexto de operación**. `seller` vende contra la carga de
 su vehículo y sin conexión; `pos` vende contra el stock de bodega y con conexión.
 Esa diferencia atraviesa stock, modo offline y rendición.
+:::
+
+:::tip[Por qué Contador es un rol aparte, no un flag del admin]
+Un `admin` "de solo lectura" no alcanza: el contador necesita generar y
+descargar sus propios reportes sin heredar permisos de modificación. Es un
+rol aparte, no un subconjunto. La separación importa para auditoría — ver
+[Roles y permisos §RN-ACC-04](/dominio/roles-y-permisos/).
+:::
+
+:::tip[Multi-rol sin switch]
+Un usuario puede tener varios roles asignados a la vez (ej. `["pos", "seller"]`).
+**Todos los roles están activos simultáneamente** — no existe `active_role` ni
+selector de rol. La UI muestra todos los módulos para los que el usuario tiene
+permisos. Ver [Roles y permisos §Multi-rol por usuario](/dominio/roles-y-permisos/).
 :::
 
 ## Producción

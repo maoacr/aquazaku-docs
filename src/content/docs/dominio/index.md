@@ -90,7 +90,7 @@ con el cliente, no una especificación aprobada.
 
 Ya confirmado por Aquazaku:
 
-- Los tres roles del sistema: `admin`, `seller`, `pos`.
+- Los cuatro roles del sistema: `admin`, `seller`, `pos`, `contador`.
 - El `pos` vende contra el stock de `BODEGA`, sin ubicación propia.
 - Los botellones se controlan **por cantidad**, sin ID individual.
 - Las bases se controlan **por ID**, se prestan y se asignan a una **dirección**.

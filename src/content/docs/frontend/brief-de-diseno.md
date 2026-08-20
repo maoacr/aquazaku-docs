@@ -46,15 +46,16 @@ tienen consecuencias visuales:
    el camino. El agua es finita y el suministro municipal es intermitente.
 3. **Operación sin señal.** El vendedor de ruta trabaja donde no hay internet.
 
-## 2. Las tres superficies
+## 2. Las superficies
 
-El sistema tiene exactamente **tres roles**, y cada uno usa una superficie distinta:
+El sistema tiene exactamente **cuatro roles**, cada uno con su contexto:
 
 | Rol | Superficie | Contexto de uso |
 | --- | --- | --- |
 | `admin` | Web de escritorio | Oficina, pantalla grande, sesiones largas |
 | `pos` | Web / terminal | Mostrador, uso rápido y repetitivo, con conexión |
 | `seller` | **App móvil** | Calle, sol directo, sin señal, una sola mano |
+| `contador` | Web de escritorio | Oficina externa, **solo lectura**, genera reportes PDF para DIAN |
 
 Diseñá las tres. No son la misma aplicación con distinto menú: son contextos de
 uso muy diferentes.
