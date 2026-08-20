@@ -38,6 +38,7 @@ export default defineConfig({
 						{ label: 'Visión general', slug: 'empezar/vision-general' },
 						{ label: 'Glosario del negocio', slug: 'empezar/glosario' },
 						{ label: 'Qué falta preguntar', slug: 'empezar/pendientes' },
+						{ label: 'Entorno local', slug: 'empezar/entorno-local' },
 					],
 				},
 				{
