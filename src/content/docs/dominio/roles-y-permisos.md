@@ -124,12 +124,35 @@ Se declara junto al permiso y se aplica en un solo lugar.
 
 ### Alcances definidos
 
-| Alcance | Significa |
-| --- | --- |
-| `todo` | Todos los registros del sistema |
-| `ruta` | Solo los de la ruta que tiene abierta |
-| `propio` | Solo los registros que él mismo creó |
-| — | Sin acceso |
+| Alcance | Significa | Filtra datos |
+| --- | --- | :-: |
+| `todo` | Todos los registros del sistema | sin filtro |
+| `propio` | Solo los registros que él mismo creó | sí |
+| `ruta` | Solo los de la ruta que tiene abierta | sí |
+| `BODEGA` | Solo lo que está físicamente en bodega | sí |
+| `prep` | Solo los reportes de preparación | no — categoría |
+| `operativos` | Solo los reportes operativos | no — categoría |
+| — | Sin acceso | — |
+
+Los cuatro primeros filtran **filas de una tabla** y se aplican con una cláusula
+`WHERE`. `prep` y `operativos` no: acotan **qué categoría de reporte** se puede
+ver o descargar, y eso lo resuelve el módulo de reportes (M13), no la capa de
+datos.
+
+La distinción importa: si un alcance categórico se colara en una consulta de
+tabla, no habría columna por la cual filtrar. El código
+([`scopes.ts`](/decisiones/0005-scopes-fail-closed/)) falla en ese caso en vez de
+devolver todo sin filtrar.
+
+:::caution[`cantidades` y `con motivo` NO son alcances]
+En la matriz vas a ver celdas como `🟡 cantidades (con motivo)` o
+`✅ con cliente verificado`. **No son alcances** — son restricciones de negocio y
+viven en la capa de servicio del módulo, no en la matriz de permisos.
+
+La matriz responde *¿puedo hacer esto?*. El servicio responde *¿se dan las
+condiciones para hacerlo ahora?*. Mezclarlas convierte la matriz en un árbol de
+decisión imposible de testear.
+:::
 
 ---
 
@@ -167,10 +190,10 @@ acá se refleja en el código y viceversa.
 | `ventas:ver` | ✅ | 🟡 `propio` | 🟡 `propio` | 🟡 `todo` |
 | `ventas:crear` | ✅ | ✅ | ✅ | ❌ |
 | `ventas:anular` | ✅ `todo` | 🟡 `propio` + status=pendiente | 🟡 `propio` + status=pendiente | ❌ |
-| `ventas:anular_verificada` | ✅ `todo` (motivo obligatorio) | ❌ | � | ❌ |
+| `ventas:anular_verificada` | ✅ `todo` (motivo obligatorio) | ❌ | ❌ | ❌ |
 | `ventas:verificar_pago` | ✅ `todo` | 🟡 `propio` | 🟡 `propio` | ❌ |
 | `ventas:gestionar_cuentas_pendientes` | ✅ `todo` | ❌ | ❌ | ❌ |
-| `cobros:ver` | ✅ | � `propio` | 🟡 `propio` | 🟡 `todo` |
+| `cobros:ver` | ✅ | 🟡 `propio` | 🟡 `propio` | 🟡 `todo` |
 | `cobros:registrar` | ✅ | ✅ | ✅ | ❌ |
 
 :::note[State machine de ventas — implementado en M2]
@@ -190,8 +213,8 @@ para que cuando llegue M2 estén listas.
 | `clientes:ver` | ✅ | ✅ | ✅ | 🟡 `todo` |
 | `clientes:crear` | ✅ | ✅ | ✅ | ❌ |
 | `clientes:verificar_documento` | ✅ | ✅ | ✅ | ❌ |
-| `clientes:editar` | ✅ | ❌ | ❌ | � |
-| `clientes:habilitar_credito` | ✅ | ❌ | � | ❌ |
+| `clientes:editar` | ✅ | ❌ | ❌ | ❌ |
+| `clientes:habilitar_credito` | ✅ | ❌ | ❌ | ❌ |
 
 ### Stock de producto
 
@@ -286,15 +309,15 @@ proveedor está `activo`. Es una validación de la capa de servicio
 | `rutas:ver` | ✅ | 🟡 `propio` | 🟡 `todo` | 🟡 `todo` |
 | `rutas:abrir` | ✅ | ✅ | ❌ | ❌ |
 | `rutas:rendir` | ✅ | 🟡 `propio` | ❌ | ❌ |
-| `rutas:cerrar_con_faltante` | ✅ | ❌ | � | ❌ |
+| `rutas:cerrar_con_faltante` | ✅ | ❌ | ❌ | ❌ |
 
 ### Administración
 
 | Permiso | `admin` | `seller` | `pos` | `contador` |
 | --- | :-: | :-: | :-: | :-: |
-| `productos:ver` | ✅ | ✅ | ✅ | � `todo` |
+| `productos:ver` | ✅ | ✅ | ✅ | 🟡 `todo` |
 | `productos:editar_precios` | ✅ | ❌ | ❌ | ❌ |
-| `usuarios:*` | ✅ | ❌ | � | ❌ |
+| `usuarios:*` | ✅ | ❌ | ❌ | ❌ |
 | `auditoria:ver` | ✅ `todo` | ❌ | ❌ | ✅ `todo` (read-only) |
 | `reportes:operativos` | ✅ | ❌ | 🟡 `prep` | ✅ |
 | `reportes:financieros` | ✅ | ❌ | ❌ | ✅ |
