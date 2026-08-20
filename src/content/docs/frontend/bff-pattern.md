@@ -61,6 +61,37 @@ export async function getServerUser(): Promise<User | null> {
 }
 ```
 
+### El header `Origin` no es opcional
+
+Better-Auth responde **403 `MISSING_OR_NULL_ORIGIN`** a toda petición que cambie
+estado y llegue sin header `Origin`. Es una defensa contra CSRF y está bien que
+exista.
+
+El problema: `fetch` del lado del servidor **no manda `Origin`** — no hay
+documento que origine la petición. Así que el helper lo declara explícitamente,
+con el valor de `WEB_PUBLIC_URL`, que `api/` ya tiene en sus `trustedOrigins`.
+
+:::danger[Este bug rompió todo el login y ningún test lo vio]
+Se descubrió recién al correr los dos servidores juntos y entrar por el browser.
+
+- Los tests de `api/` usan `app.inject()`, que **no dispara** el chequeo de origen.
+- Los tests de `web/` **mockean `fetch`**, así que nunca sale una petición real.
+- `curl` sin `Origin` devolvía **200**, porque omite otros headers que disparan
+  el chequeo y además descarta los headers vacíos.
+
+Los dos repos en verde, el sistema sin funcionar. **El bug vivía exactamente en
+la costura entre ambos**, que es el único lugar que ninguna suite unitaria mira.
+
+Moraleja para el resto de M0 y para M1+: una task no está terminada porque sus
+tests pasen. Está terminada cuando se la vio funcionar de punta a punta.
+:::
+
+La solución correcta fue **declarar el origen real**, no desactivar el chequeo en
+`api/`. Apagar la validación resolvía el síntoma tirando abajo una protección
+legítima. Y `Origin` se manda **solo el origen**, sin path ni query: un
+`Origin: https://app.aquazaku.com/algo` no matchea contra `trustedOrigins` y
+devuelve el mismo 403 por otra causa.
+
 ## Convenciones
 
 ### En Server Components
