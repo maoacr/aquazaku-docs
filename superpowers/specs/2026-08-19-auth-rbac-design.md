@@ -401,7 +401,7 @@ Ver estructura completa en sección 4 del diseño presentado al usuario (pre-spe
 
 **`api/`** (~25 archivos): server.ts, db/, modules/auth/, modules/users/, modules/audit/, modules/authz/, lib/
 
-**`web/`** (~20 archivos): app/(auth)/*, app/(app)/*, lib/api-server.ts, lib/modules.ts, components/, .eslintrc con regla custom
+**`web/`** (~20 archivos): app/(auth)/*, app/(app)/*, lib/api-server.ts, lib/modules.ts, components/, eslint.config.mjs con regla custom
 
 **`docs/`** (actualizaciones):
 - `/arquitectura/modulos.md` → M0 pasa de "por arrancar" a ✅

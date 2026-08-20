@@ -154,27 +154,45 @@ Tres capas se complementan. Si una falla, las otras atrapan:
 |---|---|---|
 | **Skill del proyecto** | LLM (asistente AI) que olvida el patrón | `.claude/skills/aquazaku-bff/SKILL.md` en el repo paraguas |
 | **Helper module** | Dev que escribe código que bypassee | El único export para hablar a api/ |
-| **ESLint rule** | `fetch` directo o `localStorage` en código | `web/.eslintrc.json` (ver abajo) |
+| **ESLint rule** | `fetch` directo o `localStorage` en código | `web/eslint.config.mjs` (ver abajo) |
 
 ### ESLint rule
 
-```json
-// web/.eslintrc.json
+ESLint 9 usa **flat config**. El archivo lo genera `create-next-app` y se
+extiende, no se reemplaza:
+
+```js
+// web/eslint.config.mjs — se agrega al array existente
 {
-  "rules": {
-    "no-restricted-syntax": [
-      "error",
+  rules: {
+    'no-restricted-syntax': [
+      'error',
       {
-        "selector": "CallExpression[callee.name='fetch']",
-        "message": "Use apiServerFetch() from @/lib/api-server instead of fetch() directly. See /docs/frontend/bff-pattern.md"
+        selector: "CallExpression[callee.name='fetch']",
+        message:
+          'Usá apiServerFetch() de @/lib/api-server en vez de fetch() directo. Ver /frontend/bff-pattern/.',
       },
       {
-        "selector": "MemberExpression[object.name='localStorage']",
-        "message": "No tokens in localStorage. Use httpOnly cookies only."
-      }
-    ]
-  }
-}
+        selector: "MemberExpression[object.name='localStorage']",
+        message: 'Nada de tokens en localStorage. Solo cookies httpOnly.',
+      },
+      {
+        selector: "MemberExpression[object.name='sessionStorage']",
+        message: 'Nada de tokens en sessionStorage. Solo cookies httpOnly.',
+      },
+    ],
+  },
+},
+```
+
+El helper es el único lugar donde `fetch()` es legítimo, así que lleva su
+excepción — si no, la regla se muerde la cola:
+
+```js
+{
+  files: ['src/lib/api-server.ts'],
+  rules: { 'no-restricted-syntax': 'off' },
+},
 ```
 
 Si tu build falla con este error, **es para bien** — te está protegiendo de
