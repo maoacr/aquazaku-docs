@@ -52,35 +52,79 @@ binario invisible. Por eso Bruno va con `npm install -g`, que aterriza en el
 bin de Node que sí está en el `PATH`.
 :::
 
-## Provisionar las bases de datos
+## Provisionar bases y roles
 
-Se crean dos: una para desarrollo y otra que los tests truncan y recrean.
+### Dos roles, no uno
+
+Esto no es ceremonia: es lo que hace que `audit_log` sea de verdad inmutable.
+
+| Rol | Quién lo usa | Puede |
+|---|---|---|
+| `aquazaku` | drizzle-kit y el runner de migraciones | Es **dueño** de las tablas. DDL completo |
+| `aquazaku_app` | el servidor de `api/` en runtime | Leer y escribir datos. Sobre `audit_log`, **solo `SELECT` e `INSERT`** |
+
+Si la aplicación se conectara como dueña, un bug o una inyección podrían correr
+`ALTER TABLE audit_log DISABLE TRIGGER` y después borrar la bitácora. Con un rol
+que no es dueño, no puede — ni siquiera teniendo control del proceso.
+
+Los triggers frenan a todo el mundo, incluido el dueño; los permisos frenan a la
+aplicación aunque alguien desactive los triggers. Cada capa tapa el hueco de la
+otra. Ver [ADR-0004](/decisiones/0004-audit-log-inmutable).
+
+### Comandos
 
 ```bash
+# Rol dueño: crea y altera tablas
 psql -d postgres -c "CREATE ROLE aquazaku LOGIN PASSWORD 'aquazaku' CREATEDB;"
+
+# Rol de la aplicación: sin CREATEDB, sin CREATEROLE, sin superuser
+psql -d postgres -c "CREATE ROLE aquazaku_app LOGIN PASSWORD 'aquazaku_app';"
+
+# Una base para desarrollo y otra que los tests truncan entre suites
 createdb -O aquazaku aquazaku_dev
 createdb -O aquazaku aquazaku_test
 
 for db in aquazaku_dev aquazaku_test; do
-  psql -d $db -c 'CREATE EXTENSION IF NOT EXISTS citext;'
-  psql -d $db -c 'CREATE EXTENSION IF NOT EXISTS pgcrypto;'
+  psql -d postgres -c "GRANT CONNECT ON DATABASE $db TO aquazaku_app;"
+  psql -d "$db" -c 'GRANT USAGE ON SCHEMA public TO aquazaku_app;'
 done
 ```
 
-`citext` es obligatoria: la columna `users.email` es `citext` para que el login
-sea case-insensitive sin `LOWER()` en cada query. `pgcrypto` la usa Postgres
-para generar UUIDs.
+Los roles son objetos de **cluster**, no de base: por eso se crean acá y no en
+una migración. Los `GRANT` sobre tablas sí viven en la migración
+`0001_audit_append_only`, porque dependen del schema.
+
+### Aplicar el schema
+
+```bash
+cd api && pnpm db:migrate && pnpm db:migrate:test
+```
+
+La migración crea la extensión `citext` sola — `users.email` la necesita para que
+el login sea case-insensitive sin depender de que cada query recuerde un
+`LOWER()`. No hace falta crearla a mano.
 
 ## Cómo se conecta cada cosa
 
 | Servicio | URL / DSN |
 |---|---|
-| Postgres dev | `postgres://aquazaku:aquazaku@localhost:5432/aquazaku_dev` |
-| Postgres test | `postgres://aquazaku:aquazaku@localhost:5432/aquazaku_test` |
+| Postgres — app, dev | `postgres://aquazaku_app:aquazaku_app@localhost:5432/aquazaku_dev` |
+| Postgres — migraciones, dev | `postgres://aquazaku:aquazaku@localhost:5432/aquazaku_dev` |
+| Postgres — app, test | `postgres://aquazaku_app:aquazaku_app@localhost:5432/aquazaku_test` |
+| Postgres — migraciones, test | `postgres://aquazaku:aquazaku@localhost:5432/aquazaku_test` |
 | Mailpit SMTP | `smtp://localhost:1025` |
 | Mailpit web UI | <http://localhost:8025> |
 | `api/` | <http://localhost:3001> |
 | `web/` | <http://localhost:3000> |
+
+:::caution[Limpiar audit_log en un test cuesta]
+Los triggers rechazan también el `TRUNCATE`, así que vaciar la bitácora exige
+desactivarlos y volver a prenderlos — y eso solo lo puede hacer el rol dueño. El
+helper `resetDb()` de `api/src/test/db.ts` ya lo encapsula.
+
+Que sea incómodo es la señal de que la protección funciona. Si limpiar el log
+fuera fácil, no estaría protegido.
+:::
 
 En dev los emails de recuperación de contraseña **no salen a internet**: van a
 Mailpit y se leen en su UI web. Resend solo se usa en producción.
