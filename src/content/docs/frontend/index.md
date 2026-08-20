@@ -24,7 +24,7 @@ Documentación del proyecto `web/`: el panel de administración que usa la ofici
 - **Plan de implementación:** [`/superpowers/plans/2026-08-19-m0-auth-rbac.md`](/superpowers/plans/2026-08-19-m0-auth-rbac)
 - **Patrón BFF:** [`/frontend/bff-pattern.md`](/frontend/bff-pattern) — guía para devs sobre `apiServerFetch()`, el helper único, anti-patrones y ESLint rule
 - **Decisiones arquitectónicas relevantes:**
-  - [ADR-0001 — Stack del módulo M0](/decisiones/0001-stack-m0) — Next.js 15 (App Router) + React 19 + Tailwind + TanStack Table
+  - [ADR-0001 — Stack del módulo M0](/decisiones/0001-stack-m0) — Next.js 16 (App Router) + React 19 + Tailwind + TanStack Table
   - [ADR-0002 — Patrón BFF desde M0](/decisiones/0002-bff-pattern) — web/ como Backend-For-Frontend, defensa en 3 capas
 
 **Cuando el código arranque**, esta sección se llena con:

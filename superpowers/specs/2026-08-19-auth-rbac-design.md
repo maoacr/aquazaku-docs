@@ -55,28 +55,37 @@ Las reglas de negocio que este módulo implementa están definidas en [`/docs/do
 
 | Capa | Elección |
 |---|---|
-| Runtime | Node.js 20 LTS |
-| Framework HTTP | Fastify 4.x |
-| ORM | Drizzle |
+| Runtime | Node.js 22 LTS |
+| Framework HTTP | Fastify 5.x |
+| ORM | Drizzle 0.45.x |
 | DB | Postgres 16 |
-| Auth | Better-Auth 1.3.x |
-| Validación | Zod |
-| Email | Resend (prod), MailHog (dev) |
-| Logging | Pino |
-| Tests | Vitest + Supertest |
-| Hashing password | argon2id (via Better-Auth) |
+| Auth | Better-Auth 1.7.x |
+| Validación | Zod 4.x |
+| Email | Resend (prod), Mailpit (dev) |
+| Logging | Pino 10.x |
+| Tests | Vitest 4.x + Supertest |
+| Hashing password | argon2id (`@node-rs/argon2`, vía Better-Auth) |
 
 ### `web/` (Next.js frontend)
 
 | Capa | Elección |
 |---|---|
-| Framework | Next.js 15.x (App Router) |
-| UI | React 19 |
+| Framework | Next.js 16.x (App Router) |
+| UI | React 19.2 |
 | Estilos | Tailwind CSS |
 | Componentes | Headless UI + custom |
 | Tablas / filtros | TanStack Table |
-| Validación | Zod |
-| Tests | Vitest + Testing Library + MSW |
+| Validación | Zod 4.x |
+| Tests | Vitest 4.x + Testing Library + MSW |
+
+> **Nota de versiones (corrección 2026-08-19).** La primera redacción de este spec
+> fijaba Node 20, Fastify 4, Better-Auth 1.3 y Next 15. Al validar contra el
+> registro de npm antes de implementar, todas estaban una línea mayor por detrás
+> del stable actual. Para un proyecto greenfield eso es deuda técnica
+> autoinfligida el día uno, así que se sube al stable vigente. El criterio queda
+> fijado: **se actualiza deliberadamente entre módulos, nunca en medio de uno.**
+>
+> Setup de la máquina en [Entorno local](/empezar/entorno-local/).
 
 ## 6. Modelo de datos
 
@@ -287,7 +296,9 @@ Regla custom que falla el build si alguien usa `fetch()` directo o `localStorage
 
 ### 9.3 Skill del proyecto
 
-Un skill que el LLM (asistente de código) consulta antes de escribir código BFF. Contiene: patrón correcto, anti-patrones, reglas de caching, convenciones de logging, estructura del helper. Se crea **después** de aprobar este spec, antes de implementar M0.
+Un skill que el LLM (asistente de código) consulta antes de escribir código BFF. Contiene: patrón correcto, anti-patrones, reglas de caching, convenciones de logging, estructura del helper.
+
+**Estado: creado** en `.claude/skills/aquazaku-bff/SKILL.md` del repo paraguas (`/Users/mao/code/aquazaku`). Vive ahí y no en `web/` porque el repo paraguas es el directorio de trabajo de las sesiones de asistente y aloja lo transversal; así el skill carga aunque se esté editando `api/` o `web/`. No duplica contenido: apunta a [`/frontend/bff-pattern`](/frontend/bff-pattern/), que es la fuente de verdad.
 
 ## 10. Matriz de permisos — versión final
 
@@ -400,7 +411,7 @@ Ver estructura completa en sección 4 del diseño presentado al usuario (pre-spe
 - `/decisiones/0002-bff-pattern.md` (nuevo)
 - `/decisiones/0003-roles-permisos-matriz.md` (nuevo)
 
-**Skill del proyecto** (en `~/.config/opencode/skills/` o en el repo): `aquazaku-bff` con reglas para el LLM.
+**Skill del proyecto**: `aquazaku-bff` en `.claude/skills/` del repo paraguas, con las reglas duras para el LLM. Ya creado.
 
 ## 15. Criterios de éxito (Definition of Done de M0)
 

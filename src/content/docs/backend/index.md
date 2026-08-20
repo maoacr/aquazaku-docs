@@ -34,7 +34,7 @@ esquema de permisos por rol.
   — incluye endpoints `/auth/*`, `/users/*`, `/audit`, modelo de datos, flujos completos
 - **Plan de implementación:** [`/superpowers/plans/2026-08-19-m0-auth-rbac.md`](/superpowers/plans/2026-08-19-m0-auth-rbac)
 - **Decisiones arquitectónicas relevantes:**
-  - [ADR-0001 — Stack del módulo M0](/decisiones/0001-stack-m0) — Node 20 + Fastify + Drizzle + Postgres + Better-Auth + custom authz
+  - [ADR-0001 — Stack del módulo M0](/decisiones/0001-stack-m0) — Node 22 + Fastify + Drizzle + Postgres + Better-Auth + custom authz
   - [ADR-0003 — Matriz de permisos resuelta](/decisiones/0003-roles-permisos-matriz) — multi-rol sin switch, state machine de ventas (M2)
 
 **Cuando el código arranque**, esta sección se llena con:

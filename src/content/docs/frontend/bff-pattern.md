@@ -152,7 +152,7 @@ Tres capas se complementan. Si una falla, las otras atrapan:
 
 | Capa | Qué atrapa | Cómo se configura |
 |---|---|---|
-| **Skill del proyecto** | LLM (asistente AI) que olvida el patrón | `~/.config/opencode/skills/aquazaku-bff/SKILL.md` |
+| **Skill del proyecto** | LLM (asistente AI) que olvida el patrón | `.claude/skills/aquazaku-bff/SKILL.md` en el repo paraguas |
 | **Helper module** | Dev que escribe código que bypassee | El único export para hablar a api/ |
 | **ESLint rule** | `fetch` directo o `localStorage` en código | `web/.eslintrc.json` (ver abajo) |
 

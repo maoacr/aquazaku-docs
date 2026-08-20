@@ -139,25 +139,47 @@ Stack del M0 (Auth + RBAC):
 
 | Capa | Elección |
 |---|---|
-| Runtime `api/` | Node.js 20 LTS |
-| Framework `api/` | Fastify 4.x |
-| ORM | Drizzle |
+| Runtime `api/` | Node.js 22 LTS |
+| Framework `api/` | Fastify 5.x |
+| ORM | Drizzle 0.45.x |
 | DB | Postgres 16 |
-| Auth (identidad) | Better-Auth 1.3.x con admin plugin |
+| Auth (identidad) | Better-Auth 1.7.x con admin plugin |
 | Authz (permisos) | Módulo propio `src/modules/authz/` con `createAccessControl`-style |
 | Sesiones | Cookies httpOnly (no JWT stateless) — mejor revocación |
-| Hashing | argon2id via Better-Auth |
-| Email (reset) | Resend (prod), MailHog (dev) |
-| Logging | Pino con `request_id` propagado |
-| Validación | Zod |
-| Frontend | Next.js 15 (App Router) + React 19 |
+| Hashing | argon2id (`@node-rs/argon2`) via Better-Auth |
+| Email (reset) | Resend (prod), Mailpit (dev) |
+| Logging | Pino 10.x con `request_id` propagado |
+| Validación | Zod 4.x |
+| Frontend | Next.js 16 (App Router) + React 19.2 |
 | Estilos frontend | Tailwind CSS |
 | Tablas/filtros | TanStack Table |
 | Patrón | BFF-native (web/ es proxy server-to-server hacia api/) |
-| Tests | Vitest + Supertest (api/) + Testing Library + MSW (web/) |
+| Tests | Vitest 4.x + Supertest (api/) + Testing Library + MSW (web/) |
 
 Las reglas de la matriz viven en código TypeScript (no en DB). Ver
 [ADR-0003](/decisiones/0003-roles-permisos-matriz).
+
+### Revisión 2026-08-19 — versiones
+
+La primera redacción de este ADR fijó Node 20, Fastify 4, Better-Auth 1.3,
+Next 15, Zod 3 y Vitest 2. Al validar contra el registro de npm **antes** de
+escribir la primera línea de código, todas estaban una línea mayor por detrás
+del stable vigente.
+
+**Qué cambió:** solo los números de versión. Ninguna elección de herramienta se
+revirtió — sigue siendo Fastify, Drizzle, Better-Auth, Next, y el razonamiento
+de este ADR se mantiene íntegro.
+
+**Por qué:** arrancar un proyecto greenfield una major por detrás es deuda
+técnica autoinfligida el día uno. El costo de migrar Fastify 4→5 con el código
+ya escrito es muchísimo mayor que el de empezar en 5.
+
+**Único reemplazo real:** MailHog → **Mailpit**. MailHog no recibe mantenimiento
+desde 2020; Mailpit es su sucesor de facto y cumple el mismo rol (SMTP falso en
+dev). Ver [Entorno local](/empezar/entorno-local/).
+
+**Criterio que queda fijado:** las versiones se actualizan **deliberadamente
+entre módulos, nunca en medio de uno**. Durante M0 el stack no se mueve.
 
 ## Consecuencias
 

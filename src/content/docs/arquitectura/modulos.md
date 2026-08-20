@@ -24,7 +24,7 @@ las reglas de negocio de cada módulo, ver [Dominio](/dominio/).
   - Multi-rol por usuario sin switch — todos los roles asignados están activos simultáneamente.
   - Matriz de permisos resuelta (sesión M0 del 19-ago-2026) — ver [ADR-0003](/decisiones/0003-roles-permisos-matriz).
   - Patrón BFF-native en web/ desde el inicio — ver [ADR-0002](/decisiones/0002-bff-pattern).
-  - Stack: Node 20 + Fastify + Drizzle + Postgres + Better-Auth + Next.js — ver [ADR-0001](/decisiones/0001-stack-m0).
+  - Stack: Node 22 + Fastify + Drizzle + Postgres + Better-Auth + Next.js — ver [ADR-0001](/decisiones/0001-stack-m0).
   - Defensa en profundidad: skill del proyecto + helper module + ESLint rule.
   - Alcance se aplica en una sola capa de datos (no repetido por endpoint).
   - La UI oculta módulos, la API prohíbe.
