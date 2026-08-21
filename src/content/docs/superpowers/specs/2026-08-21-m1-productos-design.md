@@ -274,9 +274,18 @@ para que el error sea legible. Los dos, no uno.
 ([RN-CAT-08](/dominio/productos/)). Es dato semilla, editable desde la UI, no
 una constante.
 
-Los precios de las pacas **no están confirmados**: el seed los deja en `0` y la
-primera tarea del `admin` es cargarlos. Sembrar un número inventado sería peor
-que sembrar un cero — un cero se ve, un número plausible no.
+Los precios de las pacas **no están confirmados**, así que las pacas nacen
+**desactivadas** y con precio en `0`.
+
+Sembrar un número inventado sería peor —se confunde con un dato real y termina
+en una venta— pero un cero **activo** tampoco alcanza: un `pos` podría vender
+una paca a $0 y el problema aparecería recién en el cierre, sin saber de dónde
+salió.
+
+Desactivadas, no se pueden vender hasta que un `admin` les cargue el precio real
+y las active. Si se olvida, la venta se bloquea: un fallo **ruidoso**, que se
+arregla en el momento. Mismo criterio que [ADR-0005](/decisiones/0005-scopes-fail-closed/)
+— ante la duda, cerrado.
 
 ## 11. Estrategia de testing
 

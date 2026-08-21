@@ -111,7 +111,7 @@ servidor nunca abre una conexión con la segunda. Provisionamiento en
 ```bash
 pnpm db:migrate        # base de desarrollo
 pnpm db:migrate:test   # base de tests
-pnpm db:seed           # catálogo de roles + primer admin
+pnpm db:seed           # roles, primer admin y catálogo de productos
 ```
 
 | Migración | Qué trae |
@@ -127,6 +127,25 @@ producción. Verificado: corren sobre una base **virgen** sin pasos manuales y s
 El seed también es idempotente: si ya hay un administrador activo no hace nada y
 **termina con éxito**, así puede vivir en el pipeline de deploy. En producción
 exige `SEED_CONFIRM=yes`.
+
+:::caution[Las pacas se siembran desactivadas, a propósito]
+De los tres productos, solo el precio del botellón está confirmado
+([RN-CAT-08](/dominio/productos/)): $10.000.
+
+Las dos pacas entran con precio `0` **y desactivadas**. No es un dato a medio
+cargar: es la única forma de que el faltante no pase inadvertido. Un precio
+inventado se confunde con uno real; un `0` activo deja vender a $0 y el problema
+recién aparece en el cierre.
+
+Desactivadas, la venta se bloquea hasta que un `admin` cargue el precio y las
+active. El seed lo avisa en cada corrida:
+
+```
+⚠ 2 producto(s) esperando precio, desactivados:
+    P20U_600ML
+    P50U_300ML
+```
+:::
 
 ### Decisiones de modelado
 

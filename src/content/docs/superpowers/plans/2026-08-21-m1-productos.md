@@ -10,7 +10,7 @@ semilla y dos pantallas en `web/`.
 
 **Dominio:** [Productos y catálogo](/dominio/productos/) — RN-CAT-01 a 11.
 
-**Estado:** 🚧 en curso — T1 a T5 cerradas.
+**Estado:** 🚧 en curso — T1 a T6 cerradas.
 
 ---
 
@@ -490,7 +490,7 @@ de permisos no tiene puerta lateral.
 - Modificar: `api/drizzle/seed.ts`
 - Modificar: `api/src/db/__tests__/seed.test.ts`
 
-- [ ] **Paso 1 — `sembrarProductos()`, idempotente**
+- [x] **Paso 1 — `sembrarProductos()`, idempotente**
 
 Igual que `sembrarRoles()`: si ya están, no hace nada y sale en 0.
 
@@ -500,7 +500,7 @@ Igual que `sembrarRoles()`: si ya están, no hace nada y sale en 0.
 | `P50U_300ML` | Paca de 50 bolsas de 300 ml | `paca` | 300 | 50 |
 | `BOT_20L` | Recarga de botellón de 20 L | `botellon` | 20000 | 1 |
 
-- [ ] **Paso 2 — Solo `BOT_20L` con precio real**
+- [x] **Paso 2 — Solo `BOT_20L` con precio real**
 
 $10.000, confirmado por Aquazaku ([RN-CAT-08](/dominio/productos/)).
 
@@ -510,6 +510,33 @@ inventado se confunde con un dato real** y termina en una venta.
 
 **Cierra cuando:** el seed corre dos veces sin duplicar y los litros calculados
 dan 12, 15 y 20.
+
+:::note[Notas de ejecución — T6 cerrada el 22-ago-2026]
+**Cambio respecto del plan: las pacas nacen DESACTIVADAS, no solo con precio 0.**
+
+El plan decía sembrarlas en `0` porque "un cero se ve y un número inventado no".
+Es cierto, pero incompleto: un producto **activo** con precio `0` se puede
+vender. Un `pos` cobra $0 por una paca y el problema aparece recién en el
+cierre, sin rastro de dónde salió.
+
+Las dos opciones del plan fallaban en silencio. Desactivadas, la venta se
+bloquea hasta que un `admin` cargue el precio real — un fallo **ruidoso**, que
+se arregla en el momento. Es el criterio de
+[ADR-0005](/decisiones/0005-scopes-fail-closed/): ante la duda, cerrado.
+
+**El seed avisa en cada corrida** qué productos están esperando precio. Un
+recordatorio que aparece solo, en vez de una nota que alguien tiene que
+acordarse de leer.
+
+**El código sale de `codigoBase()`, no escrito a mano.** Escribirlo en el
+semillero dejaría dos fuentes del formato que se separan el día que cambie.
+
+**Test que no estaba en el plan:** que una segunda corrida **no pise** un precio
+que el admin ya cargó. Es lo que hace seguro dejar el seed en el pipeline de
+deploy: sin eso, cada despliegue devolvería los precios a cero.
+
+**Resultado:** 7 tests nuevos, suite de `api/` en **431**.
+:::
 
 ---
 
