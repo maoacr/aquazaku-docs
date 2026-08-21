@@ -202,9 +202,21 @@ El camino ingenuo tiene una carrera clásica:
 3. UPDATE cantidad = 10 - 8    → 2
 ```
 
-Dos procesos que leen `10` a la vez venden 16 de 10. El `CHECK` los frena —esa
-es su función— pero el segundo recibe un error de Postgres en vez de un mensaje
-útil, y peor: **el primero pudo haber ganado por azar**.
+Dos procesos que leen `10` a la vez venden 16 de 10.
+
+:::danger[Y el `CHECK` NO los frena — verificado, no supuesto]
+Es lo que más engaña de este bug. El paso 3 escribe un valor **absoluto**
+calculado sobre una lectura vieja (`10 - 8 = 2`), no un delta. **Nunca intenta
+escribir un número negativo**, así que `cantidad_disponible >= 0` se cumple
+perfectamente y el saldo queda mal sin que nada proteste.
+
+Se comprobó implementando la versión ingenua a propósito: 20 descuentos de 10
+sobre un lote de 100 dieron **20 éxitos** —vendió 200 de 100— con el saldo en
+`90` y el libro sumando `-150`. Cero errores de Postgres.
+
+El `CHECK` protege contra un valor negativo, no contra una **actualización
+perdida**. Son dos problemas distintos y hacen falta las dos defensas.
+:::
 
 La forma correcta decide y descuenta en una sola operación:
 
