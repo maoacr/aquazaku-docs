@@ -214,6 +214,65 @@ Un precio escrito en el código es un despliegue cada vez que sube el agua.
 
 ---
 
+### RN-CAT-09 — El precio declara qué incluye, aunque hoy no haya IVA
+
+**Estado:** 🟡 Supuesto — el hecho de negocio está confirmado; el mecanismo es
+propuesta nuestra.
+
+**Hoy Aquazaku no retiene IVA ni declara nada.** Pero va a llegar el momento de
+conectar con facturación electrónica, retenciones y declaraciones según la ley
+colombiana — es la misma expectativa que ya sostiene
+[RN-VEN-11](/dominio/ventas/).
+
+La respuesta **no** es construir el motor de impuestos ahora. Es no perder la
+información que lo hace posible después.
+
+```
+producto = {
+  ...,
+  precio_residencial: number,
+  precio_comercial: number,
+  precio_minimo: number,
+  precio_incluye_impuestos: bool,       // hoy: true (el precio es el que se cobra)
+  tarifa_iva_porcentaje: number,        // hoy: 0
+  ...
+}
+
+venta_linea = {
+  ...,
+  precio_aplicado: number,
+  precio_incluia_impuestos: bool,       // snapshot, igual que el precio
+  tarifa_iva_aplicada: number,          // snapshot
+  ...
+}
+```
+
+**Por qué el snapshot y no solo el producto:** el precio se congela en el
+comprobante ([RN-VEN-04](/dominio/ventas/)), y la situación tributaria tiene que
+congelarse con él. El día que Aquazaku empiece a discriminar IVA y actualice el
+catálogo, las ventas viejas tienen que seguir diciendo qué representaban.
+
+Sin eso, dentro de dos años nadie puede responder si aquellos $10.000 de 2026
+eran base gravable o total con impuesto. Y no se puede reconstruir: es
+información que solo existía en el momento de la venta.
+
+:::caution[Lo que esta regla NO propone]
+No hay motor de impuestos, ni retenciones (ReteIVA, ReteFuente, ReteICA), ni
+códigos DIAN, ni cálculo de nada. **Dos campos y sus snapshots.**
+
+Las retenciones y la declaración dependen del proveedor que se elija y de la
+resolución de facturación — se diseñan cuando llegue esa integración, no antes.
+Construirlas hoy sería adivinar los requisitos de una API que todavía no se
+integró.
+:::
+
+**El costo de la alternativa:** guardar el precio como un número pelado sale
+gratis hoy y carísimo después. Es exactamente el argumento de
+[RN-VEN-11](/dominio/ventas/) — *"sin el campo, perdemos la información"* —
+aplicado al precio en vez de a la intención de facturar.
+
+---
+
 ## Preguntas abiertas
 
 Ninguna de estas frena el modelo de datos, pero **sí** frenan la carga del
@@ -221,13 +280,12 @@ catálogo real. Hay que resolverlas antes de sembrar productos.
 
 | # | Pregunta | Por qué importa |
 | --- | --- | --- |
-| 1 | **¿Los precios se cargan con IVA incluido o se calcula aparte?** | El agua envasada en Colombia tiene tratamiento específico. Si el IVA se discrimina, el producto necesita su tarifa y la venta dos totales. Bloquea M11 (Contador). |
-| 2 | **¿El código de producto lo define Aquazaku o lo genera el sistema?** | Si Aquazaku ya usa códigos en su operación, el catálogo tiene que respetarlos. Si no, el sistema genera uno y listo. |
-| 3 | **¿Se venden bolsas sueltas o solo pacas completas?** | Cambia la unidad de venta y el descuento de stock. Hoy el modelo asume paca completa. |
+| 1 | **¿El código de producto lo define Aquazaku o lo genera el sistema?** | Si Aquazaku ya usa códigos en su operación, el catálogo tiene que respetarlos. Si no, el sistema genera uno y listo. |
+| 2 | **¿Se venden bolsas sueltas o solo pacas completas?** | Cambia la unidad de venta y el descuento de stock. Hoy el modelo asume paca completa. |
 
 :::caution[Las 🟡 de este documento son propuestas nuestras]
-RN-CAT-01, 02 y 03 las redactamos nosotros a partir de cómo encajan los demás
-módulos. **No se implementan sin confirmar con Aquazaku.**
+RN-CAT-01, 02, 03 y 09 las redactamos nosotros a partir de cómo encajan los
+demás módulos. **No se implementan sin confirmar con Aquazaku.**
 
 Las ✅ no son concesiones: se derivan de reglas ya confirmadas en otros
 documentos, y cada una linkea a su origen.

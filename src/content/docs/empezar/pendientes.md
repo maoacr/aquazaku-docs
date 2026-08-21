@@ -24,6 +24,17 @@ Esta página tiene que **encogerse** con el tiempo. Si crece, el proyecto está
 avanzando sobre supuestos.
 :::
 
+:::danger[Los números no se reciclan]
+El número de pregunta es un **identificador global y estable**, igual que el de
+una regla. Las reglas lo citan: `✅ Confirmada — cerrá la pregunta #23`.
+
+Reusar el número de una pregunta cerrada rompe esa cita en silencio — apunta a
+otra cosa y nadie se entera. **Una pregunta nueva toma el siguiente libre, aunque
+queden huecos.**
+
+Máximo asignado hasta hoy: **29**. La próxima es la 30.
+:::
+
 ---
 
 ## 🔴 Bloquean M1 — Productos y catálogo
@@ -35,9 +46,8 @@ producto de verdad. Contexto completo en
 
 | # | Pregunta | Para qué |
 | :-: | --- | --- |
-| 9 | **¿Los precios se cargan con IVA incluido o se discrimina aparte?** Si se discrimina, el producto necesita su tarifa y la venta dos totales. Bloquea M11 (Contador). | [RN-CAT-03](/dominio/productos/) |
-| 10 | **¿El código de producto lo define Aquazaku o lo genera el sistema?** Si ya usan códigos en su operación, el catálogo tiene que respetarlos. | [RN-CAT-01](/dominio/productos/) |
-| 11 | **¿Se venden bolsas sueltas o solo pacas completas?** Cambia la unidad de venta y el descuento de stock. Hoy el modelo asume paca completa. | [RN-CAT-01](/dominio/productos/) |
+| 28 | **¿El código de producto lo define Aquazaku o lo genera el sistema?** Si ya usan códigos en su operación, el catálogo tiene que respetarlos. | [RN-CAT-01](/dominio/productos/) |
+| 29 | **¿Se venden bolsas sueltas o solo pacas completas?** Cambia la unidad de venta y el descuento de stock. Hoy el modelo asume paca completa. | [RN-CAT-01](/dominio/productos/) |
 
 ---
 
