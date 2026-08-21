@@ -106,6 +106,7 @@ Todos menos los tres primeros pasan por `requireAuth` y `requirePermission`.
 | `PRECIO_MINIMO_INVALIDO` | 422 | El piso superaría un precio de lista (RN-CAT-04) |
 | `PRODUCTO_YA_INACTIVO` | 409 | Desactivar uno que ya lo estaba |
 | `PRODUCTO_YA_ACTIVO` | 409 | Reactivar uno que ya lo estaba |
+| `PRODUCTO_CON_STOCK` | 409 | Desactivar uno con unidades en stock (RN-CAT-02) |
 
 ### Cómo explorarlo
 

@@ -94,8 +94,16 @@ en stock y los reportes.
 comprobantes que ya no se pueden leer y reportes que no cuadran. Es el mismo
 principio que [RN-CLI-02](/dominio/clientes/) para clientes.
 
-**Condición para desactivar:** que no queden unidades en stock. Un producto
-inactivo con stock es inventario que nadie puede vender ni descartar.
+**Condición para desactivar:** que no queden unidades en stock — **implementada
+en M2** (22-ago-2026).
+
+Un producto inactivo con saldo es **inventario fantasma**: nadie puede venderlo,
+porque no aparece en la pantalla de venta, ni descartarlo, porque para
+descartarlo primero hay que encontrarlo. Queda ocupando lugar en la bodega y en
+ninguna cuenta.
+
+Cuentan también las unidades de lotes **vencidos**: están físicamente ahí y hay
+que descartarlas antes de dar el producto por terminado.
 
 ---
 

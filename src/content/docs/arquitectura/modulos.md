@@ -63,8 +63,8 @@ las reglas de negocio de cada módulo, ver [Dominio](/dominio/).
   - El piso de precio es un `CHECK` en la base, no una validación de servicio.
   - `litros` es columna generada: no se puede desincronizar de sus entradas.
   - Extiende la matriz de permisos con `crear`, `editar` y `desactivar`.
-  - Deuda conocida: RN-CAT-02 exige stock en cero para desactivar, y la tabla
-    de stock es de M2.
+  - RN-CAT-02 exige stock en cero para desactivar: **cerrado en M2**
+    (22-ago-2026), cuando existió la tabla contra la cual verificarlo.
 
 ## M2 — Stock de producto terminado
 
@@ -84,7 +84,7 @@ las reglas de negocio de cada módulo, ver [Dominio](/dominio/).
   - `fecha_vencimiento` se **guarda**, no se genera: cambiar la regla no puede
     reescribir el pasado.
   - La concurrencia es el problema real: dos pantallas descuentan del mismo saldo.
-  - Cierra la deuda de RN-CAT-02 que dejó M1.
+  - Cierra la deuda de RN-CAT-02 que dejó M1: **hecho** (22-ago-2026).
 
 ## M3 — Insumos
 
