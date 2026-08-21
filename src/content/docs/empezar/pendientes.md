@@ -35,7 +35,6 @@ producto de verdad. Contexto completo en
 
 | # | Pregunta | Para qué |
 | :-: | --- | --- |
-| 8 | **¿La primera entrega de botellón es un producto distinto de la recarga?** Si el cliente nuevo paga más la primera vez, son dos productos con precios distintos. | [RN-CAT-01](/dominio/productos/), [RN-ENV-03](/dominio/botellones-y-bases/) |
 | 9 | **¿Los precios se cargan con IVA incluido o se discrimina aparte?** Si se discrimina, el producto necesita su tarifa y la venta dos totales. Bloquea M11 (Contador). | [RN-CAT-03](/dominio/productos/) |
 | 10 | **¿El código de producto lo define Aquazaku o lo genera el sistema?** Si ya usan códigos en su operación, el catálogo tiene que respetarlos. | [RN-CAT-01](/dominio/productos/) |
 | 11 | **¿Se venden bolsas sueltas o solo pacas completas?** Cambia la unidad de venta y el descuento de stock. Hoy el modelo asume paca completa. | [RN-CAT-01](/dominio/productos/) |

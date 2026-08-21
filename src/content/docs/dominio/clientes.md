@@ -261,7 +261,7 @@ trazabilidad es la que hace que el flag signifique algo — si nadie responde po
 él, todos lo marcan siempre y deja de servir.
 :::
 
-Ver [RN-CLI-14](#rn-cli-14--cualquier-puede-verificar-el-código-de-verificación-queda-auditado)
+Ver [RN-CLI-14](#rn-cli-14--cualquiera-de-los-cuatro-roles-operativos-puede-verificar-el-código-de-verificación-queda-auditado)
 para quién puede llevar a un cliente de `PENDIENTE` a `VERIFICADO`.
 
 ---

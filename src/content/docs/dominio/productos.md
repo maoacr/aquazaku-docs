@@ -155,8 +155,8 @@ vacíos.
 
 ### RN-CAT-06 — El catálogo lo edita solo `admin`
 
-**Estado:** ✅ Confirmada — se deriva de la
-[matriz de permisos](/dominio/roles-y-permisos/).
+**Estado:** ✅ Confirmada — por Aquazaku, 21-ago-2026. El precio es un
+parámetro del sistema y solo `admin` lo cambia.
 
 `pos`, `seller` y `contador` **leen** el catálogo. Solo `admin` crea productos,
 edita precios y desactiva.
@@ -183,6 +183,37 @@ verificable.
 
 ---
 
+### RN-CAT-08 — La primera entrega y la recarga son el mismo producto
+
+**Estado:** ✅ Confirmada — por Aquazaku, 21-ago-2026.
+
+Un cliente que nunca tuvo botellón paga **exactamente lo mismo** que uno que
+recarga: el precio del agua. No se le cobra el envase, ni depósito, ni garantía.
+
+Por lo tanto el catálogo tiene **un solo producto** de botellón —
+`Recarga de botellón 20 L` — y no dos.
+
+**Por qué:** el botellón no se vende, se intercambia
+([RN-BAS-08](/dominio/botellones-y-bases/): *sin garantía nunca, sin depósito*).
+Si el catálogo tuviera dos productos con precios distintos, estaría cobrando un
+envase que el negocio no cobra.
+
+**Dónde queda la diferencia entonces:** en el saldo de envases, no en la plata.
+La primera entrega **aumenta en uno** el saldo de botellones del cliente
+([RN-ENV-04](/dominio/botellones-y-bases/)); la recarga lo deja igual
+([RN-ENV-03](/dominio/botellones-y-bases/)). Misma venta, distinto movimiento de
+envase — y ese movimiento es de M7, no del catálogo.
+
+:::tip[Precio vigente al 21-ago-2026: $10.000]
+Es el valor **semilla**, no una constante. Vive en el producto como dato
+editable ([RN-CAT-03](#rn-cat-03--el-precio-vive-en-el-producto)) y solo `admin`
+lo cambia ([RN-CAT-06](#rn-cat-06--el-catálogo-lo-edita-solo-admin)).
+
+Un precio escrito en el código es un despliegue cada vez que sube el agua.
+:::
+
+---
+
 ## Preguntas abiertas
 
 Ninguna de estas frena el modelo de datos, pero **sí** frenan la carga del
@@ -190,10 +221,9 @@ catálogo real. Hay que resolverlas antes de sembrar productos.
 
 | # | Pregunta | Por qué importa |
 | --- | --- | --- |
-| 1 | **¿La primera entrega de botellón es un producto distinto de la recarga?** | Si el cliente nuevo paga más la primera vez (envase en depósito), son dos productos con precios distintos. Si paga lo mismo y el envase se maneja aparte, es uno solo. Afecta la pantalla del `pos` y el catálogo semilla. |
-| 2 | **¿Los precios se cargan con IVA incluido o se calcula aparte?** | El agua envasada en Colombia tiene tratamiento específico. Si el IVA se discrimina, el producto necesita su tarifa y la venta dos totales. Bloquea M11 (Contador). |
-| 3 | **¿El código de producto lo define Aquazaku o lo genera el sistema?** | Si Aquazaku ya usa códigos en su operación, el catálogo tiene que respetarlos. Si no, el sistema genera uno y listo. |
-| 4 | **¿Se venden bolsas sueltas o solo pacas completas?** | Cambia la unidad de venta y el descuento de stock. Hoy el modelo asume paca completa. |
+| 1 | **¿Los precios se cargan con IVA incluido o se calcula aparte?** | El agua envasada en Colombia tiene tratamiento específico. Si el IVA se discrimina, el producto necesita su tarifa y la venta dos totales. Bloquea M11 (Contador). |
+| 2 | **¿El código de producto lo define Aquazaku o lo genera el sistema?** | Si Aquazaku ya usa códigos en su operación, el catálogo tiene que respetarlos. Si no, el sistema genera uno y listo. |
+| 3 | **¿Se venden bolsas sueltas o solo pacas completas?** | Cambia la unidad de venta y el descuento de stock. Hoy el modelo asume paca completa. |
 
 :::caution[Las 🟡 de este documento son propuestas nuestras]
 RN-CAT-01, 02 y 03 las redactamos nosotros a partir de cómo encajan los demás

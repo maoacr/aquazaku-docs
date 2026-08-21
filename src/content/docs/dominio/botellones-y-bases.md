@@ -160,8 +160,14 @@ sigue valiendo sobre el **total**, sin importar el estado.
 Al recargar, el cliente entrega un envase vacío y recibe uno lleno. Su saldo de
 botellones **no cambia**: sigue teniendo la misma cantidad.
 
-Si el cliente **no** entrega el vacío, su saldo aumenta en uno y se aplica la
-política de envase prestado o en depósito.
+Si el cliente **no** entrega el vacío, su saldo aumenta en uno. **No se le cobra
+nada por eso**: el envase queda registrado en su poder, no facturado
+([RN-BAS-08](#rn-bas-08--daño-a-la-base--recargo-automático-al-cliente-en-cualquier-momento-del-ciclo)
+— botellones sin garantía, sin depósito).
+
+Es exactamente lo que pasa en una primera entrega: el cliente paga el agua y se
+lleva un envase que ahora figura en su saldo
+([RN-CAT-08](/dominio/productos/)).
 
 **Por qué:** confundir recarga con venta de botellón hace que el inventario de
 envases se desangre sin que nadie lo note.
