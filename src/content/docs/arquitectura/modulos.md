@@ -73,8 +73,17 @@ las reglas de negocio de cada módulo, ver [Dominio](/dominio/).
   stock crítico.
 - **Roles:** `admin`, `pos`, `seller` (consulta), `contador` (consulta).
 - **Depende de:** M0, M1.
-- **Doc de dominio:** [Stock](/dominio/stock/) — RN-STK-01 a 08.
-- **Estado:** 🔲 pendiente.
+- **Doc de dominio:** [Stock](/dominio/stock/) — RN-STK-01, 02, 03, 05, 06, 07 y 08.
+  La 04 es de insumos y pertenece a M3.
+- **Spec de diseño:** [`/superpowers/specs/2026-08-22-m2-stock-design.md`](/superpowers/specs/2026-08-22-m2-stock-design)
+- **Estado:** 🚧 spec escrita; plan e implementación por arrancar.
+- **Notas:**
+  - **Sin columna de ubicación**: una sola bodega y no se modela (RN-STK-01).
+  - Libro de movimientos + saldo materializado en el lote. El saldo no se edita.
+  - `fecha_vencimiento` se **guarda**, no se genera: cambiar la regla no puede
+    reescribir el pasado.
+  - La concurrencia es el problema real: dos pantallas descuentan del mismo saldo.
+  - Cierra la deuda de RN-CAT-02 que dejó M1.
 
 ## M3 — Insumos
 

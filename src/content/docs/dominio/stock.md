@@ -300,4 +300,5 @@ stock_locations = ["BODEGA"]   // una sola
 - ¿Se define stock mínimo de tapas y sellos que dispare alerta de reposición?
 - ¿Se compran insumos de tratamiento de agua? ¿Se controlan o son gasto?
 - ¿Se lleva cuenta corriente con proveedores o se paga contra entrega?
-- ¿Cada cuánto se hace inventario físico?
+- ¿Cada cuánto se hace inventario físico? — consolidada como
+  [pregunta 31](/empezar/pendientes/).

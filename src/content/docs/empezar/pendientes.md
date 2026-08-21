@@ -32,8 +32,21 @@ Reusar el número de una pregunta cerrada rompe esa cita en silencio — apunta 
 otra cosa y nadie se entera. **Una pregunta nueva toma el siguiente libre, aunque
 queden huecos.**
 
-Máximo asignado hasta hoy: **29**. La próxima es la 30.
+Máximo asignado hasta hoy: **31**. La próxima es la 32.
 :::
+
+---
+
+## 🔴 Bloquean parte de M2 — Stock
+
+Ninguna frena el libro de movimientos ni los lotes, pero sí lo que se construye
+encima. Contexto en la
+[spec de M2](/superpowers/specs/2026-08-22-m2-stock-design).
+
+| # | Pregunta | Para qué |
+| :-: | --- | --- |
+| 30 | **¿Cuál es el stock mínimo de producto terminado que debería disparar alerta?** ¿Uno por producto, o uno solo para todos? | El roadmap pone las alertas en M2, pero ninguna regla define el umbral. Sin el número, M2 entrega la consulta y M12 la usa cuando exista |
+| 31 | **¿Cada cuánto se hace inventario físico?** | Define si el ajuste es excepcional o rutina, y si hace falta una pantalla de conteo o alcanza con el ajuste puntual — [RN-STK-02](/dominio/stock/) |
 
 ---
 

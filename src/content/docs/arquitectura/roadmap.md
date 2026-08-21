@@ -256,7 +256,8 @@ puede arrancar en `design` mientras el anterior está en `apply`, pero no antes.
 | ✅ **Terminado** | **M0 — Auth + RBAC** · **M1 — Productos y catálogo** |
 | Design en curso | — |
 | Apply en curso | — |
-| **Por arrancar** | **M2 — Stock de producto terminado** |
+| Spec escrita | **M2 — Stock de producto terminado** |
+| **Por arrancar** | **M2 — plan e implementación** |
 | Pendiente | M3–M7, M9–M13 |
 | Diferido (post-MVP) | M8 — Rutas y seller mobile |
 
