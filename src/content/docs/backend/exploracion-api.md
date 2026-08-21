@@ -26,24 +26,34 @@ cambia una ruta y no toca la colección, se ve en el diff.
 | `2-Usuarios` | Listar, crear, asignar roles y la **protección del último admin** |
 | `3-Auditoria` | Consulta, filtro de denegados y validación de filtros |
 | `4-Productos` | Catálogo, piso de precio, auditoría del cambio y **un `pos` recibiendo 403** |
-| `5-Sesion` | Cierre de sesión y que la credencial deje de servir |
+| `5-Stock` | Lotes, ajuste, descarte, el libro y **un `contador` recibiendo 403** |
+| `6-Sesion` | Cierre de sesión y que la credencial deje de servir |
 
 Las carpetas llevan número porque el orden importa: el login deja la cookie que
 usan los requests siguientes.
 
 :::caution[El cierre de sesión va último, por definición]
-`5-Sesion` cierra la sesión. Cualquier carpeta que corra después lo hace **sin
+`Sesion` cierra la sesión. Cualquier carpeta que corra después lo hace **sin
 cookie** y falla entera con 401.
 
-Cuando se agregue una carpeta nueva, va **antes** de esa — por eso `Sesion` pasó
-de `4` a `5` al entrar el catálogo.
+Cuando se agregue una carpeta nueva, va **antes** de esa. Por eso `Sesion` ya se
+movió dos veces: de `4` a `5` cuando entró el catálogo, y de `5` a `6` cuando
+entró el stock.
 :::
 
 ### El único lugar donde otro rol pega contra `api/`
 
-`4-Productos` cambia de sesión a mitad de camino: entra como el `pos` que creó
-`2-Usuarios`, verifica que **no** pueda crear productos (403) y que **sí** pueda
-leer el catálogo (200), y después vuelve a la sesión de admin.
+Dos carpetas cambian de sesión a mitad de camino y vuelven a admin al terminar.
+
+`4-Productos` entra como el `pos` que creó `2-Usuarios`, verifica que **no**
+pueda crear productos (403) y que **sí** pueda leer el catálogo (200).
+
+`5-Stock` **crea su propio `contador`**, y no por gusto: el usuario de
+`2-Usuarios` termina con `pos` + `seller`, y como los roles se **suman**
+(RN-ACC-01), el `pos` puede ajustar stock. Ese usuario no sirve para probar un
+rechazo. El `contador` es el testigo externo —mira todo, no modifica nada— y es
+el rol correcto para verificar que lectura y escritura están separadas de
+verdad.
 
 Los tests unitarios ya verifican que la matriz le niegue el permiso, pero esos
 no atraviesan un socket. Los dos peores bugs de M0 —el header `Origin` y el
