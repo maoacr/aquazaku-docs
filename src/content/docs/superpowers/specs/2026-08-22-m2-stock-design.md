@@ -400,3 +400,16 @@ Sin `PUT` ni `PATCH` sobre el saldo: **el stock no se edita**
 | --- | --- | --- |
 | 30 | **¿Cuál es el stock mínimo de producto terminado que debería disparar alerta?** ¿Es por producto o uno solo? | El roadmap pone las alertas en M2, pero ninguna regla define el umbral. Sin respuesta, M2 entrega la consulta y M12 la usa cuando exista el número |
 | 31 | **¿Cada cuánto se hace inventario físico?** Ya estaba abierta en [Stock](/dominio/stock/) | Define si el ajuste es excepcional o rutinario, y si conviene una pantalla de conteo o alcanza con el ajuste puntual |
+
+
+---
+
+## 15. Implementación
+
+El desglose en tasks está en el
+[plan de M2](/superpowers/plans/2026-08-22-m2-stock) — 9 tasks, **ordenadas por
+costo de revertir** y no por comodidad de construcción.
+
+La compuerta es **T3**: el test de concurrencia corre antes de que nada se
+apoye en el saldo. Si el modelo no aguanta, conviene saberlo con dos tablas
+construidas y no con nueve tasks encima.
