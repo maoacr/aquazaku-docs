@@ -159,7 +159,7 @@ porque todo lo demás lo necesita, no porque sea el más visible.
 | # | Módulo | Propósito (una línea) | Roles que lo usan | Depende de | Estado |
 | :-: | --- | --- | --- | --- | --- |
 | M0 | **Auth + RBAC** | Identidad, login, permisos por rol y alcance | Todos | — | ✅ diseñado |
-| M1 | **Productos y catálogo** | Qué se vende: pacas 600ml/300ml, botellones con sus unidades y conversiones | `admin`, `pos`, `seller`, `contador` | M0 | 🔲 pendiente |
+| M1 | **Productos y catálogo** | Qué se vende: pacas 600ml/300ml, botellones con sus unidades y conversiones | `admin`, `pos`, `seller`, `contador` | M0 | ✅ terminado |
 | M2 | **Stock de producto terminado** | Lotes, vencimiento 30d, FIFO, bloqueo de vencidos, alertas de stock crítico | `admin`, `pos`, `seller`, `contador` | M0, M1 | 🔲 pendiente |
 | M3 | **Insumos** | Tapas, sellos, bolsas por kg con stock mínimo configurable (default 200/200) | `admin`, `pos` | M0 | 🔲 pendiente |
 | M4 | **Producción y cierre del día** | Tandas, lote generado automáticamente, mermas, descartes con causa, mantenimiento de filtros | `admin`, `pos` | M0, M1, M2, M3 | 🔲 pendiente |
@@ -249,16 +249,15 @@ puede arrancar en `design` mientras el anterior está en `apply`, pero no antes.
 
 ## Estado actual
 
-**Hoy, 20-ago-2026:**
+**Hoy, 22-ago-2026:**
 
 | Fase | Módulo |
 | --- | --- |
-| ✅ **Terminado** | **M0 — Auth + RBAC** |
-| Spec escrita | **M1 — Productos y catálogo** |
+| ✅ **Terminado** | **M0 — Auth + RBAC** · **M1 — Productos y catálogo** |
 | Design en curso | — |
 | Apply en curso | — |
-| **Por arrancar** | **M1 — implementación** |
-| Pendiente | M2–M7, M9–M13 |
+| **Por arrancar** | **M2 — Stock de producto terminado** |
+| Pendiente | M3–M7, M9–M13 |
 | Diferido (post-MVP) | M8 — Rutas y seller mobile |
 
 :::tip[M0 cerrado el 20-ago-2026]

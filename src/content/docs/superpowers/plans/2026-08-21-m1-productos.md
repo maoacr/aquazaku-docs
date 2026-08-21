@@ -10,7 +10,7 @@ semilla y dos pantallas en `web/`.
 
 **Dominio:** [Productos y catálogo](/dominio/productos/) — RN-CAT-01 a 11.
 
-**Estado:** 🚧 en curso — T1 a T7 cerradas.
+**Estado:** ✅ Terminado (22-ago-2026) — las 8 tasks cerradas.
 
 ---
 
@@ -643,7 +643,7 @@ acceso" o como pantalla rota— así que ahora tiene los suyos, incluido que un
 - Crear: `api/bruno/aquazaku/5-Productos/`
 - Modificar: `docs/` — backend, base de datos, frontend, roadmap
 
-- [ ] **Paso 1 — Colección Bruno con aserciones**
+- [x] **Paso 1 — Colección Bruno con aserciones**
 
 No requests decorativos: cada uno con tests. Incluir el que **debe fallar** —
 crear producto como `pos` y esperar 403.
@@ -654,7 +654,7 @@ fácil de pasar por alto, y la corrida sigue en verde con menos requests. Si el
 resumen dice `Skipped`, hay un archivo que no corrió.
 :::
 
-- [ ] **Paso 2 — Documentar lo implementado, no lo planeado**
+- [x] **Paso 2 — Documentar lo implementado, no lo planeado**
 
 | Doc | Qué actualizar |
 | --- | --- |
@@ -664,17 +664,59 @@ resumen dice `Skipped`, hay un archivo que no corrió.
 | `arquitectura/roadmap.md` | M1 terminado, M2 por arrancar |
 | `arquitectura/modulos.md` | Estado y qué quedó construido |
 
-- [ ] **Paso 3 — Barrido de `/docs`**
+- [x] **Paso 3 — Barrido de `/docs`**
 
 Links internos **con anchors**, frontmatter completo, cero mojibake.
 
-- [ ] **Paso 4 — Verificación final de punta a punta**
+- [x] **Paso 4 — Verificación final de punta a punta**
 
 Todos los servicios arriba, browser real, los diez criterios de la
 [spec §13](/superpowers/specs/2026-08-21-m1-productos-design).
 
 **Cierra cuando:** Bruno verde contra servidor real y `/docs` refleja lo que
 existe.
+
+:::danger[Notas de ejecución — T8 encontró el CI roto]
+**El job de Bruno en CI no corría.** `bru` 4.x sacó el flag `--recursive` y
+exige que el path apunte a la raíz de la colección. El comando del workflow
+—`bru run bruno/aquazaku --env ci --recursive`— imprime la ayuda y sale con
+código 1: **el pipeline se ponía rojo sin haber corrido ni un request**, que es
+fácil de confundir con un test que falla.
+
+El comando documentado en `/docs` tenía el mismo problema. Los dos corregidos a
+`cd bruno/aquazaku && bru run . -r --env <entorno>`.
+
+Al arreglarlo casi meto otro: puse `working-directory: api/bruno/aquazaku`, pero
+el workflow vive **dentro** de `api/`, así que la raíz ya es esa. Sobraba un
+nivel.
+
+**La contraseña del `.env` no sirve para correr Bruno.** `SEED_ADMIN_PASSWORD`
+es la contraseña **inicial**; el admin nace con `mustChangePassword` y la cambia
+al primer login. Desde ese momento el valor del archivo no abre nada — el
+sistema funcionando como debe, pero no estaba dicho en ningún lado. Ahora sí.
+
+La colección se corrió contra una instancia apuntando a la base de **tests**,
+con una cuenta descartable de contraseña generada al momento. Es lo que hace CI,
+y evita pedirle la contraseña real a nadie.
+:::
+
+:::note[Otras notas — T8 cerrada el 22-ago-2026]
+**`4-Sesion` pasó a `5-Sesion`.** El cierre de sesión tiene que ser lo último:
+cualquier carpeta posterior corre sin cookie y falla entera con 401. Se
+renombró antes de escribir un solo request, no después de ver 22 fallas.
+
+**El 403 del `pos` ahora se prueba sobre HTTP real.** `4-Productos` cambia de
+sesión a mitad de camino, verifica que un `pos` no pueda crear (403) y sí pueda
+leer el catálogo (200), y vuelve a admin. Los unitarios ya cubrían la matriz,
+pero no atraviesan un socket — y las costuras son donde vivieron los dos peores
+bugs de M0.
+
+**`13-Volver-como-admin` no es ceremonia:** sin él, `5-Sesion` cerraría la
+sesión del `pos` y probaría algo distinto de lo que dice probar.
+
+**Resultado:** colección en **25 requests y 64 aserciones**, todas verdes contra
+un servidor real.
+:::
 
 ---
 

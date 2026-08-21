@@ -25,23 +25,70 @@ cambia una ruta y no toca la colección, se ve en el diff.
 | `1-Auth` | Señal de vida, login y perfil con permisos resueltos |
 | `2-Usuarios` | Listar, crear, asignar roles y la **protección del último admin** |
 | `3-Auditoria` | Consulta, filtro de denegados y validación de filtros |
-| `4-Sesion` | Cierre de sesión y que la credencial deje de servir |
+| `4-Productos` | Catálogo, piso de precio, auditoría del cambio y **un `pos` recibiendo 403** |
+| `5-Sesion` | Cierre de sesión y que la credencial deje de servir |
 
 Las carpetas llevan número porque el orden importa: el login deja la cookie que
 usan los requests siguientes.
 
+:::caution[El cierre de sesión va último, por definición]
+`5-Sesion` cierra la sesión. Cualquier carpeta que corra después lo hace **sin
+cookie** y falla entera con 401.
+
+Cuando se agregue una carpeta nueva, va **antes** de esa — por eso `Sesion` pasó
+de `4` a `5` al entrar el catálogo.
+:::
+
+### El único lugar donde otro rol pega contra `api/`
+
+`4-Productos` cambia de sesión a mitad de camino: entra como el `pos` que creó
+`2-Usuarios`, verifica que **no** pueda crear productos (403) y que **sí** pueda
+leer el catálogo (200), y después vuelve a la sesión de admin.
+
+Los tests unitarios ya verifican que la matriz le niegue el permiso, pero esos
+no atraviesan un socket. Los dos peores bugs de M0 —el header `Origin` y el
+logout faltante— vivían justamente en costuras entre capas, donde ninguna suite
+unitaria mira por diseño.
+
+El request `13-Volver-como-admin` no es ceremonia: sin él, `5-Sesion` cerraría
+la sesión del `pos` y su verificación probaría algo distinto de lo que dice
+probar.
+
 ## Correrla a mano
 
 ```bash
-cd api && bru run bruno/aquazaku -r --env local
+cd api/bruno/aquazaku && bru run . -r --env local
 ```
+
+:::danger[Se corre DESDE la raíz de la colección]
+`bru` 4.x exige que el path apunte a la colección, no a una ruta relativa desde
+otro lado. `bru run bruno/aquazaku` desde `api/` responde:
+
+```
+You can run only at the root of a collection
+```
+
+Y el flag `--recursive` ya no existe: es `-r`. Con la forma vieja el comando
+imprime la ayuda y sale con código 1, o sea que **el pipeline se pone rojo sin
+haber corrido ni un request** — fácil de confundir con un test que falla.
+:::
 
 El entorno `local` deja `adminPassword` como variable **secreta**: no está en el
 archivo. Se pasa al correr, o se completa desde la interfaz de Bruno.
 
 ```bash
-bru run bruno/aquazaku -r --env local --env-var adminPassword=tu-contraseña
+bru run . -r --env local --env-var adminPassword=tu-contraseña
 ```
+
+:::caution[No es la contraseña del seed]
+`SEED_ADMIN_PASSWORD` es la contraseña **inicial**. El admin nace con
+`mustChangePassword`, así que lo primero que hace al entrar es cambiarla — y
+desde ese momento el valor del `.env` ya no sirve para entrar.
+
+Va la contraseña **actual**. Si se perdió, se recupera por el flujo de
+`/forgot-password`, que en dev deja el mail en
+[Mailpit](http://localhost:8025).
+:::
 
 ## Los tests no son decorativos
 
