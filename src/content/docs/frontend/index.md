@@ -71,6 +71,51 @@ Cargar el precio y activar son dos decisiones separadas a propósito
 lo que faltaba.
 :::
 
+:::danger[Existe un sistema de diseño y todavía no está aplicado]
+`claude-design/` no son mockups: es un **sistema de diseño con tokens finales**
+—`tokens.css` y `tokens.json`— más trece pantallas de referencia en HTML y las
+48 reglas de negocio escritas como casos ejecutables.
+
+**Ni `web/` ni `docs/` lo usan hoy.** Las pantallas de M0 y M1 se construyeron
+con Tailwind por defecto, sin la paleta ni la tipografía del sistema.
+
+Lo que el sistema ya fija y no hay que volver a decidir:
+
+| | |
+|---|---|
+| Paleta | `#1D78B3` primaria · `#5CD9CC` acento (agua y retornables) · `#33BD73` **reservado** |
+| Tipografía | IBM Plex Sans y Mono. Mono con `tabular-nums` en **toda** cantidad, ID, lote y dinero |
+| Iconos | Lucide, trazo 2px, 24px. Un icono por concepto, nunca dos |
+| Foco | Anillo `#5CD9CC`, **nunca suprimido**: el punto de venta se opera con teclado |
+| Táctil | Mínimo 44px en cualquier control; 56px en botones primarios |
+
+**Regla dura del sistema:** el verde `#33BD73` **nunca es decorativo**. Es la luz
+verde del cuadre y de la autonomía. Si aparece donde no significa "todo en
+orden", está mal usado.
+
+Aplicarlo es trabajo pendiente, y conviene hacerlo **antes** de que haya muchas
+pantallas: cada pantalla nueva sin tokens es una más para migrar después.
+:::
+
+:::caution[El sistema de diseño trae reglas de negocio, y no todas están vigentes]
+`reglas-como-tests.md` tiene 48 reglas ejecutables. Algunas **ya estaban
+adoptadas** y se implementaron; otras son **derivas conocidas** donde manda el
+dominio.
+
+| Regla del sistema | Estado |
+|---|---|
+| R2 — motivo mínimo de 10 caracteres | ✅ Adoptada e implementada (M2) |
+| R20 — con causa `otro`, el motivo es obligatorio | ✅ Adoptada e implementada (M2) |
+| R18 — un lote vencido no se vende | ✅ Coincide con [RN-STK-08](/dominio/stock/) |
+| R17 — sale primero el lote más viejo | ✅ Coincide con el FIFO de M2 |
+| Vencimiento **6 meses / 3 meses** | ❌ **Deriva.** Manda [RN-STK-08](/dominio/stock/): **30 días** |
+| `seller` con carga de camión | ❌ **Deriva.** Manda [RN-STK-01](/dominio/stock/) |
+
+Ante una diferencia entre el sistema de diseño y `/dominio/`, **manda el
+dominio**: los mockups congelaron un modelo de negocio que después cambió. Ver
+[el roadmap](/arquitectura/roadmap/) sobre derivas conocidas.
+:::
+
 ### Estructura
 
 ```

@@ -104,6 +104,20 @@ descartó.
 existe —el inventario físico siempre difiere— pero es un documento con nombre,
 fecha y motivo, no un `UPDATE`.
 
+:::caution[El motivo va con un mínimo de 10 caracteres]
+No es "no vacío". Con eso alcanzan `.`, `x` u `ok`, y tres meses después quien
+investiga un descuadre encuentra `x`: el registro no sirve para nada, pero el
+sistema hizo exactamente lo que le pidieron.
+
+Diez caracteres no garantizan una buena explicación. Descartan el gesto reflejo
+de llenar el campo para que la pantalla deje pasar.
+
+Es una **convención transversal** del proyecto, no una regla del stock: aplica
+igual a anulaciones, devoluciones, daños y diferencias de cierre. Está en las
+[convenciones del roadmap](/arquitectura/roadmap/) y como regla ejecutable R2 en
+el sistema de diseño.
+:::
+
 ---
 
 ### RN-STK-03 — No se puede vender lo que no hay
@@ -264,6 +278,16 @@ descarte = {
 | `otro` | depende de revisión admin | depende | Descarte + flag para revisión |
 
 **El `pos` o `admin` debe clasificar la causa obligatoriamente** al registrar. Sin clasificar, no se descarta.
+
+:::note[`otro` arrastra un campo obligatorio detrás]
+Las otras tres causas ya dicen qué pasó por sí solas. `otro` no dice nada: sin
+texto, el registro queda como *"se descartaron 12 unidades por otro"* — un
+número sin significado, que es justamente lo que la causa obligatoria quiere
+evitar.
+
+Con `causa = otro`, las observaciones dejan de ser opcionales y van con el mismo
+mínimo de 10 caracteres. Regla R20 del sistema de diseño.
+:::
 
 **Patrón compartido con [RN-BAS-08](/dominio/botellones-y-bases/)** (recargo por daño de base):
 
