@@ -1,0 +1,456 @@
+---
+title: Plan de la fase de diseño — 11 tasks
+description: "Las 11 tasks de la fase de diseño, ordenadas por lo que obliga a rehacer trabajo: el modo oscuro primero, porque si llega último todas las pantallas se repintan dos veces."
+---
+
+**Objetivo:** implementar la
+[spec de la fase de diseño](/superpowers/specs/2026-08-21-fase-diseno-design) —
+modo oscuro vivo, marca, estados por cuatro canales, accesibilidad y voz única.
+
+**Sistema de diseño:** `claude-design/` — tokens, 13 diseños de referencia y
+`reglas-como-tests.md` (R40, R49–R55).
+
+**Estado:** 🔲 Por arrancar.
+
+---
+
+## El orden es por lo que obliga a rehacer trabajo
+
+En M2 el criterio fue el costo de revertir, porque un error de inventario se
+descubre semanas después. Acá el criterio es otro: **cuánto trabajo visual te
+obliga a repetir**.
+
+Un módulo de inventario falla en silencio. Una fase de diseño falla en voz alta
+—se ve— pero te hace repintar veinte archivos dos veces si el orden está mal.
+
+| Riesgo | Qué pasa si llega tarde | Task |
+| --- | --- | :-: |
+| 🔴 **Modo oscuro al final** | Cada pantalla repintada en claro se repinta de nuevo al descubrir que en oscuro no funciona. **Trabajo duplicado, garantizado** | **T1** |
+| 🔴 **Hex sueltos sin barrer** | Se ven bien en claro y mal en oscuro. Aparecen de a uno, durante meses | T2 |
+| 🔴 **Par fondo/texto sin regla** | Es el bug que ya tenemos en el menú, y el que dejó 4 botones invisibles en M2 | T2 |
+| 🟠 **Primitivas después de repintar** | Cada pantalla inventa su propio vacío, su propio error y su propio estado | T3–T6 |
+| 🟢 **Voz mezclada** | Es mecánico y aditivo, pero rompe tests que buscan por texto | T7 |
+
+**T1 es la compuerta.** Nada visual arranca antes de que el modo oscuro se pueda
+activar y ver.
+
+:::danger[La regla de M2, y acá vale doble]
+Una task no está terminada porque sus tests pasen. En M2 eso dejó **cuatro
+botones invisibles** con typecheck limpio y 234 tests en verde, y lo agarró una
+captura de pantalla.
+
+En esta fase **todo lo que se produce es exactamente lo que los tests no ven.**
+Cada task que toque una pantalla se cierra viéndola **en claro y en oscuro**.
+:::
+
+## Lo que va a romperse a propósito
+
+**T7 rompe tests de M0, M1 y M2.** Cambiar "¿Olvidaste tu contraseña?" por
+"¿Olvidó su contraseña?" hace fallar todo test que busque por texto visible.
+**Eso está bien**: esos tests afirman una voz que el sistema de diseño nunca
+autorizó. Se actualizan entendiendo por qué fallaron, nunca se silencian.
+
+**T2 puede romper tests de snapshot o de clase.** Ídem.
+
+---
+
+## Grafo de dependencias
+
+```
+T1 modo oscuro ── T2 barrido + par fondo/texto ──┬── T3 accesibilidad ──┐
+   (compuerta)                                   ├── T4 marca ─────────┤
+                                                 ├── T5 <Estado> ──────┼── T8 repintar ──┐
+                                                 ├── T6 estados de IU ─┤                 │
+                                                 └── T7 voz: usted ────┘                 │
+                                                                                         ├── T11 cierre
+T9  docs/ con tokens ────────────────────────────────────────────────────────────────────┤
+T10 corregir el brief ───────────────────────────────────────────────────────────────────┘
+    (ninguna de las dos toca web/)
+```
+
+- **T1** es la compuerta: sin modo oscuro visible, nada visual arranca.
+- **T3 a T7** son independientes entre sí. Se pueden hacer en cualquier orden.
+- **T9** y **T10** no tocan `web/`: pueden ir en paralelo desde el principio.
+- **T8** consume todo lo de `web/`. **T11** cierra.
+
+## Restricciones globales
+
+- Convención del proyecto: 2 espacios, comillas simples, sin punto y coma.
+- Conventional commits, sin `Co-Authored-By`. **Nunca buildear.**
+- Cada commit deja el proyecto en verde: `pnpm test`, `pnpm lint`, `pnpm typecheck`.
+- **`web/src/app/tokens.css` es una copia — no se edita.** Todo lo derivado va en
+  `globals.css`, que es el puente. Si el sistema de diseño cambia, `tokens.css`
+  se vuelve a copiar entero.
+- **Ningún hex en un componente.** Si falta un token, se agrega al puente.
+- Patrón BFF vigente: nada de `localStorage`, nada de `fetch` directo.
+- Iconos: **solo Lucide**, y nunca dos iconos distintos para el mismo concepto.
+- **El verde `#33BD73` es reservado.** Solo "cuadra" o "todo en orden".
+
+---
+
+## T1 · Modo oscuro vivo — la compuerta
+
+**Objetivo:** que `data-tema` se escriba en el `<html>` desde el servidor, según
+una cookie, sin destello, con tres valores.
+
+**Archivos:**
+- `web/src/lib/tema.ts` — tipo `Tema = 'claro' | 'oscuro' | 'sistema'`, lectura y
+  normalización de la cookie
+- `web/src/app/layout.tsx` — lee la cookie y pinta `data-tema`
+- `web/src/app/actions-tema.ts` — Server Action que escribe la cookie
+- `web/src/components/ui/selector-tema.tsx` — el control
+- `web/src/app/globals.css` — bloque `@media (prefers-color-scheme: dark)` para
+  el valor `sistema`
+
+**Pasos:**
+
+1. `tema.ts`: `leerTema()` y `esTemaValido()`. Cualquier valor que no sea de los
+   tres se normaliza a `sistema` — una cookie la escribe el cliente y **no se
+   confía en ella**.
+2. `layout.tsx`: `const tema = await leerTema()`. Se pinta `data-tema="oscuro"`
+   solo cuando es `oscuro`; con `claro` y `sistema` **no se escribe el atributo**.
+3. `globals.css`: dentro de `@media (prefers-color-scheme: dark)`, aplicar los
+   valores del bloque oscuro **cuando `data-tema` no está presente**. Con
+   `:root:not([data-tema])`, para que una elección explícita de `claro` gane
+   sobre la preferencia del sistema.
+4. Server Action `cambiarTema(tema)`: valida contra los tres valores, escribe la
+   cookie (`sameSite: 'lax'`, un año, **sin `httpOnly`** — no es un secreto, y
+   nada de JS necesita leerla) y `revalidatePath('/', 'layout')`.
+5. `<SelectorTema>`: tres opciones, en el menú lateral. Objetivo táctil ≥ 44 px.
+
+**Verificación:**
+- Tests: el layout escribe `data-tema` con `oscuro` y **no** lo escribe con
+  `claro` ni con `sistema`. La acción rechaza `'azul'` y normaliza a `sistema`.
+- **Con los ojos:** entrar, cambiar a oscuro, **recargar**. Si hay un destello
+  blanco, el mecanismo está mal y no se cierra la task.
+- **Sacarle el peso:** quitar la lectura de cookie del layout. Los tests tienen
+  que fallar.
+
+**Commit:** `feat(tema): modo oscuro desde el servidor, sin destello`
+
+---
+
+## T2 · Barrido de hex sueltos y el par fondo/texto
+
+**Objetivo:** cerrar el bug de contraste del menú y dejar el sistema sin colores
+que el modo oscuro no controle.
+
+**Archivos:** `web/src/components/**`, `web/src/app/**`, `globals.css`
+
+**Pasos:**
+
+1. Barrer `web/src` buscando hex sueltos y clases de la paleta de Tailwind
+   (`neutral-*`, `gray-*`, `slate-*`, `red-*`, `green-*`). Cada una se reemplaza
+   por el token semántico que corresponda **según su rol**, no según su número.
+2. **Cerrar el bug del menú.** `hover:bg-accion` sale. El hover pasa a ser
+   `hover:bg-tarjeta`, y `bg-accion` + `text-invertido` queda reservado para el
+   módulo **activo**.
+3. Documentar el par fondo/texto en `globals.css`, arriba de las utilidades.
+4. **Test de contraste sobre los tokens.** Un test que lee los pares declarados
+   en la spec (D2), calcula la relación de contraste WCAG desde los hex de
+   `tokens.css` y exige ≥ 4.5:1 en claro **y** en oscuro.
+
+:::note[Por qué el test de contraste va sobre los tokens y no sobre el DOM]
+`axe` en jsdom **no puede medir contraste**: necesita un motor de render real
+que resuelva colores computados. Un test que dijera "el contraste está bien"
+corriendo en jsdom estaría mintiendo.
+
+Sobre los tokens sí se puede: los hex están ahí, la fórmula de WCAG es
+aritmética, y el resultado es exacto. No cubre que alguien use el par
+equivocado —eso lo agarra el ojo— pero **sí** garantiza que ningún par
+declarado del sistema sea ilegible.
+:::
+
+**Verificación:**
+- El barrido no deja hex ni clases de paleta cruda en `web/src`.
+- El test de contraste pasa en los dos modos.
+- **Con los ojos, en claro y en oscuro:** recorrer las cinco pantallas. Buscar
+  específicamente **botones invisibles** — es el defecto que M2 dejó documentado.
+- **Sacarle el peso:** poner a mano un par malo en la tabla del test. Tiene que
+  fallar.
+
+**Commit:** `fix(ui): cerrar el contraste del menú y barrer color fuera de tokens`
+
+---
+
+## T3 · Accesibilidad transversal (R54, R55)
+
+**Objetivo:** foco siempre visible y objetivos táctiles que se puedan tocar.
+
+**Pasos:**
+
+1. **R55 — anillo de foco.** En `globals.css`, un `:focus-visible` global con
+   `0 0 0 2px <fondo>, 0 0 0 5px var(--aq-anillo-foco)`. Prohibido
+   `outline: none` sin reemplazo. El punto de venta se opera con teclado.
+2. **R54 — objetivos táctiles.** Mínimo 44 px en todo control; botón primario
+   56 px. Se aplica en las primitivas, no pantalla por pantalla.
+3. Ningún texto de contenido por debajo de 13 px. Los 11 px solo con `.aq-micro`,
+   que ya existe y exige mayúsculas y tracking.
+
+**Verificación:**
+- Test: recorrer los controles renderizados y afirmar que ninguno declara alto
+  menor a 44 px.
+- **Con el teclado:** recorrer login y stock con `Tab`. Si en algún salto se
+  pierde de vista dónde está el foco, la task no está.
+
+**Commit:** `feat(ui): anillo de foco y objetivos táctiles del sistema`
+
+---
+
+## T4 · La marca aparece
+
+**Objetivo:** isotipo y gradiente, solo en superficies de marca.
+
+**Archivos:**
+- `web/src/components/marca/isotipo.tsx` — SVG en línea, tres gotas,
+  `currentColor`
+- `web/src/components/marca/logotipo.tsx` — isotipo + palabra
+- `web/src/app/(auth)/layout.tsx` — gradiente de marca
+- `web/src/components/ui/sidebar.tsx` — cabecera con logotipo
+
+**Pasos:**
+
+1. `<Isotipo>` como SVG en línea con `fill="currentColor"`: tiene que funcionar
+   en claro y en oscuro **sin duplicar el archivo**.
+2. Layout de acceso: gradiente `linear-gradient(135deg, #0E2A3C, #12525C, #14603F)`,
+   declarado como token en `globals.css`, no como hex en el componente.
+3. Menú lateral: reemplazar el `<h2>Aquazaku</h2>` por `<Logotipo>`.
+4. **El gradiente no va a ningún otro lado.** Nunca detrás de una tabla ni de
+   una cifra.
+
+**Verificación:**
+- Test: el isotipo tiene `role="img"` y nombre accesible.
+- **Con los ojos, en los dos modos:** el isotipo se ve en ambos; el gradiente
+  aparece **solo** en acceso.
+- **Sacarle el peso:** buscar el gradiente en `web/src`. Si aparece fuera del
+  layout de acceso y del token, está mal.
+
+**Commit:** `feat(marca): isotipo y gradiente en las superficies de marca`
+
+---
+
+## T5 · El componente `<Estado>` (R40)
+
+**Objetivo:** un estado se comunica por **cuatro canales a la vez** — color,
+forma, icono y texto en mayúsculas — y eso se escribe una sola vez.
+
+**Archivos:** `web/src/components/ui/estado.tsx`
+
+**Pasos:**
+
+1. `<Estado tono="cubierto" | "justo" | "expuesto">` con los cuatro canales.
+   Las formas salen de `.aq-forma-*`, que ya está en `tokens.css` y hoy no la
+   usa nadie.
+2. Iconos de Lucide: `check`, `alert-triangle`, `x`. Nunca dos iconos distintos
+   para el mismo concepto.
+3. Aplicarlo al **vencimiento de lotes de M2** — vigente / vence pronto /
+   vencido — y al bloqueo de vencidos.
+4. **No** se implementa el semáforo de autonomía: necesita producción y consumo
+   real, y es de M4.
+
+**Verificación:**
+- Test: cada tono renderiza los cuatro canales. El texto va en mayúsculas.
+- **Sacarle el peso:** quitar la clase de forma. El test tiene que fallar — si
+  pasa, solo está probando el color, que es exactamente lo que R40 prohíbe.
+- **Con los ojos:** en escala de grises los tres estados siguen siendo
+  distinguibles. Ese es el punto de la regla.
+
+**Commit:** `feat(ui): estado por color, forma, icono y texto`
+
+---
+
+## T6 · Estados de interfaz (R49–R53)
+
+**Objetivo:** carga, vacíos y errores implementados una vez, no por pantalla.
+
+**Archivos:**
+- `web/src/components/ui/esqueleto.tsx`
+- `web/src/components/ui/vacio.tsx`
+- `web/src/lib/errores.ts`
+- `loading.tsx` por ruta de `(app)`
+- `web/src/app/(app)/error.tsx`
+
+**Pasos:**
+
+1. **R49 — carga.** `loading.tsx` con esqueleto que copia **la grilla real** de
+   esa tabla, no un rectángulo genérico. **Nunca** un spinner de pantalla
+   completa.
+2. **R50 — tres vacíos.** `<Vacio variante="primera-vez" | "sin-resultados" |
+   "terminado">`. El de filtro **nunca** sugiere crear: ofrece quitar el filtro.
+3. **R52 — errores sin jerga.** `errores.ts` mapea `ApiError.status` a texto
+   humano. Prohibido que salga un código HTTP, «timeout», «null» o un nombre de
+   tabla. Un solo botón primario. Se apoya en el `ApiError` que ya tira
+   `apiServerFetch` — ver [patrón BFF](/frontend/bff-pattern/).
+4. **R53 — sin conexión.** Mensaje neutro que **aclara que no se perdió nada**,
+   con reintentar y llamar a la planta. No es culpa del usuario.
+5. **R51 — dato tibio.** Sello de hora en las consultas de stock. El dato viejo
+   se marca, no se esconde.
+
+**Verificación:**
+- Test: el mapa de errores no filtra códigos ni jerga para 401, 403, 404, 409,
+  422 y 500. Cada variante de `<Vacio>` renderiza su acción, y `sin-resultados`
+  **no** ofrece crear.
+- **Con los ojos:** apagar `api/` y entrar. El mensaje tiene que ser neutro y no
+  mostrar un stack.
+- **Sacarle el peso:** agregar un status sin traducir al mapa. El test tiene que
+  fallar, no caer en un texto genérico.
+
+**Commit:** `feat(ui): esqueletos, vacíos diferenciados y errores sin jerga`
+
+---
+
+## T7 · La interfaz habla de usted
+
+**Objetivo:** una sola voz en el producto — usted, español de Colombia.
+
+**Pasos:**
+
+1. Barrer `web/src` por voseo (`á`/`é` imperativos: `Revisá`, `elegí`, `Ingresá`)
+   y por tuteo (`tu`, `tus`, `olvidaste`, `podés`, `vas a`).
+2. Reescribir a usted. Tres archivos ya identificados: `login-form.tsx`,
+   `forgot-password-form.tsx`, `change-password-form.tsx`. Barrer el resto.
+3. **Actualizar los tests que fallen.** Fallan porque afirman una voz que el
+   sistema de diseño nunca autorizó.
+4. **La documentación no se toca.** `/docs` sigue en voseo: son dos voces
+   distintas y a propósito.
+
+**Verificación:**
+- Test: un barrido sobre los textos de interfaz que falle ante imperativos
+  voseantes y ante `tu`/`tus` dirigido al usuario.
+- **Con los ojos:** leer las cinco pantallas de corrido. Si en alguna el sistema
+  tutea, falta una.
+
+**Commit:** `fix(ui): la interfaz habla de usted, como manda el sistema de diseño`
+
+---
+
+## T8 · Repintar las pantallas que ya tienen backend
+
+**Objetivo:** aplicar todo lo anterior a acceso, productos, stock, usuarios y
+auditoría, usando las 13 pantallas de referencia como especificación visual.
+
+**Pasos:**
+
+1. Abrir `claude-design/disenos/Documentacion Aquazaku.dc.html` y usar la
+   pantalla de referencia que corresponda a cada módulo.
+2. Repintar en este orden: acceso → menú → productos → stock → usuarios →
+   auditoría.
+3. **Toda cifra, ID, código de lote y dinero en `IBM Plex Mono` con
+   `tabular-nums`.** Las columnas de números tienen que cuadrar a la vista.
+   Nunca mono en texto corrido.
+4. Elevación: sombra en claro, **tono en oscuro**. No se usan sombras en oscuro.
+5. Los botellones y las bases van en aqua y **fuera del total**: no son plata.
+   (No aplica todavía, pero la regla se respeta desde ahora.)
+
+**Verificación:**
+- Suite completa en verde: tests, lint, typecheck.
+- **Con los ojos, pantalla por pantalla, en claro y en oscuro.** Es la única
+  verificación que sirve acá, y es obligatoria.
+- Recorrido con `Tab` en cada pantalla.
+
+**Commit:** uno por pantalla, no uno gigante. `feat(ui): repintar <pantalla> con el sistema de diseño`
+
+---
+
+## T9 · `docs/` con los tokens de Aquazaku
+
+**Objetivo:** que el sitio de documentación deje de usar el tema por defecto de
+Starlight.
+
+**Pasos:**
+
+1. Mapear las custom properties de Starlight (`--sl-color-*`) a los tokens
+   `--aq-*` en un CSS propio.
+2. IBM Plex en el sitio, igual que en el producto.
+3. Que el modo oscuro de Starlight coincida con el nuestro.
+4. **No se reescribe el tema de Starlight**: se le pasan los valores.
+
+**Verificación:**
+- Los enlaces siguen funcionando: 41 páginas, 553 anclas, 0 rotas.
+- **Con los ojos:** el sitio en claro y en oscuro.
+
+**Commit:** `feat(docs): el sitio usa los tokens de Aquazaku`
+
+---
+
+## T10 · El brief de diseño describe un proyecto que no existe
+
+**Objetivo:** que `/frontend/brief-de-diseno/` deje de mandar a quien lo lea a
+diseñar el sistema equivocado.
+
+:::danger[Esto no es documentación vieja: es documentación que engaña]
+El brief se advierte a sí mismo: *"Si el dominio cambia, este brief cambia. Es
+la traducción del dominio a pantallas — si se desactualiza, **se diseña sobre
+reglas viejas**"*.
+
+Se desactualizó. Y está publicado en `/frontend/`, exactamente donde alguien
+—persona o asistente— iría a buscar antes de diseñar cualquier pantalla.
+:::
+
+**Lo que el brief afirma y el dominio ya descartó:**
+
+| Línea | Afirma | La verdad |
+| :-: | --- | --- |
+| 47 | "Operación sin señal. El vendedor de ruta trabaja donde no hay internet" | No hay vendedores de calle. Todo es web **con conexión asumida** |
+| 57 | `seller` opera en **app móvil**, "calle, sol directo, sin señal, una sola mano" | No hay app móvil. El `seller` entra por navegador |
+| 64 | La app móvil "es su superficie real y la que hay que diseñar" | La superficie real es escritorio de 1440 px |
+| 236 | "Esta es **la superficie con más peso del proyecto**" | Es una superficie que no existe |
+| 209–254 | Pantallas de armado de ruta, inicio de ruta y rendición de ruta | `rutas.md` está marcado como **modelo descartado** |
+
+**Cómo funciona el negocio de verdad:** los pedidos llegan **por WhatsApp** al
+teléfono de la planta o del punto de venta, y el cliente **recoge** o **paga un
+flete externo** (mototaxi, carro). Quien contesta el chat es la misma persona
+que atiende el mostrador.
+
+**Pasos:**
+
+1. Corregir las afirmaciones falsas contra el modelo vigente: sin vendedores de
+   calle, sin app móvil, sin operación sin señal, superficie de escritorio.
+2. Quitar las pantallas de ruta del listado de vistas, o marcarlas explícitamente
+   como descartadas con enlace a `rutas.md`.
+3. Encabezar el documento con su estado real y su relación con `claude-design/`:
+   **el brief es el insumo que produjo el sistema de diseño; ante cualquier
+   contradicción, manda `claude-design/`.**
+4. Revisar `frontend/index.md` por la misma deriva.
+
+:::note[Por qué no se borra]
+El brief tiene valor histórico: explica por qué el sistema de diseño quedó como
+quedó. Se corrige y se fecha, no se borra. Borrarlo perdería el porqué; dejarlo
+como está sigue costando decisiones equivocadas.
+:::
+
+**Verificación:**
+- Barrer el brief por "sin señal", "offline", "app móvil" y "ruta". Lo que quede
+  tiene que estar marcado como descartado.
+- Leerlo entero de corrido: al terminar, el modelo que describe tiene que ser el
+  de WhatsApp y mostrador.
+
+**Commit:** `docs(frontend): el brief describía un modelo descartado`
+
+---
+
+## T11 · Cierre
+
+**Pasos:**
+
+1. Recorrido visual completo, claro y oscuro, con teclado. Capturas.
+2. Documentar el sistema de diseño aplicado en
+   `docs/src/content/docs/frontend/` — el par fondo/texto, `<Estado>`, los tres
+   vacíos, la voz de usted y qué se decidió **no** construir.
+3. Actualizar el [roadmap](/arquitectura/roadmap/): fase de diseño ✅, y M3 pasa
+   a "por arrancar".
+4. Notas de ejecución por task en este mismo archivo, como en M2.
+5. Confirmar que `/frontend/` ya no contradice a `claude-design/` (T10).
+
+**Commit:** `docs: cerrar la fase de diseño`
+
+---
+
+## Lo que esta fase deja listo para M3
+
+M3 (Insumos) va a necesitar tabla, formulario de alta, aviso de stock mínimo y
+estados de vencimiento. **Al terminar esta fase, nada de eso se diseña de nuevo:**
+`<Estado>`, `<Vacio>`, los esqueletos, el mapa de errores, el par fondo/texto y
+la voz ya existen.
+
+Ese es el retorno de haberla hecho antes y no después.
