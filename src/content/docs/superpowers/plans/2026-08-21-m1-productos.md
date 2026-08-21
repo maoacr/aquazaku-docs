@@ -612,7 +612,27 @@ los casos del test.
 `pos` queda pendiente de su lado. Lo verificable desde el servidor —el rastro de
 auditoría con antes y después— se comprobó con `psql`.
 
-**Resultado:** 26 tests nuevos, suite de `web/` en **202** (venía de 176).
+**Dos líneas que decían lo mismo.** La primera versión del aviso mostraba
+siempre resumen + desglose, y con un solo producto quedaba así:
+
+```
+1 producto no se puede vender todavía.
+1 ya tiene precio cargado: solo falta activarlo.
+```
+
+Lo marcó el dueño. Dos líneas que dicen lo mismo hacen buscar una diferencia que
+no existe. Ahora el mensaje es uno solo cuando hay un motivo único, y el
+desglose aparece únicamente cuando los dos motivos conviven. La lógica salió a
+`lib/productos.ts` para poder testearla: un archivo de página de Next no puede
+exportar helpers.
+
+**El error boundary no estaba renderizado por ningún test.** Existía y manejaba
+el 403 bien, pero nadie lo había ejecutado. Es la mitad de `web/` del contrato
+de RN-ACC-02 —`api/` prohíbe, y acá se decide si eso se ve como "no tenés
+acceso" o como pantalla rota— así que ahora tiene los suyos, incluido que un
+403 **no** ofrezca "reintentar": reintentar no cambia los permisos.
+
+**Resultado:** 42 tests nuevos, suite de `web/` en **218** (venía de 176).
 :::
 
 ---
