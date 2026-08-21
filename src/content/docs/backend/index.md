@@ -56,6 +56,24 @@ Repositorio: [`aquazaku-api`](https://github.com/maoacr/aquazaku-api).
 | `PATCH /productos/:id/precios` | `productos:editar_precios` | Los tres juntos. Audita antes y después |
 | `POST /productos/:id/desactivar` | `productos:desactivar` | |
 | `POST /productos/:id/reactivar` | `productos:desactivar` | |
+| `GET /stock` | `stock:ver` | Por producto: total, vendible y vencido |
+| `GET /stock/:productoId/lotes` | `stock:ver` | Con saldo, del más próximo a vencer |
+| `GET /stock/movimientos` | `stock:ver` | El libro. Filtros + paginación por cursor |
+| `POST /stock/entradas` | `stock:ajustar` | Crea el lote. Motivo obligatorio |
+| `POST /stock/ajustes` | `stock:ajustar` | ± sobre un lote. Motivo obligatorio |
+| `POST /stock/descartes` | `stock:descartar` | Causa obligatoria (RN-STK-06) |
+
+:::danger[No hay ninguna ruta que edite el saldo]
+Ni `PUT` ni `PATCH` sobre las unidades de un lote. El stock **se mueve mediante
+documentos** con motivo y responsable ([RN-STK-02](/dominio/stock/)), nunca se
+corrige a mano.
+
+Que esas rutas no existan es parte del contrato, no una omisión: hay tests que
+verifican que `PUT`, `PATCH` y `DELETE` sobre un lote devuelvan **404**.
+
+El ajuste es el escape válido —la realidad física siempre difiere del sistema—
+pero es un documento con nombre, fecha y motivo.
+:::
 
 :::note[Por qué el catálogo no tiene `DELETE`]
 Un `DELETE /productos/:id` diría que el producto desaparece, y eso es justo lo
@@ -107,6 +125,10 @@ Todos menos los tres primeros pasan por `requireAuth` y `requirePermission`.
 | `PRODUCTO_YA_INACTIVO` | 409 | Desactivar uno que ya lo estaba |
 | `PRODUCTO_YA_ACTIVO` | 409 | Reactivar uno que ya lo estaba |
 | `PRODUCTO_CON_STOCK` | 409 | Desactivar uno con unidades en stock (RN-CAT-02) |
+| `STOCK_INSUFICIENTE` | 409 | Se pidió más de lo disponible. Trae el saldo real |
+| `LOTE_NO_ENCONTRADO` | 404 | |
+| `MOTIVO_REQUERIDO` | 422 | Ajuste sin motivo (RN-STK-02) |
+| `CANTIDAD_INVALIDA` | 422 | Cero, negativa donde no corresponde, o no entera |
 
 ### Cómo explorarlo
 
