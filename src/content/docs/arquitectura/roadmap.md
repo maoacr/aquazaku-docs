@@ -160,7 +160,7 @@ porque todo lo demás lo necesita, no porque sea el más visible.
 | :-: | --- | --- | --- | --- | --- |
 | M0 | **Auth + RBAC** | Identidad, login, permisos por rol y alcance | Todos | — | ✅ diseñado |
 | M1 | **Productos y catálogo** | Qué se vende: pacas 600ml/300ml, botellones con sus unidades y conversiones | `admin`, `pos`, `seller`, `contador` | M0 | ✅ terminado |
-| M2 | **Stock de producto terminado** | Lotes, vencimiento 30d, FIFO, bloqueo de vencidos, alertas de stock crítico | `admin`, `pos`, `seller`, `contador` | M0, M1 | 🔲 pendiente |
+| M2 | **Stock de producto terminado** | Lotes, vencimiento 30d, FIFO, bloqueo de vencidos | `admin`, `pos`, `seller`, `contador` | M0, M1 | ✅ terminado |
 | M3 | **Insumos** | Tapas, sellos, bolsas por kg con stock mínimo configurable (default 200/200) | `admin`, `pos` | M0 | 🔲 pendiente |
 | M4 | **Producción y cierre del día** | Tandas, lote generado automáticamente, mermas, descartes con causa, mantenimiento de filtros | `admin`, `pos` | M0, M1, M2, M3 | 🔲 pendiente |
 | M5 | **Clientes** | Alta con verificación de documento, ficha, segmentación residencial/comercial, bloqueo de baja con cifras | `admin`, `pos`, `seller`, `contador` | M0 | 🔲 pendiente |
@@ -253,11 +253,10 @@ puede arrancar en `design` mientras el anterior está en `apply`, pero no antes.
 
 | Fase | Módulo |
 | --- | --- |
-| ✅ **Terminado** | **M0 — Auth + RBAC** · **M1 — Productos y catálogo** |
+| ✅ **Terminado** | **M0 — Auth + RBAC** · **M1 — Productos** · **M2 — Stock** |
 | Design en curso | — |
 | Apply en curso | — |
-| Spec escrita | **M2 — Stock de producto terminado** |
-| **Por arrancar** | **M2 — plan e implementación** |
+| **Por arrancar** | **Fase de diseño** — UI, modo oscuro y marca |
 | Pendiente | M3–M7, M9–M13 |
 | Diferido (post-MVP) | M8 — Rutas y seller mobile |
 

@@ -77,7 +77,9 @@ las reglas de negocio de cada módulo, ver [Dominio](/dominio/).
   La 04 es de insumos y pertenece a M3.
 - **Spec de diseño:** [`/superpowers/specs/2026-08-22-m2-stock-design.md`](/superpowers/specs/2026-08-22-m2-stock-design)
 - **Plan de tasks:** [`/superpowers/plans/2026-08-22-m2-stock.md`](/superpowers/plans/2026-08-22-m2-stock) — 9 tasks, ordenadas por costo de revertir.
-- **Estado:** 🚧 dominio corregido, spec y plan escritos; implementación por arrancar.
+- **Estado:** ✅ **implementado** (22-ago-2026). Las 9 tasks cerradas y
+  verificadas contra la base: el libro explica el saldo y la cadena de auditoría
+  no tiene huecos.
 - **Notas:**
   - **Sin columna de ubicación**: una sola bodega y no se modela (RN-STK-01).
   - Libro de movimientos + saldo materializado en el lote. El saldo no se edita.
