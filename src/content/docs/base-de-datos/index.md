@@ -24,8 +24,10 @@ Esa decisión, cuando se tome, va documentada como
 
 ## Estado actual
 
-**M0 — Auth + RBAC: ✅ implementado** (20-ago-2026). Siete tablas, dos
-migraciones, sobre PostgreSQL 16.
+**M0 — Auth + RBAC: ✅ implementado** (20-ago-2026).
+**M1 — Productos: 🚧 en curso** — la tabla y sus invariantes ya están.
+
+Ocho tablas, tres migraciones, sobre PostgreSQL 16.
 
 ### Tablas
 
@@ -38,6 +40,41 @@ migraciones, sobre PostgreSQL 16.
 | `roles` | Catálogo cerrado de los cuatro |
 | `user_roles` | N:M, con quién otorgó cada rol |
 | `audit_log` | Bitácora **append-only** |
+| `productos` | Catálogo. Precios con piso garantizado por `CHECK` y litros como **columna generada** |
+
+### `productos`: los invariantes viven en la base
+
+La tabla del catálogo (M1) apoya tres reglas del dominio en Postgres y no en la
+capa de servicio.
+
+| Mecanismo | Qué garantiza |
+|---|---|
+| `CHECK productos_precio_minimo_es_piso` | [RN-CAT-04](/dominio/productos/) — el piso nunca supera un precio de lista |
+| `GENERATED ALWAYS AS` en `litros` | [RN-PRD-01](/dominio/produccion/) — el derivado no puede desincronizarse de `contenido_ml × unidades` |
+| `REVOKE DELETE` a `aquazaku_app` | [RN-CAT-02](/dominio/productos/) — un producto se desactiva, no se borra |
+
+El servicio **igual** valida el piso, pero para otra cosa: para que el error diga
+qué corregir en vez de escupir un mensaje de Postgres. La base es la que impide
+el dato malo aunque un endpoint se olvide.
+
+:::tip[El `CHECK` no perdona ni al dueño]
+Verificado a mano: un `UPDATE` que baja el precio residencial por debajo del
+piso **falla incluso ejecutado con el rol dueño**, el mismo que corre las
+migraciones.
+
+El `GRANT` solo limita al rol de la aplicación. El `CHECK` aplica a todo el
+mundo — por eso hacen falta los dos, igual que en `audit_log`.
+:::
+
+:::caution[Los privilegios por defecto conceden `DELETE`]
+La migración `0001` dejó un `ALTER DEFAULT PRIVILEGES` que otorga
+`SELECT, INSERT, UPDATE, DELETE` sobre **toda tabla nueva**, para que nadie
+tenga que acordarse de un `GRANT` por migración.
+
+Consecuencia: `productos` nació con permiso de borrado heredado, y hubo que
+**revocarlo explícitamente**. Toda tabla futura que deba ser append-only o
+solo-desactivable tiene que hacer lo mismo — el default juega en contra.
+:::
 
 ### `audit_log` es inmutable de verdad
 
@@ -76,6 +113,12 @@ pnpm db:migrate        # base de desarrollo
 pnpm db:migrate:test   # base de tests
 pnpm db:seed           # catálogo de roles + primer admin
 ```
+
+| Migración | Qué trae |
+|---|---|
+| `0000_m0_initial` | Las siete tablas de M0 |
+| `0001_audit_append_only` | Triggers de `audit_log` + permisos de `aquazaku_app` |
+| `0002_productos` | Catálogo de productos, sus `CHECK` y el `REVOKE DELETE` |
 
 Las migraciones son SQL explícito de Drizzle Kit, nunca auto-generadas contra
 producción. Verificado: corren sobre una base **virgen** sin pasos manuales y son

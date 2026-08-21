@@ -10,7 +10,7 @@ semilla y dos pantallas en `web/`.
 
 **Dominio:** [Productos y catálogo](/dominio/productos/) — RN-CAT-01 a 11.
 
-**Estado:** 🔲 por arrancar.
+**Estado:** 🚧 en curso — T1 cerrada.
 
 ---
 
@@ -68,7 +68,7 @@ T2 matriz ───────────────────────�
 
 **Produce:** la tabla `productos` con sus invariantes.
 
-- [ ] **Paso 1 — Enum y tabla en `schema.ts`**
+- [x] **Paso 1 — Enum y tabla en `schema.ts`**
 
 Seguir el estilo del archivo: helper `tstz`, `pgEnum` arriba, comentario que
 explique el *por qué* de lo que no es obvio.
@@ -77,7 +77,7 @@ explique el *por qué* de lo que no es obvio.
 export const presentacionEnum = pgEnum('presentacion', ['paca', 'botellon'])
 ```
 
-- [ ] **Paso 2 — Columna generada para `litros`**
+- [x] **Paso 2 — Columna generada para `litros`**
 
 ```ts
 litros: numeric('litros', { precision: 10, scale: 3 })
@@ -88,7 +88,7 @@ El botellón lleva `unidades = 1` para que la fórmula sea la misma en los tres
 productos. Con `null` haría falta un `COALESCE` y la columna dejaría de ser
 trivial de leer.
 
-- [ ] **Paso 3 — Los tres `CHECK`**
+- [x] **Paso 3 — Los tres `CHECK`**
 
 ```ts
 check('precio_minimo_es_piso', sql`
@@ -99,7 +99,7 @@ check('precios_no_negativos', sql`${t.precioMinimo} >= 0`),
 check('unidades_positivas', sql`${t.unidades} >= 1`),
 ```
 
-- [ ] **Paso 4 — Migración SQL explícita**
+- [x] **Paso 4 — Migración SQL explícita**
 
 Escribirla a mano, no generarla. Incluye el `GRANT` a `aquazaku_app`: el rol de
 la aplicación no es dueño de las tablas, así que sin `GRANT` la app no puede
@@ -112,7 +112,7 @@ GRANT SELECT, INSERT, UPDATE ON productos TO aquazaku_app;
 Sin `DELETE`. [RN-CAT-02](/dominio/productos/) dice que un producto no se borra
 — y la forma más barata de garantizarlo es que el rol no tenga el privilegio.
 
-- [ ] **Paso 5 — Tests de integración**
+- [x] **Paso 5 — Tests de integración**
 
 | Verifica | Cómo |
 | --- | --- |
@@ -132,6 +132,31 @@ enteraría hasta que un precio quede por debajo del piso en producción.
 
 **Cierra cuando:** los cuatro tests pasan y `psql` rechaza un `UPDATE` que viole
 el piso, probado a mano.
+
+:::note[Notas de ejecución — T1 cerrada el 21-ago-2026]
+**El `GRANT` del plan estaba mal, hacía falta un `REVOKE`.** La migración `0001`
+había dejado un `ALTER DEFAULT PRIVILEGES` que concede `SELECT, INSERT, UPDATE,
+DELETE` sobre toda tabla nueva. `productos` nació con borrado heredado: agregar
+un `GRANT` sin `DELETE` no quitaba nada. Se revoca explícitamente.
+
+**`litros` quedó `NOT NULL`.** Drizzle la generó nullable. Como sus dos entradas
+son `NOT NULL` nunca puede serlo, y dejarla así obligaba a un chequeo de null
+inútil en cada consumidor.
+
+**El `CHECK` resultó más fuerte de lo que pedía el plan.** Rechaza el `UPDATE`
+incluso ejecutado con el rol **dueño** — el mismo que corre las migraciones. El
+`GRANT` solo limita al rol de la aplicación; el `CHECK` no perdona a nadie.
+
+**Los timestamps van en inglés.** La spec los escribía `creadoEn` /
+`actualizadoEn`, pero todas las tablas del proyecto usan `createdAt` /
+`updatedAt`. Manda el código existente.
+
+**`rm` está aliaseado a `trash`** y no acepta `-f`: un snapshot viejo de
+drizzle-kit sobrevivió y la segunda generación produjo un `ALTER` en vez de un
+`CREATE`. Para limpiar artefactos de migración va `/bin/rm`.
+
+**Resultado:** 14 tests nuevos, suite de `api/` en **363** (venía de 349).
+:::
 
 ---
 
