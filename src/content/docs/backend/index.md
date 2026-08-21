@@ -49,6 +49,32 @@ Repositorio: [`aquazaku-api`](https://github.com/maoacr/aquazaku-api).
 | `PATCH /users/:id` | `usuarios:editar` | Desactivar cierra sus sesiones |
 | `PUT /users/:id/roles` | `usuarios:editar` | Idempotente; hace efecto en el acto |
 | `GET /audit` | `auditoria:ver` | Filtros + paginación por cursor |
+| `GET /productos` | `productos:ver` | `?estado=activos\|inactivos\|todos`, por defecto `activos` |
+| `GET /productos/:id` | `productos:ver` | |
+| `POST /productos` | `productos:crear` | El código lo genera el sistema (RN-CAT-11) |
+| `PATCH /productos/:id` | `productos:editar` | Solo el nombre — **no toca precios** |
+| `PATCH /productos/:id/precios` | `productos:editar_precios` | Los tres juntos. Audita antes y después |
+| `POST /productos/:id/desactivar` | `productos:desactivar` | |
+| `POST /productos/:id/reactivar` | `productos:desactivar` | |
+
+:::note[Por qué el catálogo no tiene `DELETE`]
+Un `DELETE /productos/:id` diría que el producto desaparece, y eso es justo lo
+que [RN-CAT-02](/dominio/productos/) prohíbe. El verbo tiene que contar la
+verdad de lo que pasa, así que desactivar es un `POST` a su propia ruta.
+
+Está garantizado en tres capas: la base le revocó el privilegio al rol de la
+aplicación, el servicio no expone el método y la ruta no existe.
+:::
+
+:::caution[Precios: ruta aparte, permiso aparte]
+Cambiar precios **no** entra en el `PATCH` general. Si entrara,
+`productos:editar` daría acceso a lo que `productos:editar_precios` protege, y
+la matriz de permisos dejaría de significar lo que dice.
+
+Los tres precios viajan juntos y ninguno es opcional: permitir cambiar uno solo
+obligaría a leer los otros dos de la base para verificar el piso, y abriría una
+ventana entre esa lectura y el `UPDATE`.
+:::
 
 Todos menos los tres primeros pasan por `requireAuth` y `requirePermission`.
 
@@ -76,6 +102,10 @@ Todos menos los tres primeros pasan por `requireAuth` y `requirePermission`.
 | `VALIDATION_ERROR` | 400 | Con detalle por campo |
 | `ULTIMO_ADMIN` | 409 | Dejaría el sistema sin administrador (RN-ACC-06) |
 | `EMAIL_EN_USO` | 409 | El email ya existe (`citext`: choca sin importar el case) |
+| `PRODUCTO_NO_ENCONTRADO` | 404 | |
+| `PRECIO_MINIMO_INVALIDO` | 422 | El piso superaría un precio de lista (RN-CAT-04) |
+| `PRODUCTO_YA_INACTIVO` | 409 | Desactivar uno que ya lo estaba |
+| `PRODUCTO_YA_ACTIVO` | 409 | Reactivar uno que ya lo estaba |
 
 ### Cómo explorarlo
 

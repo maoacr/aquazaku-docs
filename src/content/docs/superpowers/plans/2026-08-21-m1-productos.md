@@ -10,7 +10,7 @@ semilla y dos pantallas en `web/`.
 
 **Dominio:** [Productos y catálogo](/dominio/productos/) — RN-CAT-01 a 11.
 
-**Estado:** 🚧 en curso — T1 a T4 cerradas.
+**Estado:** 🚧 en curso — T1 a T5 cerradas.
 
 ---
 
@@ -411,21 +411,21 @@ diciendo que se cierra con el criterio de aceptación de M2. No como `TODO`: un
 **Produce:** los siete endpoints de la
 [spec §8](/superpowers/specs/2026-08-21-m1-productos-design).
 
-- [ ] **Paso 1 — Esquemas Zod**
+- [x] **Paso 1 — Esquemas Zod**
 
 Que `web/` pueda importar el mismo esquema. La validación del cliente es
 comodidad; la del servidor es la que manda — pero no tienen por qué diferir.
 
-- [ ] **Paso 2 — `requirePermission` en cada ruta**
+- [x] **Paso 2 — `requirePermission` en cada ruta**
 
 `editarPrecios` va con `{ auditaLaRuta: true }`.
 
-- [ ] **Paso 3 — Errores con código estable**
+- [x] **Paso 3 — Errores con código estable**
 
 `PRODUCTO_NO_ENCONTRADO` · `CODIGO_DUPLICADO` · `PRECIO_MINIMO_INVALIDO` ·
 `PRODUCTO_YA_INACTIVO`.
 
-- [ ] **Paso 4 — Tests E2E, no solo unitarios**
+- [x] **Paso 4 — Tests E2E, no solo unitarios**
 
 | Verifica | Espera |
 | --- | --- |
@@ -437,6 +437,50 @@ comodidad; la del servidor es la que manda — pero no tienen por qué diferir.
 
 **Cierra cuando:** los cinco casos pasan y una petición HTTP real devuelve lo
 esperado.
+
+:::danger[Notas de ejecución — T5, el error que casi se cuela]
+**Usé `auditarSinBloquear` para las acciones exitosas del catálogo, y está
+mal.** Esa función existe para **eventos de sesión** y **se traga los fallos a
+propósito**: su docstring dice que convertir una caída de la bitácora en
+imposibilidad de iniciar sesión transformaría un problema de registro en una
+caída total.
+
+Pero un cambio de precio **sí** es una acción sensible: RN-ACC-04 la nombra
+explícitamente. Con `auditarSinBloquear`, un precio podía cambiarse y la
+bitácora fallar **en silencio** — exactamente lo que la regla existe para
+impedir.
+
+Corregido con un `auditar()` local y **bloqueante**: si no se puede auditar, la
+operación falla. Misma regla que en `requirePermission`.
+
+El rechazo sí sigue usando la versión no bloqueante: si la auditoría fallara
+ahí, taparía el error de negocio original que el usuario necesita ver.
+:::
+
+:::note[Otras notas de ejecución — T5 cerrada el 22-ago-2026]
+**`validar()` se extrajo a `lib/http.ts`.** Era idéntica carácter por carácter
+en los dos módulos. Mismo criterio que con `ErrorDeNegocio`: se comparte al
+aparecer el segundo consumidor.
+
+**El filtro es `?estado=activos|inactivos|todos`, no `?activo=`.** La spec decía
+`?activo=true|false|todos`, que mezcla un booleano con un string y se lee raro:
+`activo=todos` no es español. El vocabulario manda, también en una query string.
+
+**Zod valida forma; el piso lo valida el servicio.** Si Zod también verificara
+RN-CAT-04, el mismo problema devolvería `VALIDATION_ERROR` (400) o
+`PRECIO_MINIMO_INVALIDO` (422) según quién lo atrapara primero, y el frontend
+tendría que manejar los dos. Una regla, un código, un lugar.
+
+**Desactivar es `POST`, no `DELETE`.** El verbo tiene que contar la verdad de lo
+que pasa. Hay un test que verifica que `DELETE /productos/:id` devuelva 404: que
+la ruta no exista es parte del contrato, no una omisión.
+
+**Test que no estaba en el plan:** que el `PATCH` general no pueda cambiar
+precios aunque se los mande en el body. Es la verificación de que la separación
+de permisos no tiene puerta lateral.
+
+**Resultado:** 27 tests nuevos, suite de `api/` en **424**.
+:::
 
 ---
 
