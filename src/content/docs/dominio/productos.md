@@ -273,20 +273,82 @@ aplicado al precio en vez de a la intención de facturar.
 
 ---
 
+### RN-CAT-10 — La paca es indivisible: no se venden bolsas sueltas
+
+**Estado:** ✅ Confirmada — por Aquazaku, 21-ago-2026.
+
+La paca es la **unidad atómica** del sistema. Se produce por paca, se stockea
+por paca y se vende por paca. No hay media paca ni bolsas sueltas.
+
+**Por qué importa más allá del catálogo:** si se vendieran bolsas sueltas, el
+stock tendría que contar unidades **dentro** de cada paca, y una paca abierta
+sería un estado nuevo que hoy no existe. Eso se propaga a
+[Stock](/dominio/stock/) —los lotes dejarían de contarse en pacas— y a
+[Producción](/dominio/produccion/), donde el cierre diario genera lote por paca.
+
+Manteniendo la paca indivisible, **la misma unidad sirve para los tres módulos**
+y no hace falta convertir en ninguna frontera.
+
+:::note[La equivalencia en litros sigue siendo configuración]
+Que la paca no se divida **no contradice** a
+[RN-PRD-01](/dominio/produccion/). Las 20 bolsas de 600 ml siguen siendo un
+parámetro editable: define cuántos litros representa la paca, no que se puedan
+vender por separado.
+:::
+
+---
+
+### RN-CAT-11 — El código lo genera el sistema; la identidad sigue siendo el UUID
+
+**Estado:** ✅ Confirmada — por Aquazaku, 21-ago-2026. Hoy no usan códigos
+propios.
+
+Cada producto lleva un **código corto y legible** que genera el sistema:
+
+```
+PACA-600      Paca de bolsas de 600 ml
+PACA-300      Paca de bolsas de 300 ml
+BOT-20        Recarga de botellón 20 L
+```
+
+Pero el código **no es la identidad**. La identidad es el UUID interno — mismo
+principio que [RN-CLI-01](/dominio/clientes/) para clientes: el documento sirve
+para buscar, no para identificar.
+
+**Por qué separarlos:** el día que un código se escriba mal, o que Aquazaku
+quiera renombrar `BOT-20` a `RECARGA-20`, no puede arrastrar consigo las ventas
+históricas, los lotes ni los movimientos de stock. Todo eso apunta al UUID.
+
+**El código es único y no se reusa.** Si un producto se desactiva
+([RN-CAT-02](#rn-cat-02--un-producto-no-se-borra-se-desactiva)), su código queda
+tomado: reciclarlo haría que un comprobante viejo parezca referirse al producto
+nuevo.
+
+:::note[Por qué generarlo y no dejarlo libre]
+Un código escrito a mano termina con variantes: `PACA600`, `paca-600`,
+`Paca 600`. Después nadie puede buscar de forma confiable, y el día que haya
+código de barras o facturación electrónica hay que limpiarlos todos.
+
+Generarlo cuesta lo mismo hoy y evita esa limpieza.
+:::
+
+---
+
 ## Preguntas abiertas
 
-Ninguna de estas frena el modelo de datos, pero **sí** frenan la carga del
-catálogo real. Hay que resolverlas antes de sembrar productos.
+**Ninguna.** Las cuatro que estaban abiertas se cerraron el 21-ago-2026:
+RN-CAT-06 y 08 (precio y primera entrega), RN-CAT-09 (IVA), RN-CAT-10 (paca
+indivisible) y RN-CAT-11 (código).
 
-| # | Pregunta | Por qué importa |
-| --- | --- | --- |
-| 1 | **¿El código de producto lo define Aquazaku o lo genera el sistema?** | Si Aquazaku ya usa códigos en su operación, el catálogo tiene que respetarlos. Si no, el sistema genera uno y listo. |
-| 2 | **¿Se venden bolsas sueltas o solo pacas completas?** | Cambia la unidad de venta y el descuento de stock. Hoy el modelo asume paca completa. |
+El dominio de M1 está completo y se puede escribir la spec.
 
 :::caution[Las 🟡 de este documento son propuestas nuestras]
 RN-CAT-01, 02, 03 y 09 las redactamos nosotros a partir de cómo encajan los
 demás módulos. **No se implementan sin confirmar con Aquazaku.**
 
-Las ✅ no son concesiones: se derivan de reglas ya confirmadas en otros
-documentos, y cada una linkea a su origen.
+Las ✅ vienen de dos lados, y conviene distinguirlos:
+
+- **Confirmadas por Aquazaku** el 21-ago-2026 — RN-CAT-06, 08, 10 y 11.
+- **Derivadas** de reglas ya confirmadas en otros documentos — RN-CAT-04, 05 y
+  07. Cada una linkea a su origen.
 :::

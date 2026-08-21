@@ -37,20 +37,6 @@ Máximo asignado hasta hoy: **29**. La próxima es la 30.
 
 ---
 
-## 🔴 Bloquean M1 — Productos y catálogo
-
-Son **decisiones de negocio**, no mediciones. Ninguna frena el modelo de datos,
-pero sí la carga del catálogo real: sin respuesta no se puede sembrar un
-producto de verdad. Contexto completo en
-[Productos y catálogo](/dominio/productos/).
-
-| # | Pregunta | Para qué |
-| :-: | --- | --- |
-| 28 | **¿El código de producto lo define Aquazaku o lo genera el sistema?** Si ya usan códigos en su operación, el catálogo tiene que respetarlos. | [RN-CAT-01](/dominio/productos/) |
-| 29 | **¿Se venden bolsas sueltas o solo pacas completas?** Cambia la unidad de venta y el descuento de stock. Hoy el modelo asume paca completa. | [RN-CAT-01](/dominio/productos/) |
-
----
-
 ## 🟠 Faltan mediciones en planta
 
 No son decisiones: son números que hay que ir a tomar.
