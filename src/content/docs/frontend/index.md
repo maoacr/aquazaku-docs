@@ -31,6 +31,8 @@ Repositorio: [`aquazaku-web`](https://github.com/maoacr/aquazaku-web).
 | `/reset-password?token=…` | con token | Destino del link del correo |
 | `/change-password` | con sesión | Primer ingreso forzado (spec §7.2) |
 | `/` | con sesión | Dashboard |
+| `/modulos/productos` | **los cuatro roles** | Catálogo en lectura: código, litros y precios |
+| `/modulos/productos/gestion` | `admin` | Alta, precios y activación |
 | `/modulos/usuarios` | `admin` | Alta, roles y estado |
 | `/modulos/auditoria` | `admin` | Bitácora con filtros |
 | `/contador/auditoria` | `contador` | La misma vista, por su propia puerta |
@@ -38,6 +40,36 @@ Repositorio: [`aquazaku-web`](https://github.com/maoacr/aquazaku-web).
 Todo lo que requiere sesión vive bajo el route group `(app)`, que no agrega
 segmento a la URL. El guard está en su layout: **una pantalla nueva nace
 protegida** sin que su autor tenga que acordarse de nada.
+
+:::tip[El catálogo es la primera pantalla que ven `pos` y `seller`]
+Hasta M0 esos dos roles entraban a un menú vacío. `productos:ver` lo tienen los
+cuatro ([RN-CAT-06](/dominio/productos/)) porque un `pos` que no ve precios no
+puede vender, y el `contador` los necesita para leer un comprobante.
+
+El link a **Gestionar catálogo** aparece solo si el usuario tiene
+`productos:editar_precios`, pero eso es cosmética: quien entre a la URL a mano
+igual recibe **403** de `api/` ([RN-ACC-02](/dominio/roles-y-permisos/)).
+:::
+
+:::caution[El aviso mira si el producto se puede vender, no si le falta el precio]
+Salió de verificar el flujo real, no de un test. Al cargarle el precio a una
+paca sembrada desactivada, el aviso de "esperando precio" **se apagaba** y el
+producto seguía sin poder venderse — con la sola etiqueta gris de "desactivado"
+como pista.
+
+Un aviso que se apaga antes de que el problema esté resuelto es peor que no
+tenerlo: convence de que terminaste.
+
+Ahora la pantalla cuenta los **no vendibles** y distingue los dos motivos, que
+piden acciones distintas:
+
+- *esperando precio* → cargarlo
+- *ya tiene precio, falta activarlo* → un click
+
+Cargar el precio y activar son dos decisiones separadas a propósito
+([T6](/superpowers/plans/2026-08-21-m1-productos)): que la pantalla lo diga es
+lo que faltaba.
+:::
 
 ### Estructura
 

@@ -10,7 +10,7 @@ semilla y dos pantallas en `web/`.
 
 **Dominio:** [Productos y catálogo](/dominio/productos/) — RN-CAT-01 a 11.
 
-**Estado:** 🚧 en curso — T1 a T6 cerradas.
+**Estado:** 🚧 en curso — T1 a T7 cerradas.
 
 ---
 
@@ -548,26 +548,26 @@ deploy: sin eso, cada despliegue devolvería los precios a cero.
 - Crear: `web/src/app/(app)/modulos/productos/actions.ts`
 - Crear: `web/src/components/productos/`
 
-- [ ] **Paso 1 — Catálogo de lectura, para los cuatro roles**
+- [x] **Paso 1 — Catálogo de lectura, para los cuatro roles**
 
 Server Component que lee con `apiServerFetch()`. **La única función que puede
 hablar con `api/`** ([ADR-0002](/decisiones/0002-bff-pattern/)).
 
-- [ ] **Paso 2 — Gestión, solo `admin`**
+- [x] **Paso 2 — Gestión, solo `admin`**
 
 El guard del route group `(app)` ya resuelve la sesión. Ocultar el menú no es
 seguridad ([RN-ACC-02](/dominio/roles-y-permisos/)): el 403 lo da la API.
 
-- [ ] **Paso 3 — Mutaciones por Server Actions**
+- [x] **Paso 3 — Mutaciones por Server Actions**
 
 Nunca `fetch` desde el cliente. La regla de ESLint lo prohíbe, y está para eso.
 
-- [ ] **Paso 4 — Sin TanStack Table**
+- [x] **Paso 4 — Sin TanStack Table**
 
 Con tres productos sería infraestructura sin uso. Entra cuando haya una tabla
 que lo pida.
 
-- [ ] **Paso 5 — Verificación manual en browser**
+- [x] **Paso 5 — Verificación manual en browser**
 
 Login como `admin` → crear producto → ver el código generado → cambiar un
 precio → **encontrar ese cambio en `/admin/auditoria` con el antes y el
@@ -577,6 +577,43 @@ Después, login como `pos`: ver el catálogo, no ver el botón de gestión, y
 —entrando a la URL a mano— recibir 403.
 
 **Cierra cuando:** los dos recorridos se hicieron en un browser real.
+
+:::danger[Notas de ejecución — T7: el bug lo encontró el browser, no la suite]
+**Verificar en un browser real volvió a pagar.** Con 202 tests en verde, la
+pantalla tenía un hueco que ninguno miraba: al cargarle el precio a una paca
+sembrada desactivada, el aviso de "esperando precio" **se apagaba** y el
+producto seguía sin poder venderse.
+
+El aviso miraba `precioResidencial === 0`. La pregunta correcta no es *"¿le
+falta el precio?"* sino *"¿se puede vender?"*. Un aviso que se apaga antes de
+que el problema esté resuelto convence de que terminaste.
+
+Se corrigió contando los **no vendibles** y separando los dos motivos, que
+piden acciones distintas. Quedaron tests de regresión.
+
+**Cómo apareció:** revisando `audit_log` después de que el dueño probara la
+pantalla. Los precios estaban cargados y las dos pacas seguían en `activo = f`.
+Nadie lo había notado, ni él ni yo — lo dijo la base.
+:::
+
+:::note[Otras notas de ejecución — T7 cerrada el 22-ago-2026]
+**Siete tests de M0 fallaron, y estaba bien que fallaran.** Afirmaban que `pos`
+y `seller` no veían ningún módulo. Era cierto en M0; RN-CAT-06 lo cambió. Se
+actualizaron para decir la verdad nueva, no se silenciaron.
+
+Un test que falla cuando el mundo cambia está haciendo su trabajo. El error
+sería ajustarlo sin preguntarse por qué falló.
+
+**El generador se probó con entradas que nunca vio:** el dueño creó un producto
+de 80 unidades de 100 ml y salió `P80U_100ML`. RN-CAT-11 funcionando fuera de
+los casos del test.
+
+**No se tipearon contraseñas.** El login lo hizo el dueño; el recorrido de
+`pos` queda pendiente de su lado. Lo verificable desde el servidor —el rastro de
+auditoría con antes y después— se comprobó con `psql`.
+
+**Resultado:** 26 tests nuevos, suite de `web/` en **202** (venía de 176).
+:::
 
 ---
 
