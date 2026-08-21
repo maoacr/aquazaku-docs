@@ -144,7 +144,21 @@ paca de 600, `50 bolsas de 300 ml` para una de 300.
 
 ## Lotes y vencimiento
 
-### RN-STK-04 — Cada cierre de producción genera un lote, vencimiento automático a 30 días
+:::caution[Esta regla se llamaba RN-STK-04, y era un error]
+Nació el 18-ago-2026 con un número que **ya estaba tomado** por la regla de
+insumos de empaque. Dos reglas distintas con el mismo identificador, las dos
+marcadas como confirmadas.
+
+No era cosmético: `proveedores.md` citaba `RN-STK-04` para hablar de insumos y
+`produccion.md` lo citaba para hablar de vencimientos. Quien seguía cualquiera
+de los dos links llegaba a una página con dos reglas del mismo nombre.
+
+Conserva el número la que se escribió primero —la de insumos— y esta pasa a
+**RN-STK-08**. Es la única vez que un número cambia, y pasa justamente porque
+nunca debió haberse duplicado.
+:::
+
+### RN-STK-08 — Cada cierre de producción genera un lote, vencimiento automático a 30 días
 
 **Estado:** ✅ Confirmada — cerrá la pregunta 🟢
 "¿Hay control de lotes o vencimiento?" de

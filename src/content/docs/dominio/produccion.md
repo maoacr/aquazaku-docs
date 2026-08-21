@@ -927,9 +927,9 @@ producto_unidad = {
 - **Vencimiento automático**: 30 días desde empaque. Lo calcula el sistema al cerrar.
 - **Impresión física**: el `pos` imprime y adhiere el lote + vencimiento al empaque físico. El sistema genera el formato legible.
 - **FIFO en bodega**: el sistema ofrece al vendedor las unidades con vencimiento más próximo primero.
-- **Vencidos se bloquean** de la venta (ver [RN-STK-04](/dominio/stock/) sobre stock con vencimiento).
+- **Vencidos se bloquean** de la venta (ver [RN-STK-08](/dominio/stock/) sobre stock con vencimiento).
 
-Ver [RN-STK-04](/dominio/stock/) para las reglas completas de stock con lote/vencimiento.
+Ver [RN-STK-08](/dominio/stock/) para las reglas completas de stock con lote/vencimiento.
 
 ---
 

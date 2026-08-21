@@ -73,7 +73,7 @@ las reglas de negocio de cada módulo, ver [Dominio](/dominio/).
   stock crítico.
 - **Roles:** `admin`, `pos`, `seller` (consulta), `contador` (consulta).
 - **Depende de:** M0, M1.
-- **Doc de dominio:** [Stock](/dominio/stock/) — RN-STK-01 a 07.
+- **Doc de dominio:** [Stock](/dominio/stock/) — RN-STK-01 a 08.
 - **Estado:** 🔲 pendiente.
 
 ## M3 — Insumos
