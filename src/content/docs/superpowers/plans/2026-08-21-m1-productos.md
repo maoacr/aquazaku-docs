@@ -10,7 +10,7 @@ semilla y dos pantallas en `web/`.
 
 **Dominio:** [Productos y catálogo](/dominio/productos/) — RN-CAT-01 a 11.
 
-**Estado:** 🚧 en curso — T1 cerrada.
+**Estado:** 🚧 en curso — T1 y T2 cerradas.
 
 ---
 
@@ -169,11 +169,11 @@ drizzle-kit sobrevivió y la segunda generación produjo un `ALTER` en vez de un
 
 **Produce:** `productos:crear`, `productos:editar`, `productos:desactivar`.
 
-- [ ] **Paso 1 — Agregar `desactivar` al tipo `Action`**
+- [x] **Paso 1 — Agregar `desactivar` al tipo `Action`**
 
 Es una acción nueva en el sistema, no solo una celda nueva.
 
-- [ ] **Paso 2 — Tres celdas, solo para `admin`**
+- [x] **Paso 2 — Tres celdas, solo para `admin`**
 
 ```ts
 { resource: 'productos', action: 'crear',       scope: 'todo' },
@@ -181,7 +181,7 @@ Es una acción nueva en el sistema, no solo una celda nueva.
 { resource: 'productos', action: 'desactivar',  scope: 'todo' },
 ```
 
-- [ ] **Paso 3 — La misma tabla en el doc de dominio**
+- [x] **Paso 3 — La misma tabla en el doc de dominio**
 
 :::danger[Dos archivos, un solo commit]
 La matriz del documento y la del código son **la misma fuente de verdad**, y
@@ -189,13 +189,35 @@ La matriz del documento y la del código son **la misma fuente de verdad**, y
 código —el test lo atrapa— sino olvidar el documento.
 :::
 
-- [ ] **Paso 4 — Tests celda por celda**
+- [x] **Paso 4 — Tests celda por celda**
 
 Que `seller`, `pos` y `contador` reciban `false` en las tres acciones nuevas.
 No alcanza con probar que `admin` puede: hay que probar que los otros no.
 
 **Cierra cuando:** `matrix.test.ts` verde y la tabla del doc coincide con el
 código.
+
+:::note[Notas de ejecución — T2 cerrada el 21-ago-2026]
+**Eran tres archivos, no dos.** El plan decía "matriz + doc", pero
+`matrix.test.ts` transcribe el documento **a mano y por separado**, a propósito:
+si derivara del código, el test confirmaría que el código es igual a sí mismo.
+Esa duplicación deliberada es la que da valor al test — y significa que agregar
+una celda cuesta tres ediciones.
+
+**Lo que ningún test puede atrapar.** El test verifica que el código coincida
+con *su propia transcripción*, no con el documento. Si alguien actualiza código
+y test pero olvida el doc, todo queda verde y la documentación miente.
+
+Se verificó cruzando los dos repos a mano: extraer las celdas de `productos` del
+`matrix.ts` y de la tabla markdown, y compararlas. Coincidieron en los cuatro
+roles. **Conviene repetir ese cruce cada vez que se toque la matriz.**
+
+**Test extra que no estaba en el plan:** que los cuatro roles conserven
+`productos:ver`. Un `pos` que no ve precios no puede vender — es una regresión
+fácil de introducir al restringir la escritura.
+
+**Resultado:** 2 tests nuevos, suite de `api/` en **365**.
+:::
 
 ---
 

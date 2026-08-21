@@ -313,10 +313,22 @@ proveedor está `activo`. Es una validación de la capa de servicio
 
 ### Administración
 
+:::note[Los cuatro roles leen el catálogo, uno solo lo edita]
+`productos:ver` lo tienen todos —un `pos` que no ve precios no puede vender— y
+la escritura es exclusiva de `admin` ([RN-CAT-06](/dominio/productos/)).
+
+El precio es la variable más sensible del negocio: un `pos` que pudiera editarlo
+volvería inútil todo el sistema de descuentos con piso, porque bajaría el precio
+en vez de pedir un código.
+:::
+
 | Permiso | `admin` | `seller` | `pos` | `contador` |
 | --- | :-: | :-: | :-: | :-: |
 | `productos:ver` | ✅ | ✅ | ✅ | 🟡 `todo` |
+| `productos:crear` | ✅ | ❌ | ❌ | ❌ |
+| `productos:editar` | ✅ | ❌ | ❌ | ❌ |
 | `productos:editar_precios` | ✅ | ❌ | ❌ | ❌ |
+| `productos:desactivar` | ✅ | ❌ | ❌ | ❌ |
 | `usuarios:*` | ✅ | ❌ | ❌ | ❌ |
 | `auditoria:ver` | ✅ `todo` | ❌ | ❌ | ✅ `todo` (read-only) |
 | `reportes:operativos` | ✅ | ❌ | 🟡 `prep` | ✅ |
