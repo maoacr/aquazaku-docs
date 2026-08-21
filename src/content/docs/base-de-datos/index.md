@@ -25,9 +25,10 @@ Esa decisión, cuando se tome, va documentada como
 ## Estado actual
 
 **M0 — Auth + RBAC: ✅ implementado** (20-ago-2026).
-**M1 — Productos: 🚧 en curso** — la tabla y sus invariantes ya están.
+**M1 — Productos y catálogo: ✅ implementado** (22-ago-2026).
+**M2 — Stock: 🚧 en curso** — las tablas y sus invariantes ya están.
 
-Ocho tablas, tres migraciones, sobre PostgreSQL 16.
+Diez tablas, cuatro migraciones, sobre PostgreSQL 16.
 
 ### Tablas
 
@@ -41,6 +42,8 @@ Ocho tablas, tres migraciones, sobre PostgreSQL 16.
 | `user_roles` | N:M, con quién otorgó cada rol |
 | `audit_log` | Bitácora **append-only** |
 | `productos` | Catálogo. Precios con piso garantizado por `CHECK` y litros como **columna generada** |
+| `lotes` | Producto empacado un día, **con su saldo encima**. FIFO por vencimiento |
+| `movimientos_stock` | El libro que explica el saldo. **Append-only**, igual que `audit_log` |
 
 ### `productos`: los invariantes viven en la base
 
@@ -79,6 +82,36 @@ tenga que acordarse de un `GRANT` por migración.
 Consecuencia: `productos` nació con permiso de borrado heredado, y hubo que
 **revocarlo explícitamente**. Toda tabla futura que deba ser append-only o
 solo-desactivable tiene que hacer lo mismo — el default juega en contra.
+:::
+
+### `lotes` y `movimientos_stock`: el saldo y el libro que lo explica
+
+El saldo vive **en el lote**, no en una tabla aparte: un lote ya es "producto +
+fecha", y una tabla de saldos solo repetiría esa clave para agregar un número.
+
+Los dos se escriben en la **misma transacción**. Si el saldo baja y el
+movimiento no queda, el libro deja de explicar el saldo — es la primera forma de
+descuadre, y la más difícil de rastrear meses después.
+
+| Mecanismo | Qué garantiza |
+|---|---|
+| `CHECK cantidad_disponible >= 0` | [RN-STK-03](/dominio/stock/) — no hay stock negativo |
+| `REVOKE UPDATE, DELETE` en `movimientos_stock` | [RN-STK-02](/dominio/stock/) — un libro editable no es un libro |
+| `REVOKE DELETE` en `lotes` | Un lote no se borra, se queda en cero. Borrarlo dejaría movimientos huérfanos y ventas sin trazabilidad |
+| `CHECK` condicionales de motivo y causa | [RN-STK-02](/dominio/stock/) y [RN-STK-06](/dominio/stock/) — exigen el dato **solo** en ajuste y descarte |
+
+:::danger[`fecha_vencimiento` NO es una columna generada, y `litros` sí]
+Las dos las calcula el sistema y ninguna se tipea a mano. Parecen el mismo caso
+y son opuestas:
+
+- **`litros` es una definición.** 12 L es lo que una paca **es**. Si cambian sus
+  entradas, debe recalcularse — por eso es `GENERATED ALWAYS AS`.
+- **`fecha_vencimiento` es un hecho de un momento.** Este lote vence este día.
+
+Si fuera generada, cambiar la regla a 45 días **recalcularía el vencimiento de
+todos los lotes del pasado**, incluidos los ya vendidos. Es lo mismo que
+[RN-CAT-07](/dominio/productos/) prohíbe para los precios: una regla nueva no
+reescribe lo que ya pasó.
 :::
 
 ### `audit_log` es inmutable de verdad
@@ -124,6 +157,7 @@ pnpm db:seed           # roles, primer admin y catálogo de productos
 | `0000_m0_initial` | Las siete tablas de M0 |
 | `0001_audit_append_only` | Triggers de `audit_log` + permisos de `aquazaku_app` |
 | `0002_productos` | Catálogo de productos, sus `CHECK` y el `REVOKE DELETE` |
+| `0003_stock` | Lotes con saldo, libro de movimientos append-only y sus `REVOKE` |
 
 Las migraciones son SQL explícito de Drizzle Kit, nunca auto-generadas contra
 producción. Verificado: corren sobre una base **virgen** sin pasos manuales y son
