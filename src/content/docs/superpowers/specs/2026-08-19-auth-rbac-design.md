@@ -1,7 +1,10 @@
-# M0 — Auth + RBAC: Diseño
+---
+title: Spec de M0 — Auth + RBAC
+description: "Diseño del módulo fundacional: identidad, matriz de permisos, alcances y bitácora inmutable. Implementado el 20-ago-2026."
+---
 
 **Fecha:** 2026-08-19
-**Estado:** Draft para revisión
+**Estado:** ✅ Implementado (20-ago-2026)
 **Módulo:** M0 del [Roadmap Aquazaku](/arquitectura/roadmap/)
 **Autores:** Mao (product owner) + AI (asistente de diseño)
 
@@ -42,7 +45,7 @@ Las reglas de negocio que este módulo implementa están definidas en [`/docs/do
 |---|---|
 | Custom auth + custom authz (no Supabase, no Auth0) | [ADR-0001-stack-m0](/decisiones/0001-stack-m0) |
 | Better-Auth como librería de auth (Lucia v3 está deprecada desde marzo 2025) | [ADR-0001-stack-m0](/decisiones/0001-stack-m0) |
-| Polyrepo: `api/` y `web/` separados,，各自各自的git repo | Estrategia ya decidida (ver memoria) |
+| Polyrepo: `api/` y `web/` en repos git separados | Estrategia ya decidida |
 | BFF-native desde M0: web/ hace de proxy server-to-server hacia api/ | [ADR-0002-bff-pattern](/decisiones/0002-bff-pattern) |
 | Sesiones via cookies httpOnly (no JWT stateless) — mejor revocación para auditoría | [ADR-0001-stack-m0](/decisiones/0001-stack-m0) |
 | Multi-rol sin switch: todos los roles asignados activos simultáneamente | [ADR-0003-roles-permisos-matriz](/decisiones/0003-roles-permisos-matriz) |
@@ -91,82 +94,68 @@ Las reglas de negocio que este módulo implementa están definidas en [`/docs/do
 
 Solo las tablas de M0. Las de M1+ se agregan en sus respectivos módulos.
 
+> **Corregido al implementar (20-ago-2026).** La primera versión de este spec
+> ponía `password_hash` en `users` y listaba cinco tablas. Better-Auth 1.7 exige
+> otra cosa, y se supo leyendo su código fuente, no su documentación:
+> **el hash de la contraseña vive en `accounts`**, hacen falta `accounts` y
+> `verifications`, `users.emailVerified` es obligatorio, `sessions.token` va
+> aparte de `sessions.id`, y `accounts.issuer` es requerido desde 1.7 con índice
+> único junto a `accountId`.
+>
+> Lo de abajo es el schema que existe. Detalle en las notas de ejecución de la
+> Task 2 del [plan](/superpowers/plans/2026-08-19-m0-auth-rbac).
+
+### Tablas que administra Better-Auth
+
+| Tabla | Columnas propias de Aquazaku |
+|---|---|
+| `users` | `status` (active/inactive), `must_change_password` · `email` es **`citext`** |
+| `sessions` | `roles text[]` — todos los activos, congelados al iniciar sesión |
+| `accounts` | — **acá vive `password`**, el hash argon2id |
+| `verifications` | — tokens de un solo uso para recuperar la contraseña |
+
+Los nombres de tabla son plurales (convención del resto del schema); Better-Auth
+los espera en singular y se mapean con `modelName` en su configuración.
+
+### Tablas propias
+
+| Tabla | Para qué |
+|---|---|
+| `roles` | Catálogo cerrado de los cuatro |
+| `user_roles` | N:M, con `granted_by` — quién otorgó cada rol |
+| `audit_log` | Bitácora append-only |
+
+### `audit_log`
+
 ```
-┌─────────────────────────────────┐
-│ users                           │
-├─────────────────────────────────┤
-│ id            uuid PK           │
-│ email         citext UNIQUE     │
-│ password_hash text              │
-│ name          text              │
-│ status        enum(active,      │
-│                       inactive) │
-│ must_change_  bool default true │
-│   password                      │
-│ created_at    timestamptz       │
-│ updated_at    timestamptz       │
-└─────────────────────────────────┘
-                ▲
-                │ 1:N
-                │
-┌─────────────────────────────────┐
-│ sessions (Better-Auth managed)  │
-├─────────────────────────────────�
-│ id            text PK (token)   │
-│ user_id       uuid FK → users   │
-│ roles         text[] (todos los │
-│                       activos)  │
-│ expires_at    timestamptz       │
-│ ip            inet              │
-│ user_agent    text              │
-│ created_at    timestamptz       │
-└─────────────────────────────────┘
-
-┌─────────────────────────────────┐
-│ roles (catálogo)                │
-├─────────────────────────────────┤
-│ name        text PK             │
-│   ('admin', 'seller', 'pos',   │
-│    'contador')                  │
-│ description text                │
-│ created_at  timestamptz         │
-└─────────────────────────────────┘
-                ▲
-                │ N:M
-                │
-┌─────────────────────────────────┐
-│ user_roles                      │
-├─────────────────────────────────�
-│ user_id     uuid FK → users     │
-│ role_name   text FK → roles     │
-│ granted_at  timestamptz         │
-│ granted_by  uuid FK → users     │
-│ PK (user_id, role_name)         │
-└─────────────────────────────────┘
-
-┌─────────────────────────────────┐
-│ audit_log (INMUTABLE)           │
-├─────────────────────────────────┤
-│ id            bigserial PK      │
-│ user_id       uuid              │
-│ rol_ejercido  text[]            │
-│ action        text              │
-│ resource      text              │
-│ resource_id   text              │
-│ result        enum(ok, denied)  │
-│ request_id    uuid              │
-│ ip            inet              │
-│ user_agent    text              │
-│ payload       jsonb             │
-│ created_at    timestamptz       │
-│                                 │
-│ REVOKE UPDATE, DELETE ON        │
-│   audit_log FROM app_user       │
-│ + trigger que rechaza mutations │
-└─────────────────────────────────┘
+id            bigserial PK
+user_id       uuid          ← SIN foreign key, a propósito
+rol_ejercido  text[]        ← todos los roles activos al ejecutar la acción
+action        text          ← formato `recurso:accion`, indexado
+resource      text
+resource_id   text
+result        enum(ok, denied)
+request_id    text          ← el mismo x-request-id que viajó desde web/
+ip            text
+user_agent    text
+payload       jsonb
+created_at    timestamptz
 ```
 
-**Multi-rol:** un usuario tiene N roles en `user_roles`. `sessions.roles` se llena al login con todos los roles del usuario. NO existe `active_role` ni switch. Todos los roles asignados están activos simultáneamente.
+**Sin foreign key a `users`** porque si un usuario se borra, su rastro tiene que
+sobrevivir. Un log que se borra en cascada no es un log.
+
+**Inmutable con dos capas independientes** —
+[ADR-0004](/decisiones/0004-audit-log-inmutable): triggers `FOR EACH STATEMENT`
+que rechazan `UPDATE`, `DELETE` y `TRUNCATE`, más un rol de aplicación que sobre
+esta tabla solo tiene `SELECT` e `INSERT`. El `REVOKE ... FROM app_user` que
+proponía la primera versión de este spec **no protegía nada**: ese rol no
+existía y la aplicación se conectaba como dueña de las tablas.
+
+**Multi-rol:** un usuario tiene N roles en `user_roles`. `sessions.roles` se
+llena al iniciar sesión con todos. NO existe `active_role` ni switch
+(RN-ACC-01). Al cambiar los roles de alguien, las sesiones abiertas se
+actualizan (RN-ACC-07).
 
 ## 7. Flujos de autenticación
 
@@ -432,14 +421,27 @@ Ver estructura completa en sección 4 del diseño presentado al usuario (pre-spe
 
 ## 16. Preguntas abiertas / riesgos
 
-| # | Pregunta | Estado |
+Estado al cerrar M0 (20-ago-2026).
+
+| # | Pregunta | Cómo quedó |
 |---|---|---|
-| 1 | ¿El doc `/docs/dominio/roles-y-permisos.md` necesita revisión formal con Aquazaku para confirmar la matriz resuelta? | Pendiente — se confirma al inicio de M2 |
-| 2 | ¿`seller` alguna vez tendrá acceso web (vs solo mobile)? | Documentado como "respaldo, no superficie de trabajo" — no se usa en M0 |
-| 3 | ¿Necesitamos refresh tokens o sliding window de cookie es suficiente? | Decidido: sliding window en M0, refresh tokens en post-MVP si hace falta |
-| 4 | ¿Qué hacer si el email provider (Resend) cae? | M0: fail gracefully, mostrar mensaje en UI; post-MVP: queue de retry |
-| 5 | ¿Rate limit en producción necesita Redis o memoria basta? | M0: memoria por instancia (suficiente para 1 server); M5+: Redis cuando escale |
+| 1 | ¿La matriz resuelta necesita revisión formal con Aquazaku? | **Sigue abierta** — se confirma al inicio de M2. La matriz está implementada y un test la verifica celda por celda contra el documento de dominio, así que confirmarla es cambiar celdas, no reescribir el módulo |
+| 2 | ¿El `seller` tendrá acceso web? | **Cerrada.** Puede entrar por web, pero no ve ningún módulo en M0: la matriz no le da ninguno de los tres que existen. Su superficie sigue siendo la app móvil (post-MVP) |
+| 3 | ¿Refresh tokens o ventana deslizante? | **Cerrada.** Ventana deslizante, administrada por Better-Auth (`expiresIn` 7 días, `updateAge` 1 día). El middleware de authz solo valida: un único dueño del ciclo de vida de la sesión |
+| 4 | ¿Qué pasa si Resend cae? | **Cerrada para M0.** El transporte lanza y la Server Action muestra un mensaje; la contraseña del usuario no cambia. Cola de reintentos sigue siendo post-MVP |
+| 5 | ¿El rate limit necesita Redis? | **Cerrada para M0.** En memoria por proceso, como preveía el spec. El día que haya más de una instancia el contador por proceso deja de servir — está anotado en el código, no es un descuido |
+
+### Riesgos que aparecieron implementando
+
+| Riesgo | Estado |
+|---|---|
+| Los bugs de costura entre `api/` y `web/` no los ve ninguna suite unitaria | **Mitigado parcialmente.** La colección de Bruno en CI atraviesa un socket real, pero solo del lado de `api/`. El seam `web/ → api/` sigue verificándose a mano en el browser |
+| `api/` no tiene linter real: `lint` es un alias de `tsc --noEmit` | **Abierto.** `web/` sí tiene ESLint con la regla anti-`fetch()`. Decidir si `api/` suma uno |
+| `api/` no tiene script `build` | **Diferido a propósito.** Con alias `@/*` y ESM, `tsc` solo no produce salida ejecutable en Node. Se resuelve al preparar el deploy, con bundler |
+| Los roles se congelan en la sesión al iniciar sesión | **Resuelto** — [RN-ACC-07](/dominio/roles-y-permisos/): al cambiar roles se actualizan las sesiones abiertas |
 
 ---
 
-**Próximo paso:** una vez aprobado este spec, invocar la skill `writing-plans` para descomponer M0 en tasks de implementación.
+**Resultado:** M0 implementado en las 15 tasks del
+[plan](/superpowers/plans/2026-08-19-m0-auth-rbac), cada una con sus notas de
+ejecución. Lo que este spec no anticipó está documentado ahí, task por task.

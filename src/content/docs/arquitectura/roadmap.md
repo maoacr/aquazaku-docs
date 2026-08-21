@@ -169,7 +169,7 @@ porque todo lo demás lo necesita, no porque sea el más visible.
 | M8 | **Rutas y seller mobile** | App nativa del seller, offline-first, cierre de ruta | `seller`, `admin`, `contador` | M0, M5, M6, M7 | ⏸ POST-MVP |
 | M9 | **Proveedores y compras** | Mixto contado/transferencia/crédito, sin módulo de CxP completo | `admin`, `pos`, `contador` | M0, M3 | 🔲 pendiente |
 | M10 | **Precios y promociones** | Listas residencial/comercial con piso, códigos de descuento con piso absoluto | `admin`, `pos`, `seller`, `contador` | M0, M1 | 🔲 pendiente |
-| M11 | **Contador** | Panel solo lectura: cartera por edad, facturas sin emitir, descarga CSV/PDF | `contador`, `admin` | M0, M5, M6, M7, M9, M10 | � pendiente |
+| M11 | **Contador** | Panel solo lectura: cartera por edad, facturas sin emitir, descarga CSV/PDF | `contador`, `admin` | M0, M5, M6, M7, M9, M10 | 🔲 pendiente |
 | M12 | **Alertas** | Alimenta al panel de planta y al panel admin; umbrales configurables | `admin`, `pos` | M0, M2, M3, M4 | 🔲 pendiente |
 | M13 | **Auditoría** | Quién hizo qué cuándo; transversal — todo módulo registra | `admin` (consulta) | M0 + transversal | 🔲 pendiente |
 
@@ -249,17 +249,30 @@ puede arrancar en `design` mientras el anterior está en `apply`, pero no antes.
 
 ## Estado actual
 
-**Hoy, 19-ago-2026:**
+**Hoy, 20-ago-2026:**
 
 | Fase | Módulo |
 | --- | --- |
+| ✅ **Terminado** | **M0 — Auth + RBAC** |
 | Spec en curso | — |
 | Design en curso | — |
 | Apply en curso | — |
-| Verificado | — |
-| **Por arrancar** | **M0 — Auth + RBAC** |
-| Pendiente | M1–M7, M9–M13 |
+| **Por arrancar** | **M1 — Productos y catálogo** |
+| Pendiente | M2–M7, M9–M13 |
 | Diferido (post-MVP) | M8 — Rutas y seller mobile |
+
+:::tip[M0 cerrado el 20-ago-2026]
+Las 15 tasks del plan implementadas y verificadas de punta a punta en un browser
+real. `api/` con 349 tests, `web/` con 176, y una colección de Bruno que corre
+en CI contra un servidor de verdad.
+
+Qué quedó construido: [Backend](/backend/), [Frontend](/frontend/) y
+[Base de datos](/base-de-datos/).
+
+Salieron dos ADR ([0004](/decisiones/0004-audit-log-inmutable) y
+[0005](/decisiones/0005-scopes-fail-closed)) y dos reglas de negocio que nadie
+había escrito antes: [RN-ACC-06 y RN-ACC-07](/dominio/roles-y-permisos/).
+:::
 
 El resto del documento de dominio está cerrado: las reglas RN-\* que ya están
 publicadas en `/dominio/` cubren lo que el módulo necesita **definir**, no
@@ -267,28 +280,27 @@ cómo lo **implementa**. El SDD de cada módulo traduce esas reglas en código.
 
 ---
 
-## Decisiones abiertas antes de arrancar M0
+## Decisiones abiertas
 
-Preguntas que siguen sin resolverse y que pueden frenar la spec/design del
-primer módulo:
+Preguntas que siguen sin resolverse y que pueden frenar la spec de algún módulo.
 
-1. **Interpretación final de "mobile-first"** — ¿metodología UI (working
-   assumption actual) o prioridad de plataforma? Si es plataforma, hay que
-   decidir si el seller opera desde una app móvil desde el día uno o se
-   arranca por web con app diferida (que ya está decidido).
-2. **Stack del proyecto `api/`** — pendiente. Ver
-   [`empezar/pendientes`](/empezar/pendientes/). No bloquea el dominio (las
-   reglas están cerradas), pero bloquea el `design.md` de M0.
-3. **Nombre del módulo de retornables** — `entrega` (como aparece en
+1. **Nombre del módulo de retornables** — `entrega` (como aparece en
    `claude-design/`) o `retornables` (como aparece en el modelo de datos y en
-   el dominio). Coexisten hoy; hay que unificar antes de la spec de M7.
-4. **Stock mínimo default de insumos** — el plan de M3 asume 200/200 (tapas
-   y sellos) pero el número no está confirmado por Aquazaku. Confirmar antes
-   del `design.md`.
-5. **Derivas heredadas del paquete `claude-design/`** — el verify del
-   19-ago-2026 documentó varias derivas aceptadas (vencimiento 6m, modelo
-   seller mobile offline-first, 9 personas). Verificar que el equipo que
-   arranque M0 las tenga presente para no replicarlas en el código.
+   el dominio). Coexisten hoy; hay que unificar antes de la spec de **M7**.
+2. **Stock mínimo default de insumos** — el plan de M3 asume 200/200 (tapas y
+   sellos) pero el número no está confirmado por Aquazaku. Confirmar antes del
+   diseño de **M3**.
+
+Ver también [Qué falta preguntar](/empezar/pendientes/) — las cuatro mediciones
+🟠 que requieren ir a la planta.
+
+### Resueltas al implementar M0
+
+| Pregunta | Cómo quedó |
+|---|---|
+| Interpretación de "mobile-first" | **Metodología de UI.** La app móvil del `seller` es post-MVP; se arranca por web y las pantallas se diseñan desde el ancho chico hacia arriba |
+| Stack del proyecto `api/` | [ADR-0001](/decisiones/0001-stack-m0), y ya implementado: Node 22, Fastify 5, Drizzle, Postgres 16, Better-Auth 1.7 |
+| Derivas heredadas del paquete `claude-design/` | M0 se construyó desde el dominio y los ADR, no desde los mockups. Las derivas documentadas en el verify del 19-ago-2026 **no se replicaron en el código**; siguen valiendo como advertencia para los módulos que sí usen esos diseños |
 
 ---
 

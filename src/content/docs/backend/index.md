@@ -28,17 +28,72 @@ esquema de permisos por rol.
 
 ## Estado actual
 
-**M0 — Auth + RBAC** está diseñado y pendiente de implementación.
+**M0 — Auth + RBAC: ✅ implementado** (20-ago-2026). 349 tests, verificado de
+punta a punta contra `web/` en un browser real.
 
-- **Spec de diseño:** [`/superpowers/specs/2026-08-19-auth-rbac-design.md`](/superpowers/specs/2026-08-19-auth-rbac-design)
-  — incluye endpoints `/auth/*`, `/users/*`, `/audit`, modelo de datos, flujos completos
-- **Plan de implementación:** [`/superpowers/plans/2026-08-19-m0-auth-rbac.md`](/superpowers/plans/2026-08-19-m0-auth-rbac)
-- **Decisiones arquitectónicas relevantes:**
-  - [ADR-0001 — Stack del módulo M0](/decisiones/0001-stack-m0) — Node 22 + Fastify + Drizzle + Postgres + Better-Auth + custom authz
-  - [ADR-0003 — Matriz de permisos resuelta](/decisiones/0003-roles-permisos-matriz) — multi-rol sin switch, state machine de ventas (M2)
+Repositorio: [`aquazaku-api`](https://github.com/maoacr/aquazaku-api).
 
-**Cuando el código arranque**, esta sección se llena con:
-- Referencia de API de cada endpoint (request/response/Zod schemas)
-- Documentación del módulo `authz/` (matriz ejecutable, scopes, middleware)
-- Catálogo de errores (códigos HTTP + significado para el cliente)
-- Decisiones de implementación que NO están en el spec
+### Qué expone hoy
+
+| Endpoint | Quién puede | Notas |
+|---|---|---|
+| `GET /health` | cualquiera | Señal de vida |
+| `POST /api/auth/sign-in/email` | cualquiera | Better-Auth. Límite: 5 intentos / 15 min |
+| `POST /api/auth/request-password-reset` | cualquiera | Límite: 3 / 15 min |
+| `POST /api/auth/reset-password` | con token | Cierra todas las sesiones |
+| `GET /auth/me` | con sesión | Perfil + roles + permisos resueltos |
+| `POST /auth/sign-out` | con sesión | |
+| `POST /auth/change-password` | con sesión | Exige la contraseña actual |
+| `GET /users`, `GET /users/:id` | `usuarios:ver` | Incluye los roles |
+| `POST /users` | `usuarios:crear` | |
+| `PATCH /users/:id` | `usuarios:editar` | Desactivar cierra sus sesiones |
+| `PUT /users/:id/roles` | `usuarios:editar` | Idempotente; hace efecto en el acto |
+| `GET /audit` | `auditoria:ver` | Filtros + paginación por cursor |
+
+Todos menos los tres primeros pasan por `requireAuth` y `requirePermission`.
+
+### Módulos
+
+- **`modules/authz/`** — matriz de permisos ejecutable, alcances, `can()`,
+  `scopedCondition()`, middleware y emisión de auditoría. La matriz es una
+  transcripción 1-a-1 de [Roles y permisos](/dominio/roles-y-permisos/), y un
+  test la verifica celda por celda contra una lista derivada del documento.
+- **`modules/auth/`** — Better-Auth sobre el schema propio, transportes de
+  correo (Resend y Mailpit) y límite de intentos.
+- **`modules/users/`** — ABM con la protección del último administrador.
+- **`modules/audit/`** — consulta de la bitácora.
+
+### Códigos de error
+
+| Código | Status | Cuándo |
+|---|---|---|
+| `UNAUTHENTICATED` | 401 | No vino cookie de sesión |
+| `SESSION_EXPIRED` | 401 | Vino una que el servidor ya no acepta |
+| `USER_INACTIVE` | 401 | La cuenta fue desactivada (RN-ACC-05) |
+| `FORBIDDEN` | 403 | Autenticado, sin permiso. Queda auditado |
+| `AUDIT_UNAVAILABLE` | 500 | No se pudo auditar una acción sensible, así que no se ejecutó |
+| `RATE_LIMITED` | 429 | Trae `retry-after` y `reintentarEn` |
+| `VALIDATION_ERROR` | 400 | Con detalle por campo |
+| `ULTIMO_ADMIN` | 409 | Dejaría el sistema sin administrador (RN-ACC-06) |
+| `EMAIL_EN_USO` | 409 | El email ya existe (`citext`: choca sin importar el case) |
+
+### Cómo explorarlo
+
+Hay una colección de Bruno versionada en el repo:
+[Explorar la API con Bruno](/backend/exploracion-api/).
+
+### Decisiones que salieron de implementar
+
+- [ADR-0004](/decisiones/0004-audit-log-inmutable) — `audit_log` inmutable con
+  dos capas independientes.
+- [ADR-0005](/decisiones/0005-scopes-fail-closed) — los alcances fallan cerrados.
+- [RN-ACC-06](/dominio/roles-y-permisos/) y
+  [RN-ACC-07](/dominio/roles-y-permisos/) — dos reglas de negocio que aparecieron
+  construyendo.
+
+### Referencias de diseño
+
+- [Spec de M0](/superpowers/specs/2026-08-19-auth-rbac-design) — el **plan**
+  tiene además notas de ejecución task por task, con lo que hubo que corregir.
+- [ADR-0001](/decisiones/0001-stack-m0) — stack.
+- [ADR-0003](/decisiones/0003-roles-permisos-matriz) — matriz y multi-rol.

@@ -17,18 +17,75 @@ Documentación del proyecto `web/`: el panel de administración que usa la ofici
 
 ## Estado actual
 
-**M0 — Auth + RBAC** está diseñado y pendiente de implementación.
+**M0 — Auth + RBAC: ✅ implementado** (20-ago-2026). 176 tests, verificado en el
+browser contra `api/` real.
 
-- **Spec de diseño:** [`/superpowers/specs/2026-08-19-auth-rbac-design.md`](/superpowers/specs/2026-08-19-auth-rbac-design)
-  — incluye estructura de web/, rutas `(auth)` y `(app)`, módulos UI
-- **Plan de implementación:** [`/superpowers/plans/2026-08-19-m0-auth-rbac.md`](/superpowers/plans/2026-08-19-m0-auth-rbac)
-- **Patrón BFF:** [`/frontend/bff-pattern.md`](/frontend/bff-pattern) — guía para devs sobre `apiServerFetch()`, el helper único, anti-patrones y ESLint rule
-- **Decisiones arquitectónicas relevantes:**
-  - [ADR-0001 — Stack del módulo M0](/decisiones/0001-stack-m0) — Next.js 16 (App Router) + React 19 + Tailwind + TanStack Table
-  - [ADR-0002 — Patrón BFF desde M0](/decisiones/0002-bff-pattern) — web/ como Backend-For-Frontend, defensa en 3 capas
+Repositorio: [`aquazaku-web`](https://github.com/maoacr/aquazaku-web).
 
-**Cuando el código arranque**, esta sección se llena con:
-- Stack y estructura concreta de carpetas de web/
-- Sistema de diseño (paleta, tipografía, componentes)
-- Manejo de Server Components, Server Actions, Server-Side Fetching
-- Rutas y permisos por rol en la UI (qué módulos ve cada rol)
+### Pantallas
+
+| Ruta | Quién entra | Qué hace |
+|---|---|---|
+| `/login` | cualquiera | Ingreso. Distingue credenciales inválidas de cuenta desactivada y de límite de intentos |
+| `/forgot-password` | cualquiera | Pide el correo de recuperación |
+| `/reset-password?token=…` | con token | Destino del link del correo |
+| `/change-password` | con sesión | Primer ingreso forzado (spec §7.2) |
+| `/` | con sesión | Dashboard |
+| `/modulos/usuarios` | `admin` | Alta, roles y estado |
+| `/modulos/auditoria` | `admin` | Bitácora con filtros |
+| `/contador/auditoria` | `contador` | La misma vista, por su propia puerta |
+
+Todo lo que requiere sesión vive bajo el route group `(app)`, que no agrega
+segmento a la URL. El guard está en su layout: **una pantalla nueva nace
+protegida** sin que su autor tenga que acordarse de nada.
+
+### Estructura
+
+```
+src/
+├── app/
+│   ├── (auth)/          ← sin sesión: login, recuperación, cambio
+│   └── (app)/           ← con sesión: guard + shell + módulos
+│       ├── layout.tsx   ← sesión, primer ingreso y sidebar
+│       └── error.tsx    ← distingue 403 de 5xx
+├── components/
+└── lib/
+    ├── api-server.ts    ← el ÚNICO lugar donde se llama fetch()
+    ├── api-types.ts     ← las formas que devuelve api/
+    └── modules.ts       ← qué módulos ve cada rol
+```
+
+### Las tres capas del patrón BFF
+
+Ninguna alcanza sola; ver [Patrón BFF](/frontend/bff-pattern/):
+
+1. **Skill del proyecto** — atrapa al asistente antes de que escriba el
+   anti-patrón.
+2. **`apiServerFetch()`** — reenvía cookies, propaga `x-request-id`, declara el
+   `Origin` y nunca cachea datos de sesión.
+3. **Regla de ESLint** — prohíbe `fetch()` directo, `localStorage` y
+   `sessionStorage`. Corre en CI: si no corriera, la capa no existiría.
+
+### Manejo de errores
+
+`apiServerFetch` lanza `ApiError` con el status. El boundary de `(app)` lee el
+`digest` —lo único que sobrevive a producción, porque Next borra `message` y
+`stack`— y distingue:
+
+- **401** → el layout manda a `/login`.
+- **403** → pantalla de "no tenés acceso", no un redirect silencioso.
+- **5xx** → aviso genérico con el código para pasarle a soporte.
+
+### Sin TanStack Table todavía
+
+Está en el stack y en M1+ se gana el lugar: las tablas de ventas y stock van a
+ordenar y filtrar del lado del cliente. Las de M0 no hacen ninguna de las dos
+cosas —los filtros los resuelve `api/` y la paginación es por cursor—, así que
+usarlo solo mandaría la librería al browser para renderizar celdas estáticas.
+
+### Referencias de diseño
+
+- [Spec de M0](/superpowers/specs/2026-08-19-auth-rbac-design)
+- [ADR-0001](/decisiones/0001-stack-m0) — stack.
+- [ADR-0002](/decisiones/0002-bff-pattern) — patrón BFF.
+- [Brief de diseño](/frontend/brief-de-diseno/).

@@ -75,6 +75,14 @@ export default defineConfig({
 					collapsed: true,
 					items: [{ autogenerate: { directory: 'convenciones' } }],
 				},
+				{
+					// Specs y planes de implementación (SDD). Se publican porque el
+					// resto de la documentación los enlaza: sin esto, los links de
+					// Backend, Frontend y Dominio caen en 404.
+					label: 'Specs y planes',
+					collapsed: true,
+					items: [{ autogenerate: { directory: 'superpowers' } }],
+				},
 			],
 		}),
 	],

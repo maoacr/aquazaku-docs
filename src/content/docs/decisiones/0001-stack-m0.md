@@ -1,6 +1,6 @@
 ---
 title: ADR-0001 — Stack del módulo M0 (Auth + RBAC)
-description: Decisiones de stack para el primer módulo del sistema: custom auth + custom authz, Better-Auth, Fastify + Drizzle, Next.js App Router.
+description: "Decisiones de stack para el primer módulo del sistema: custom auth + custom authz, Better-Auth, Fastify + Drizzle, Next.js App Router."
 ---
 
 **Estado:** Aceptado

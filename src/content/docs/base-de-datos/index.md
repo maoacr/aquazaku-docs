@@ -24,17 +24,67 @@ Esa decisión, cuando se tome, va documentada como
 
 ## Estado actual
 
-**M0 — Auth + RBAC** está diseñado y pendiente de implementación. El motor de
-base de datos está elegido.
+**M0 — Auth + RBAC: ✅ implementado** (20-ago-2026). Siete tablas, dos
+migraciones, sobre PostgreSQL 16.
 
-- **Motor:** PostgreSQL 16 — registrado en [ADR-0001](/decisiones/0001-stack-m0)
-- **Modelo de datos M0** (5 tablas): ver sección 6 del
-  [`/superpowers/specs/2026-08-19-auth-rbac-design.md`](/superpowers/specs/2026-08-19-auth-rbac-design)
-  - `users` — identidad de usuarios
-  - `sessions` — sesiones de Better-Auth (multi-rol, httpOnly cookies)
-  - `roles` — catálogo de los 4 roles
-  - `user_roles` — N:M entre usuarios y roles
-  - `audit_log` — log append-only con REVOKE + trigger
-- **Migraciones:** Drizzle Kit, explícitas (nunca auto-generadas contra producción)
-- **Seed:** ver sección 13 del spec — script `pnpm db:seed` con seguridad de producción
-- **Decisiones de modelado:** las reglas de negocio viven en `/dominio/`, no se duplican acá
+### Tablas
+
+| Tabla | Para qué |
+|---|---|
+| `users` | Identidad. `email` es `citext`: el login es case-insensitive **en la base**, sin depender de que cada query recuerde un `LOWER()` |
+| `accounts` | **Acá vive el hash de la contraseña**, no en `users`. Better-Auth separa identidad de credencial para poder sumar OAuth sin tocar usuarios |
+| `sessions` | Con `roles[]` congelados al iniciar sesión (RN-ACC-01) |
+| `verifications` | Tokens de un solo uso para recuperar la contraseña |
+| `roles` | Catálogo cerrado de los cuatro |
+| `user_roles` | N:M, con quién otorgó cada rol |
+| `audit_log` | Bitácora **append-only** |
+
+### `audit_log` es inmutable de verdad
+
+Dos mecanismos independientes, porque ninguno alcanza solo —
+[ADR-0004](/decisiones/0004-audit-log-inmutable):
+
+1. **Triggers** que rechazan `UPDATE`, `DELETE` y `TRUNCATE`. Son
+   `FOR EACH STATEMENT`: un `DELETE` que no matchea ninguna fila nunca
+   dispararía uno por fila y pasaría en silencio.
+2. **El rol de la aplicación** (`aquazaku_app`) no es dueño de las tablas y
+   sobre `audit_log` solo tiene `SELECT` e `INSERT`.
+
+Al dueño lo frena el trigger; al trigger lo podría desactivar el dueño. Juntas,
+adulterar la bitácora exige credenciales del rol dueño **y** un `ALTER TABLE`
+explícito.
+
+`audit_log` **no tiene foreign key** a `users`, a propósito: si un usuario se
+borra, su rastro tiene que sobrevivir. Un log que se borra en cascada no es un
+log.
+
+### Dos roles, no uno
+
+| Rol | Lo usa | Puede |
+|---|---|---|
+| `aquazaku` | drizzle-kit y el runner de migraciones | Dueño de las tablas |
+| `aquazaku_app` | el servidor en runtime | CRUD sobre datos; sobre `audit_log`, solo leer e insertar |
+
+Se traduce en dos variables: `DATABASE_URL` y `DATABASE_MIGRATION_URL`. El
+servidor nunca abre una conexión con la segunda. Provisionamiento en
+[Entorno local](/empezar/entorno-local/).
+
+### Migraciones y seed
+
+```bash
+pnpm db:migrate        # base de desarrollo
+pnpm db:migrate:test   # base de tests
+pnpm db:seed           # catálogo de roles + primer admin
+```
+
+Las migraciones son SQL explícito de Drizzle Kit, nunca auto-generadas contra
+producción. Verificado: corren sobre una base **virgen** sin pasos manuales y son
+**idempotentes**.
+
+El seed también es idempotente: si ya hay un administrador activo no hace nada y
+**termina con éxito**, así puede vivir en el pipeline de deploy. En producción
+exige `SEED_CONFIRM=yes`.
+
+### Decisiones de modelado
+
+Las reglas de negocio viven en [`/dominio/`](/dominio/) y no se duplican acá.

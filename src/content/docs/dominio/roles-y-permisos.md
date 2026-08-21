@@ -38,7 +38,7 @@ Es importante aclararlo para no caer en el modelo equivocado: en Aquazaku el
 `seller` **no visita con producto**, solo contacta clientes y registra ventas.
 La preparación del pedido y la entrega están a cargo del `pos` en la planta,
 con **transportadores informales externos** (no son usuarios del sistema). Ver
-[Operaciones](/dominio/operaciones/) cuando se redacte esa sección.
+la sección de Operaciones cuando se redacte — todavía no existe.
 :::
 
 ### Por qué existe `contador` aparte de `admin`
