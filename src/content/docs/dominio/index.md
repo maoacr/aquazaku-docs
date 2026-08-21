@@ -117,6 +117,24 @@ Ya confirmado por Aquazaku:
 - Cortes de agua: **1 día** es lo habitual y se soporta; **5 días** es el peor
   caso conocido. Ese peor caso es el que dimensiona el almacenamiento.
 
+Confirmado al construir M1 (21 y 22-ago-2026):
+
+- La **primera entrega** de botellón y la **recarga** valen lo mismo: el cliente
+  paga el agua y nada más. **$10.000** al 21-ago-2026. Un solo producto en el
+  catálogo, no dos ([RN-CAT-08](/dominio/productos/)).
+- Los **botellones no llevan depósito ni garantía, nunca**. Esto resolvió una
+  contradicción entre RN-ENV-03 y RN-BAS-08 que llevaba meses sin verse.
+- Los **precios son un parámetro del sistema** y solo `admin` los cambia
+  ([RN-CAT-06](/dominio/productos/)).
+- **No se venden bolsas sueltas.** La paca es indivisible, y por eso la misma
+  unidad sirve para catálogo, stock y producción sin conversiones
+  ([RN-CAT-10](/dominio/productos/)).
+- El **código de producto lo genera el sistema** — `P20U_600ML`, `BOT_20L` —
+  porque Aquazaku no usa códigos propios hoy ([RN-CAT-11](/dominio/productos/)).
+- Hoy **no se retiene IVA ni se declara nada**, pero se cuenta con conectar
+  facturación electrónica más adelante. El precio guarda qué representa para no
+  perder esa información ([RN-CAT-09](/dominio/productos/)).
+
 Un supuesto sin marcar se convierte en un bug de negocio tres meses después.
 
 👉 Todas las preguntas abiertas están consolidadas en

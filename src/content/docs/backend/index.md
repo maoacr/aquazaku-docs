@@ -97,7 +97,7 @@ Todos menos los tres primeros pasan por `requireAuth` y `requirePermission`.
 | `SESSION_EXPIRED` | 401 | Vino una que el servidor ya no acepta |
 | `USER_INACTIVE` | 401 | La cuenta fue desactivada (RN-ACC-05) |
 | `FORBIDDEN` | 403 | Autenticado, sin permiso. Queda auditado |
-| `AUDIT_UNAVAILABLE` | 500 | No se pudo auditar una acción sensible, así que no se ejecutó |
+| `AUDIT_UNAVAILABLE` | 500 | No se pudo auditar una acción sensible, así que no se ejecutó — [ADR-0007](/decisiones/0007-auditoria-bloqueante/) |
 | `RATE_LIMITED` | 429 | Trae `retry-after` y `reintentarEn` |
 | `VALIDATION_ERROR` | 400 | Con detalle por campo |
 | `ULTIMO_ADMIN` | 409 | Dejaría el sistema sin administrador (RN-ACC-06) |

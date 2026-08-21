@@ -43,3 +43,19 @@ un ADR nuevo que la reemplaza y se marca el viejo como `Reemplazado por ADR-XXXX
 El historial de cómo pensamos vale tanto como la conclusión.
 
 Usá la [plantilla de ADR](/decisiones/plantilla/) para arrancar.
+
+## Los que hay
+
+| ADR | Decisión | Salió de |
+| --- | --- | --- |
+| [0001](/decisiones/0001-stack-m0/) | Stack del sistema: Fastify, Drizzle, Postgres, Better-Auth, Next | Diseño de M0 |
+| [0002](/decisiones/0002-bff-pattern/) | `web/` es un BFF: el browser nunca habla con `api/` | Diseño de M0 |
+| [0003](/decisiones/0003-roles-permisos-matriz/) | La matriz de permisos vive en TypeScript, no en la base | Diseño de M0 |
+| [0004](/decisiones/0004-audit-log-inmutable/) | `audit_log` es append-only por triggers **y** por permisos | Implementación de M0 |
+| [0005](/decisiones/0005-scopes-fail-closed/) | Un alcance que no aplica falla, no devuelve todo | Implementación de M0 |
+| [0006](/decisiones/0006-invariantes-en-la-base/) | Los invariantes viven en la base; el servicio explica el error | Implementación de M1 |
+| [0007](/decisiones/0007-auditoria-bloqueante/) | Una acción sensible sin bitácora no se ejecuta | Implementación de M1 |
+
+Los dos últimos salieron de **construir**, no de planear. Es el patrón esperable:
+un ADR de diseño elige entre alternativas conocidas; uno de implementación
+aparece cuando la realidad muestra una que nadie había visto.

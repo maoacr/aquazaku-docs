@@ -47,6 +47,11 @@ Ocho tablas, tres migraciones, sobre PostgreSQL 16.
 La tabla del catálogo (M1) apoya tres reglas del dominio en Postgres y no en la
 capa de servicio.
 
+El criterio general está en
+[ADR-0006](/decisiones/0006-invariantes-en-la-base/): la base impide el dato
+malo aunque un endpoint se olvide, y el servicio existe para que el error sea
+legible. No son dos validaciones de lo mismo — son dos responsabilidades.
+
 | Mecanismo | Qué garantiza |
 |---|---|
 | `CHECK productos_precio_minimo_es_piso` | [RN-CAT-04](/dominio/productos/) — el piso nunca supera un precio de lista |
