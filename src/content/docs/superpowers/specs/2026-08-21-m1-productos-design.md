@@ -366,3 +366,10 @@ arquitectura/roadmap.md   (M1 terminado)
 
 Ninguna. El dominio de M1 se cerró el 21-ago-2026 y esta spec no abrió ninguna
 nueva.
+
+---
+
+## 15. Implementación
+
+El desglose en tasks, con sus criterios de cierre, está en el
+[plan de M1](/superpowers/plans/2026-08-21-m1-productos) — 8 tasks.

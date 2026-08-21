@@ -55,7 +55,8 @@ las reglas de negocio de cada módulo, ver [Dominio](/dominio/).
 - **Depende de:** M0.
 - **Doc de dominio:** [Productos y catálogo](/dominio/productos/) — RN-CAT-01 a 11.
 - **Spec de diseño:** [`/superpowers/specs/2026-08-21-m1-productos-design.md`](/superpowers/specs/2026-08-21-m1-productos-design)
-- **Estado:** 🚧 dominio cerrado y spec escrita; implementación por arrancar.
+- **Plan de tasks:** [`/superpowers/plans/2026-08-21-m1-productos.md`](/superpowers/plans/2026-08-21-m1-productos) — 8 tasks.
+- **Estado:** 🚧 dominio cerrado, spec y plan escritos; implementación por arrancar.
 - **Notas:**
   - Una sola tabla nueva (`productos`). El precio vive ahí, no en M10.
   - El piso de precio es un `CHECK` en la base, no una validación de servicio.
