@@ -306,18 +306,47 @@ propios.
 Cada producto lleva un **código corto y legible** que genera el sistema:
 
 ```
-PACA-600      Paca de bolsas de 600 ml
-PACA-300      Paca de bolsas de 300 ml
-BOT-20        Recarga de botellón 20 L
+P20U_600ML    Paca de 20 bolsas de 600 ml
+P50U_300ML    Paca de 50 bolsas de 300 ml
+BOT_20L       Recarga de botellón de 20 L
 ```
+
+**Cada número trae su unidad pegada.** `20U` son veinte unidades, `600ML` son
+seiscientos mililitros. No hay convención que recordar: un código como
+`P20U_600ML` se lee igual aunque nunca hayas visto el sistema, mientras que un
+`PACA-20-600` obliga a saber cuál de los dos números es cuál.
+
+El botellón se mide en litros porque así lo nombra el negocio —"botellón de
+veinte litros"— y con la unidad explícita eso deja de ser una excepción
+incómoda.
 
 Pero el código **no es la identidad**. La identidad es el UUID interno — mismo
 principio que [RN-CLI-01](/dominio/clientes/) para clientes: el documento sirve
 para buscar, no para identificar.
 
 **Por qué separarlos:** el día que un código se escriba mal, o que Aquazaku
-quiera renombrar `BOT-20` a `RECARGA-20`, no puede arrastrar consigo las ventas
-históricas, los lotes ni los movimientos de stock. Todo eso apunta al UUID.
+quiera renombrar `BOT_20L` a `RECARGA_20L`, no puede arrastrar consigo las
+ventas históricas, los lotes ni los movimientos de stock. Todo eso apunta al
+UUID.
+
+### El código lleva lo que distingue al producto
+
+Que el código incluya **cantidad y contenido** no es adorno: es lo que hace que
+dos productos distintos nunca generen el mismo código.
+
+| Producto | Código |
+| --- | --- |
+| Paca de 20 bolsas de 600 ml | `P20U_600ML` |
+| Paca de 24 bolsas de 600 ml — [RN-PRD-01](/dominio/produccion/) la anticipa | `P24U_600ML` |
+| Bolsa de 500 ml en paca de 24 | `P24U_500ML` |
+
+Sin eso haría falta desambiguar con un contador, y `PACA-600-2` no le dice nada
+a nadie: solo que es "la segunda". El `pos` que la ve en pantalla tendría que ir
+a mirar el detalle igual, y ahí el código falló en su única tarea.
+
+**El sufijo queda para un solo caso:** que un producto se desactive y meses
+después se reintroduzca idéntico. Ahí `P20U_600ML_2` sí significa algo — es la
+segunda encarnación, y el código viejo sigue tomado a propósito.
 
 **El código es único y no se reusa.** Si un producto se desactiva
 ([RN-CAT-02](#rn-cat-02--un-producto-no-se-borra-se-desactiva)), su código queda
@@ -325,8 +354,8 @@ tomado: reciclarlo haría que un comprobante viejo parezca referirse al producto
 nuevo.
 
 :::note[Por qué generarlo y no dejarlo libre]
-Un código escrito a mano termina con variantes: `PACA600`, `paca-600`,
-`Paca 600`. Después nadie puede buscar de forma confiable, y el día que haya
+Un código escrito a mano termina con variantes: `P20U600ML`, `p20u_600ml`,
+`Paca 20 600`. Después nadie puede buscar de forma confiable, y el día que haya
 código de barras o facturación electrónica hay que limpiarlos todos.
 
 Generarlo cuesta lo mismo hoy y evita esa limpieza.

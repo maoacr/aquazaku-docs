@@ -10,7 +10,7 @@ semilla y dos pantallas en `web/`.
 
 **Dominio:** [Productos y catálogo](/dominio/productos/) — RN-CAT-01 a 11.
 
-**Estado:** 🚧 en curso — T1 y T2 cerradas.
+**Estado:** 🚧 en curso — T1, T2 y T3 cerradas.
 
 ---
 
@@ -227,37 +227,79 @@ fácil de introducir al restringir la escritura.
 - Crear: `api/src/modules/productos/codigo.ts`
 - Crear: `api/src/modules/productos/__tests__/codigo.test.ts`
 
-**Produce:** `generarCodigo(presentacion, contenidoMl)` → `PACA-600`, `BOT-20`.
+**Produce:** `generarCodigo({ presentacion, contenidoMl, unidades })` →
+`P20U_600ML`, `BOT_20L`.
 
-- [ ] **Paso 1 — Determinista y legible**
+- [x] **Paso 1 — El código lleva su unidad pegada**
 
 ```
-paca     + 600 ml    → PACA-600
-paca     + 300 ml    → PACA-300
-botellon + 20 000 ml → BOT-20
+paca     · 20 u · 600 ml    → P20U_600ML
+paca     · 50 u · 300 ml    → P50U_300ML
+botellon ·  1 u · 20 000 ml → BOT_20L
 ```
 
-La paca se nombra por mililitros; el botellón por litros, porque así lo dice el
-negocio ("botellón de veinte litros", no "de veinte mil mililitros"). El
-[glosario](/empezar/glosario/) manda sobre la simetría del código.
+Cada número trae su unidad. Sin eso, `PACA-20-600` obliga a saber cuál de los
+dos es cuál; `P20U_600ML` se lee sin conocer la convención.
 
-- [ ] **Paso 2 — Colisión resuelta con sufijo, no con azar**
+La paca se mide en mililitros y el botellón en litros porque así los nombra el
+negocio. Con la unidad explícita, la asimetría deja de ser ambigüedad.
 
-Si `PACA-600` ya existe, el siguiente es `PACA-600-2`. Un sufijo aleatorio
-haría el código impredecible y rompería lo único que justifica tenerlo: que
-una persona lo pueda leer y decir.
+- [x] **Paso 2 — El botellón cae a mililitros si no da litros exactos**
 
-- [ ] **Paso 3 — El código no se reusa nunca**
+`20 000 ml` → `BOT_20L`. Pero `20 500 ml` → `BOT_20500ML`, no `BOT_20.5L`: un
+punto decimal dentro de un código es una fuente de variantes al escribirlo a
+mano.
 
-La unicidad la garantiza el índice de la base. El generador consulta los
-existentes **incluyendo los inactivos** — reciclar el código de un producto
-desactivado haría que un comprobante viejo parezca referirse al nuevo
-([RN-CAT-11](/dominio/productos/)).
+Regla explícita y testeable: **litros solo si el contenido es múltiplo exacto de
+1000.**
 
-**Cierra cuando:** los tests cubren los tres productos reales, la colisión y el
-caso del inactivo.
+- [x] **Paso 3 — La colisión es la excepción, no el caso normal**
 
----
+Como el código lleva cantidad **y** contenido, dos productos distintos nunca
+generan el mismo. `P24U_600ML` no choca con `P20U_600ML`.
+
+Solo queda un caso real: un producto desactivado que se reintroduce idéntico.
+Ahí el sufijo es `_2`, `_3`… y **sí significa algo** — es la segunda
+encarnación.
+
+- [x] **Paso 4 — El código no se recicla nunca**
+
+El generador consulta los existentes **incluyendo los inactivos**
+([RN-CAT-11](/dominio/productos/)). Reciclar el código de un producto
+desactivado haría que un comprobante viejo parezca referirse al nuevo.
+
+**Cierra cuando:** los tests cubren los tres productos reales, el botellón no
+exacto, la paca de 24 que no colisiona, y la reintroducción de un desactivado.
+
+:::note[Notas de ejecución — T3 cerrada el 21-ago-2026]
+**El formato del código cambió tres veces antes de escribir una línea**, y esa
+fue la parte que más valió la pena. El plan original decía `PACA-600` con sufijo
+contador. Revisándolo apareció que `PACA-600-2` no informa nada: el `pos` que lo
+ve tiene que abrir el detalle igual. Aquazaku propuso poner cantidad y contenido
+—`PACA-20-600`— y después hacerlo explícito con unidades: **`P20U_600ML`**.
+
+La forma final es mejor por dos motivos concretos: cada número trae su unidad,
+así que no hay convención que recordar; y como el código lleva lo que distingue
+un producto de otro, **dos productos distintos nunca colisionan**. La paca de 24
+es `P24U_600ML`, no un desempate.
+
+**El sufijo pasó de parche a información.** Ahora solo aparece cuando un
+producto se desactiva y se reintroduce idéntico — y ahí `_2` significa
+exactamente eso: la segunda encarnación.
+
+**Regla que hubo que decidir sobre la marcha:** el botellón usa litros solo si
+el contenido es múltiplo exacto de 1000. Un `BOT_20.5L` metería un punto decimal
+adentro del código, que es de donde nacen las variantes al escribirlo a mano.
+`20 500 ml` cae a `BOT_20500ML`.
+
+**Un test tenía el nombre al revés de lo que afirmaba** — decía "no reutiliza un
+hueco intermedio" y verificaba que sí lo llenaba. El comportamiento era correcto
+(no existe DELETE sobre productos, así que un hueco solo puede significar que
+ese código nunca se usó), pero el nombre mentía. Un test mal nombrado es peor
+que ninguno: el que lo lea dentro de un año va a creer la promesa equivocada.
+
+**Resultado:** 12 tests nuevos, suite de `api/` en **377**.
+:::
 
 ## Task 4 — Servicio
 
@@ -377,11 +419,11 @@ Igual que `sembrarRoles()`: si ya están, no hace nada y sale en 0.
 
 | Código | Nombre | Presentación | Contenido | Unidades |
 | --- | --- | --- | --- | --- |
-| `PACA-600` | Paca de bolsas 600 ml | `paca` | 600 | 20 |
-| `PACA-300` | Paca de bolsas 300 ml | `paca` | 300 | 50 |
-| `BOT-20` | Recarga de botellón 20 L | `botellon` | 20000 | 1 |
+| `P20U_600ML` | Paca de 20 bolsas de 600 ml | `paca` | 600 | 20 |
+| `P50U_300ML` | Paca de 50 bolsas de 300 ml | `paca` | 300 | 50 |
+| `BOT_20L` | Recarga de botellón de 20 L | `botellon` | 20000 | 1 |
 
-- [ ] **Paso 2 — Solo `BOT-20` con precio real**
+- [ ] **Paso 2 — Solo `BOT_20L` con precio real**
 
 $10.000, confirmado por Aquazaku ([RN-CAT-08](/dominio/productos/)).
 

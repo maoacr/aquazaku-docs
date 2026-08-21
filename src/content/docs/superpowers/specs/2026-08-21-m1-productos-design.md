@@ -266,11 +266,11 @@ para que el error sea legible. Los dos, no uno.
 
 | Código | Nombre | Presentación | Contenido | Unidades | Litros |
 | --- | --- | --- | --- | --- | --- |
-| `PACA-600` | Paca de bolsas 600 ml | `paca` | 600 ml | 20 | 12 |
-| `PACA-300` | Paca de bolsas 300 ml | `paca` | 300 ml | 50 | 15 |
-| `BOT-20` | Recarga de botellón 20 L | `botellon` | 20 000 ml | 1 | 20 |
+| `P20U_600ML` | Paca de 20 bolsas de 600 ml | `paca` | 600 ml | 20 | 12 |
+| `P50U_300ML` | Paca de 50 bolsas de 300 ml | `paca` | 300 ml | 50 | 15 |
+| `BOT_20L` | Recarga de botellón de 20 L | `botellon` | 20 000 ml | 1 | 20 |
 
-`BOT-20` arranca con **$10.000** — el precio vigente confirmado por Aquazaku
+`BOT_20L` arranca con **$10.000** — el precio vigente confirmado por Aquazaku
 ([RN-CAT-08](/dominio/productos/)). Es dato semilla, editable desde la UI, no
 una constante.
 
