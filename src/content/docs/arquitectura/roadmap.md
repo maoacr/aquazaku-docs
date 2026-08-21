@@ -254,10 +254,10 @@ puede arrancar en `design` mientras el anterior está en `apply`, pero no antes.
 | Fase | Módulo |
 | --- | --- |
 | ✅ **Terminado** | **M0 — Auth + RBAC** |
-| Spec en curso | — |
+| Spec escrita | **M1 — Productos y catálogo** |
 | Design en curso | — |
 | Apply en curso | — |
-| **Por arrancar** | **M1 — Productos y catálogo** |
+| **Por arrancar** | **M1 — implementación** |
 | Pendiente | M2–M7, M9–M13 |
 | Diferido (post-MVP) | M8 — Rutas y seller mobile |
 

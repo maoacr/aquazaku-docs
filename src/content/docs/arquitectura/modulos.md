@@ -54,7 +54,15 @@ las reglas de negocio de cada módulo, ver [Dominio](/dominio/).
 - **Roles:** `admin` (edita), `pos` / `seller` / `contador` (leen).
 - **Depende de:** M0.
 - **Doc de dominio:** [Productos y catálogo](/dominio/productos/) — RN-CAT-01 a 11.
-- **Estado:** 🚧 dominio cerrado (11 reglas, sin preguntas abiertas), spec por arrancar.
+- **Spec de diseño:** [`/superpowers/specs/2026-08-21-m1-productos-design.md`](/superpowers/specs/2026-08-21-m1-productos-design)
+- **Estado:** 🚧 dominio cerrado y spec escrita; implementación por arrancar.
+- **Notas:**
+  - Una sola tabla nueva (`productos`). El precio vive ahí, no en M10.
+  - El piso de precio es un `CHECK` en la base, no una validación de servicio.
+  - `litros` es columna generada: no se puede desincronizar de sus entradas.
+  - Extiende la matriz de permisos con `crear`, `editar` y `desactivar`.
+  - Deuda conocida: RN-CAT-02 exige stock en cero para desactivar, y la tabla
+    de stock es de M2.
 
 ## M2 — Stock de producto terminado
 
