@@ -5,6 +5,24 @@ sidebar:
   order: 8
 ---
 
+:::danger[Este documento describe un modelo que el dominio ya descartó]
+Acá el `seller` sale con producto cargado y el stock se mueve de `BODEGA` a
+`RUTA:{id}`. **Ese modelo no es el vigente.**
+
+Dos reglas ✅ confirmadas dicen lo contrario: el `seller`
+[no visita con producto](/dominio/roles-y-permisos/) —solo contacta clientes— y
+[RN-STK-01](/dominio/stock/) establece que hay **una sola** ubicación de stock,
+sin ubicación siquiera modelada.
+
+Este documento corresponde a **M8, que está fuera del MVP**
+([roadmap](/arquitectura/roadmap/)). Se conserva porque el ciclo de rendición y
+el modo offline siguen siendo material útil el día que M8 se retome — pero
+**hay que reescribirlo contra el modelo vigente antes de implementarlo**, no
+tomarlo como está.
+
+Mientras tanto, nada de acá se implementa.
+:::
+
 El ciclo de trabajo del `seller`. Es donde se cruzan ventas, stock y envases,
 y donde el sistema demuestra si sirve o no.
 

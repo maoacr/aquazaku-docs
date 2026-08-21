@@ -39,27 +39,43 @@ dónde estaban ni quién los tenía.
 
 ## Reglas
 
-### RN-STK-01 — El stock de producto se controla por ubicación
+### RN-STK-01 — El producto vive en un solo lugar: la bodega de la planta
 
-**Estado:** 🟡 Supuesto *(salvo el punto de venta, ver abajo)*
+**Estado:** ✅ Confirmada — 22-ago-2026. Corrige la versión anterior de esta
+regla, que suponía dos ubicaciones.
 
-No existe "el stock" a secas. Existe stock **en una ubicación**:
+Todo el producto terminado está en **la bodega de la planta**. No hay stock en
+otro lado, y por lo tanto **el stock no lleva ubicación**: es cantidad por
+producto y lote, y nada más.
 
-| Ubicación | Qué es |
-| --- | --- |
-| `BODEGA` | Depósito central |
-| `RUTA:{id}` | Carga en el vehículo de un `seller` |
+**Por qué no se modela una ubicación con un solo valor posible:** una columna
+que hoy solo puede valer `BODEGA` la arrastra cada consulta, la repite cada test
+y no permite verificar que el filtrado funcione, porque no hay contra qué
+comparar. Es complejidad que se paga durante meses a cambio de una migración que
+tal vez nunca haga falta.
 
-**Por qué:** sin ubicación no podés saber si un faltante es un robo en bodega o
-un `seller` que no rindió.
+:::note[La versión anterior suponía una segunda ubicación, y era incorrecta]
+Esta regla listaba `RUTA:{id}` — la carga en el vehículo de un `seller`. Estaba
+marcada como 🟡 **Supuesto** y contradecía a dos reglas ✅ **Confirmadas**:
 
-:::tip[Confirmado por Aquazaku]
-**El `pos` vende contra el stock de `BODEGA`.** El punto de venta *no* tiene
-ubicación de stock propia.
+- [RN-STK-07](#rn-stk-07--la-planta-de-campo-de-la-cruz-es-la-única-bodega-y-el-único-punto-de-venta):
+  `stock_locations = ["BODEGA"]`, *"no hay stock itinerante"*.
+- [Roles y permisos](/dominio/roles-y-permisos/): el `seller` **no visita con
+  producto**, solo contacta clientes. Quien despacha es el `pos`, con
+  transportadores informales externos que no son usuarios del sistema.
 
-Consecuencia directa: `BODEGA` tiene dos consumidores simultáneos —el mostrador
-y la carga de rutas— así que las bajas concurrentes sobre la misma ubicación son
-un caso real, no teórico. Hay que resolverlo en el diseño de la API.
+Ganan las confirmadas. El modelo con `seller` cargando camión quedó en
+[Rutas](/dominio/rutas/), que describe un **M8 post-MVP** y todavía no se
+actualizó a este modelo.
+:::
+
+:::caution[Dos consumidores sobre el mismo stock, igual]
+Que haya una sola ubicación **no** elimina la concurrencia. El mostrador vende y
+la preparación de pedidos descuenta, las dos contra el mismo saldo y al mismo
+tiempo.
+
+Las bajas concurrentes son un caso real y hay que resolverlas en el diseño de la
+API — no desaparecieron con la ubicación.
 :::
 
 ---
@@ -70,15 +86,19 @@ un caso real, no teórico. Hay que resolverlo en el diseño de la API.
 
 El stock nunca se edita directamente. Se mueve mediante documentos:
 
-| Documento | Efecto |
-| --- | --- |
-| **Cierre de producción** | ➕ Producto en bodega · ➖ Tapas y sellos |
-| Compra recibida | ➕ Bodega — insumos, no producto terminado |
-| Carga de ruta | Bodega ➡️ Ruta |
-| Venta en punto de venta (`pos`) | ➖ Bodega |
-| Venta en ruta (`seller`) | ➖ Ruta |
-| Devolución de ruta | Ruta ➡️ Bodega |
-| Ajuste de inventario | ± con motivo obligatorio |
+| Documento | Efecto | Módulo |
+| --- | --- | :-: |
+| **Cierre de producción** | ➕ Producto · ➖ Tapas y sellos | M4 |
+| Compra recibida | ➕ Insumos, no producto terminado | M9 |
+| Venta | ➖ Producto | M6 |
+| Devolución sana | ➕ Producto, al mismo lote | M6 |
+| Descarte | ➖ Producto, con causa | M2 |
+| Ajuste de inventario | ± con motivo obligatorio | M2 |
+
+Los tres documentos de ruta —carga, venta en ruta y devolución de ruta— **ya no
+existen**: dependían de una segunda ubicación que
+[RN-STK-01](#rn-stk-01--el-producto-vive-en-un-solo-lugar-la-bodega-de-la-planta)
+descartó.
 
 **Por qué:** un stock editable a mano es un stock que nadie cree. El ajuste
 existe —el inventario físico siempre difiere— pero es un documento con nombre,
@@ -86,21 +106,22 @@ fecha y motivo, no un `UPDATE`.
 
 ---
 
-### RN-STK-03 — No se puede vender lo que no está en la ubicación
+### RN-STK-03 — No se puede vender lo que no hay
 
-**Estado:** 🟡 Supuesto
+**Estado:** ✅ Confirmada — 22-ago-2026. Se simplifica junto con
+[RN-STK-01](#rn-stk-01--el-producto-vive-en-un-solo-lugar-la-bodega-de-la-planta).
 
-Una venta desde la ruta solo puede despachar producto cargado en esa ruta. Una
-venta del `pos` solo puede despachar producto que esté en bodega. No hay venta
-con stock negativo.
+Una venta solo puede despachar producto que exista y no esté vencido. **No hay
+venta con stock negativo.**
 
-**Por qué:** permitir negativo convierte el inventario en una sugerencia.
+**Por qué:** permitir negativo convierte el inventario en una sugerencia. Y un
+inventario que es una sugerencia no sirve para pedir insumos, ni para detectar
+un faltante, ni para cerrar el día.
 
-:::caution[Impacta la app mobile]
-El `seller` opera **sin señal**. Esta validación tiene que correr en el
-dispositivo contra la carga local, no solo en el servidor. Es una de las razones
-por las que el modo offline necesita su propio [ADR](/decisiones/).
-:::
+**Dónde se hace cumplir:** en la base, no solo en el servicio
+([ADR-0006](/decisiones/0006-invariantes-en-la-base/)). Un saldo que no puede
+ser negativo es exactamente el tipo de invariante que un `CHECK` garantiza
+aunque un endpoint nuevo se olvide de validarlo.
 
 ---
 
@@ -268,7 +289,7 @@ stock_locations = ["BODEGA"]   // una sola
 
 - No hay modelo multi-bodega. No hay transferencias entre bodegas.
 - No hay stock itinerante (porque no hay `seller` con carga de camión — el `seller` solo contacta, ver [modelo operativo](/empezar/pendientes/)).
-- `pos` vende directo desde `BODEGA` ([RN-STK-01](#rn-stk-01--el-stock-de-producto-se-controla-por-ubicación)).
+- `pos` vende directo desde `BODEGA` ([RN-STK-01](#rn-stk-01--el-producto-vive-en-un-solo-lugar-la-bodega-de-la-planta)).
 - Si en algún momento Aquazaku abre una segunda planta o vende en otra ciudad, esta regla se reabre como decisión explícita — no es un toggle.
 
 ---
