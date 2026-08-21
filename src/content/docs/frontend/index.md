@@ -32,6 +32,8 @@ Repositorio: [`aquazaku-web`](https://github.com/maoacr/aquazaku-web).
 | `/change-password` | con sesión | Primer ingreso forzado (spec §7.2) |
 | `/` | con sesión | Dashboard |
 | `/modulos/productos` | **los cuatro roles** | Catálogo en lectura: código, litros y precios |
+| `/modulos/stock` | **los cuatro roles** | Total, vendible y vencido por producto |
+| `/modulos/stock/[productoId]` | **los cuatro roles** | Lotes en orden FIFO; formularios según permiso |
 | `/modulos/productos/gestion` | `admin` | Alta, precios y activación |
 | `/modulos/usuarios` | `admin` | Alta, roles y estado |
 | `/modulos/auditoria` | `admin` | Bitácora con filtros |
@@ -71,13 +73,21 @@ Cargar el precio y activar son dos decisiones separadas a propósito
 lo que faltaba.
 :::
 
-:::danger[Existe un sistema de diseño y todavía no está aplicado]
+:::tip[El sistema de diseño está aplicado en `web/` desde M2]
 `claude-design/` no son mockups: es un **sistema de diseño con tokens finales**
 —`tokens.css` y `tokens.json`— más trece pantallas de referencia en HTML y las
 48 reglas de negocio escritas como casos ejecutables.
 
-**Ni `web/` ni `docs/` lo usan hoy.** Las pantallas de M0 y M1 se construyeron
-con Tailwind por defecto, sin la paleta ni la tipografía del sistema.
+**`web/` lo adoptó entero el 22-ago-2026.** `docs/` todavía no.
+
+`tokens.css` se **copia** a `web/src/app/`: el original vive fuera del repo —el
+workspace lo ignora— así que el build no puede leerlo. La copia **no se edita**;
+si el sistema cambia, se vuelve a copiar entera. Editarla crearía una segunda
+verdad sobre los colores de la marca, y ganaría la que alguien tocó último.
+
+`globals.css` es solo el **puente**: expone los tokens como utilidades de
+Tailwind (`bg-tarjeta`, `text-principal`, `border-sutil`). Nadie escribe un hex
+en un componente.
 
 Lo que el sistema ya fija y no hay que volver a decidir:
 
@@ -92,9 +102,22 @@ Lo que el sistema ya fija y no hay que volver a decidir:
 **Regla dura del sistema:** el verde `#33BD73` **nunca es decorativo**. Es la luz
 verde del cuadre y de la autonomía. Si aparece donde no significa "todo en
 orden", está mal usado.
+:::
 
-Aplicarlo es trabajo pendiente, y conviene hacerlo **antes** de que haya muchas
-pantallas: cada pantalla nueva sin tokens es una más para migrar después.
+:::caution[Migrar la paleta no es buscar y reemplazar]
+Al adoptar los tokens hubo que migrar 20 archivos con clases `neutral-*`. Parece
+mecánico y no lo es: **`bg-neutral-900` cumplía dos roles distintos** —superficie
+oscura en unas pantallas, botón primario en otras— y el número no dice cuál.
+
+El reemplazo por superficie dejó los cuatro botones de autenticación con texto
+blanco sobre fondo blanco: **invisibles**, con el typecheck y los 234 tests en
+verde.
+
+Lo agarró una captura de pantalla, no la suite. Cuando se migre `docs/`, conviene
+mirar cada pantalla — el compilador no sabe de contraste.
+
+Los tokens semánticos se nombran por **rol**, no por tono, justamente para que
+esto no vuelva a pasar: `bg-tarjeta` y `bg-accion` no se pueden confundir.
 :::
 
 :::caution[El sistema de diseño trae reglas de negocio, y no todas están vigentes]
