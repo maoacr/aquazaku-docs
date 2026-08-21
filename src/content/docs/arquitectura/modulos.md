@@ -53,8 +53,8 @@ las reglas de negocio de cada módulo, ver [Dominio](/dominio/).
   unidades por paca y conversiones a litros como dato configurable.
 - **Roles:** `admin` (edita), `pos` / `seller` / `contador` (leen).
 - **Depende de:** M0.
-- **Doc de dominio:** *(a documentar)* — base en RN-PRD-01.
-- **Estado:** 🔲 pendiente.
+- **Doc de dominio:** [Productos y catálogo](/dominio/productos/) — RN-CAT-01 a 07.
+- **Estado:** 🚧 dominio escrito, spec por arrancar.
 
 ## M2 — Stock de producto terminado
 

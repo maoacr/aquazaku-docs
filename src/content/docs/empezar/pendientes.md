@@ -10,6 +10,7 @@ quedó resuelto está documentado en su `RN-*` correspondiente dentro de las
 secciones de dominio ([Clientes](/dominio/clientes/),
 [Ventas](/dominio/ventas/), [Producción](/dominio/produccion/),
 [Botellones y bases](/dominio/botellones-y-bases/),
+[Productos](/dominio/productos/),
 [Roles y permisos](/dominio/roles-y-permisos/), etc.).
 
 Está ordenada por **cuánto duele equivocarse**, no por área.
@@ -22,6 +23,22 @@ línea de acá.
 Esta página tiene que **encogerse** con el tiempo. Si crece, el proyecto está
 avanzando sobre supuestos.
 :::
+
+---
+
+## 🔴 Bloquean M1 — Productos y catálogo
+
+Son **decisiones de negocio**, no mediciones. Ninguna frena el modelo de datos,
+pero sí la carga del catálogo real: sin respuesta no se puede sembrar un
+producto de verdad. Contexto completo en
+[Productos y catálogo](/dominio/productos/).
+
+| # | Pregunta | Para qué |
+| :-: | --- | --- |
+| 8 | **¿La primera entrega de botellón es un producto distinto de la recarga?** Si el cliente nuevo paga más la primera vez, son dos productos con precios distintos. | [RN-CAT-01](/dominio/productos/), [RN-ENV-03](/dominio/botellones-y-bases/) |
+| 9 | **¿Los precios se cargan con IVA incluido o se discrimina aparte?** Si se discrimina, el producto necesita su tarifa y la venta dos totales. Bloquea M11 (Contador). | [RN-CAT-03](/dominio/productos/) |
+| 10 | **¿El código de producto lo define Aquazaku o lo genera el sistema?** Si ya usan códigos en su operación, el catálogo tiene que respetarlos. | [RN-CAT-01](/dominio/productos/) |
+| 11 | **¿Se venden bolsas sueltas o solo pacas completas?** Cambia la unidad de venta y el descuento de stock. Hoy el modelo asume paca completa. | [RN-CAT-01](/dominio/productos/) |
 
 ---
 

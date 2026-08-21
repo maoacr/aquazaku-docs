@@ -20,6 +20,7 @@ producto, y el producto sale.
 | Área | Qué define |
 | --- | --- |
 | [Producción y agua](/dominio/produccion/) | Tanques en litros, envasado diario y conversión a producto |
+| [Productos y catálogo](/dominio/productos/) | Qué se vende: presentaciones, litros por unidad y precios |
 | [Stock de producto](/dominio/stock/) | Producto por ubicación |
 | [Botellones y bases](/dominio/botellones-y-bases/) | Los dos activos retornables y su trazabilidad |
 | [Ventas](/dominio/ventas/) | Qué es una venta, cómo se anula, cómo se cobra, crédito |
@@ -45,6 +46,7 @@ RN-VEN-02
 | --- | --- |
 | `RN-PRD` | Producción y agua |
 | `RN-VEN` | Ventas |
+| `RN-CAT` | Productos y catálogo |
 | `RN-STK` | Stock de producto |
 | `RN-ENV` | Botellones (por cantidad) |
 | `RN-BAS` | Bases (por unidad identificada) |

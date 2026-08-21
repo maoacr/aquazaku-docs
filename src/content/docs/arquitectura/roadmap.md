@@ -199,7 +199,7 @@ linkea.
 
 | Módulo | Doc de dominio | Reglas principales (referencia) |
 | --- | --- | --- |
-| M1 | — *(a documentar)* | RN-PRD-01 (equivalencias en litros como configuración) |
+| M1 | [Productos y catálogo](/dominio/productos/) | RN-CAT-01 a 07 (catálogo cerrado, desactivar sin borrar, precio en el producto, piso absoluto) |
 | M2 | [Stock](/dominio/stock/) | RN-STK-01 a 07 (ubicación, motivos, FIFO, vencimiento 30d, devoluciones, descarte) |
 | M3 | — *(a documentar)* | pendiente confirmar stock mínimo default 200/200 |
 | M4 | [Producción](/dominio/produccion/) | RN-PRD-02 a 24 (tanques separados, cierre diario, lote, encendido/apagado, etc.) |
