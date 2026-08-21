@@ -220,9 +220,10 @@ para que cuando llegue M2 estén listas.
 
 | Permiso | `admin` | `seller` | `pos` | `contador` |
 | --- | :-: | :-: | :-: | :-: |
-| `stock:ver` | ✅ | 🟡 `todo` | 🟡 `BODEGA` | 🟡 `todo` |
+| `stock:ver` | ✅ | 🟡 `todo` | 🟡 `todo` | 🟡 `todo` |
 | `stock:cargar_ruta` | ✅ `todo` | ❌ | ✅ `todo` | ❌ |
 | `stock:ajustar` | ✅ | ❌ | 🟡 `cantidades` (con motivo) | ❌ |
+| `stock:descartar` | ✅ | ❌ | ✅ | ❌ |
 | `insumos:ver` | ✅ | ❌ | ✅ | 🟡 `todo` |
 | `insumos:ajustar` | ✅ | ❌ | 🟡 `cantidades` (con motivo) | ❌ |
 
@@ -310,6 +311,27 @@ proveedor está `activo`. Es una validación de la capa de servicio
 | `rutas:abrir` | ✅ | ✅ | ❌ | ❌ |
 | `rutas:rendir` | ✅ | 🟡 `propio` | ❌ | ❌ |
 | `rutas:cerrar_con_faltante` | ✅ | ❌ | ❌ | ❌ |
+
+:::caution[El `pos` pasó de alcance `BODEGA` a `todo` — 22-ago-2026]
+No es que se le hayan ampliado los permisos: **hay una sola bodega y el stock no
+lleva columna de ubicación** ([RN-STK-01](/dominio/stock/)).
+
+El alcance `BODEGA` exige esa columna. Sin ella, `scopeCondition` **lanza** —es
+el fallo cerrado de [ADR-0005](/decisiones/0005-scopes-fail-closed/)— y el `pos`
+recibiría un error en vez de ver el stock. Con una sola ubicación los dos
+alcances significan lo mismo, y `todo` es el honesto.
+
+`BODEGA` queda en el modelo de alcances **sin usar**, para cuando M8 traiga una
+segunda ubicación. Un test verifica que ningún rol lo tenga asignado.
+:::
+
+:::note[`stock:cargar_ruta` es un permiso sin uso]
+Sigue en la matriz, pero el modelo que lo justificaba —el `seller` saliendo con
+producto— quedó descartado ([RN-STK-01](/dominio/stock/)).
+
+Hoy es **inerte**: ningún endpoint lo verifica, así que no concede nada. Se
+decide junto con M8, cuando se retome [Rutas](/dominio/rutas/).
+:::
 
 ### Administración
 
