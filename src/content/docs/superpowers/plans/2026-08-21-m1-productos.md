@@ -10,7 +10,7 @@ semilla y dos pantallas en `web/`.
 
 **Dominio:** [Productos y catálogo](/dominio/productos/) — RN-CAT-01 a 11.
 
-**Estado:** 🚧 en curso — T1, T2 y T3 cerradas.
+**Estado:** 🚧 en curso — T1 a T4 cerradas.
 
 ---
 
@@ -310,7 +310,7 @@ que ninguno: el que lo lea dentro de un año va a creer la promesa equivocada.
 **Produce:** `listar`, `porId`, `crear`, `editar`, `editarPrecios`,
 `desactivar`, `reactivar`.
 
-- [ ] **Paso 1 — Validar el piso antes de tocar la base**
+- [x] **Paso 1 — Validar el piso antes de tocar la base**
 
 El `CHECK` es la garantía; esta validación es la **explicación**. Sin ella el
 usuario recibe un error de Postgres en vez de un mensaje que dice qué corregir.
@@ -322,7 +322,7 @@ if (minimo > residencial || minimo > comercial) {
 }
 ```
 
-- [ ] **Paso 2 — `editarPrecios` audita con el antes y el después**
+- [x] **Paso 2 — `editarPrecios` audita con el antes y el después**
 
 ```ts
 await emit({
@@ -342,17 +342,17 @@ await emit({
 Sin el `payload`, la bitácora diría *que* alguien cambió un precio pero no *de
 cuánto a cuánto* — que es exactamente lo que se va a querer saber.
 
-- [ ] **Paso 3 — `desactivar` es idempotente en la base, explícito en el servicio**
+- [x] **Paso 3 — `desactivar` es idempotente en la base, explícito en el servicio**
 
 Desactivar uno ya inactivo devuelve `PRODUCTO_YA_INACTIVO` (409). Es
 información, no un fallo silencioso: si el `admin` creyó que estaba activo,
 merece enterarse.
 
-- [ ] **Paso 4 — Sin `DELETE` en el módulo**
+- [x] **Paso 4 — Sin `DELETE` en el módulo**
 
 No se expone. No hay forma de llamarlo por accidente.
 
-- [ ] **Paso 5 — La deuda de RN-CAT-02, escrita en el código**
+- [x] **Paso 5 — La deuda de RN-CAT-02, escrita en el código**
 
 ```ts
 // RN-CAT-02 exige que no queden unidades en stock para desactivar.
@@ -364,6 +364,39 @@ Un comentario que cita la regla y dice cuándo se cierra. No un `TODO` suelto.
 
 **Cierra cuando:** los tests cubren el piso inválido, la auditoría con payload,
 la doble desactivación y el listado filtrando por `activo`.
+
+:::note[Notas de ejecución — T4 cerrada el 22-ago-2026]
+**`ErrorDeNegocio` vivía dentro de `users/service.ts`.** Si `productos` lo
+importaba desde ahí, un módulo de catálogo pasaba a depender del de usuarios sin
+ninguna razón. Se movió a `api/src/lib/errors.ts`.
+
+El momento correcto para compartir algo es cuando aparece el **segundo**
+consumidor: antes es especulación, después es duplicación. Solo dos archivos lo
+tocaban, así que el refactor costó una edición.
+
+**`editarProducto` y `editarPrecios` quedaron separadas a propósito.** Si editar
+el nombre pudiera cambiar el precio, la matriz de permisos dejaría de significar
+lo que dice: `productos:editar` daría acceso a lo que `productos:editar_precios`
+protege. Un permiso que se puede eludir por otra puerta no es un permiso.
+
+**Dos tests que no estaban en el plan y valieron la pena:**
+
+- Que un cambio rechazado **no** escriba en la bitácora. Un log con intentos
+  fallidos mezclados como si fueran cambios reales es peor que no tenerlo.
+- Que el producto quede **intacto** cuando el piso es inválido. Verifica que la
+  validación corra antes del `UPDATE` y no a mitad de camino.
+
+**`desactivar` avisa en vez de fallar en silencio.** Desactivar uno ya inactivo
+devuelve `PRODUCTO_YA_INACTIVO` (409). Si el `admin` creía que estaba activo,
+merece enterarse: la idempotencia silenciosa le escondería que su modelo mental
+estaba mal.
+
+**La deuda de RN-CAT-02 quedó escrita en el servicio**, citando la regla y
+diciendo que se cierra con el criterio de aceptación de M2. No como `TODO`: un
+`TODO` es una intención sin dueño ni fecha.
+
+**Resultado:** 20 tests nuevos, suite de `api/` en **397**.
+:::
 
 ---
 
