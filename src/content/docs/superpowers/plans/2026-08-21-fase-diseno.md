@@ -10,7 +10,7 @@ modo oscuro vivo, marca, estados por cuatro canales, accesibilidad y voz única.
 **Sistema de diseño:** `claude-design/` — tokens, 13 diseños de referencia y
 `reglas-como-tests.md` (R40, R49–R55).
 
-**Estado:** 🚧 En curso — T1 a T6 cerradas. **12 tasks** (T2 se agregó el 22-ago-2026).
+**Estado:** 🚧 En curso — T1 a T7 cerradas. **12 tasks** (T2 se agregó el 22-ago-2026).
 
 ---
 
@@ -830,6 +830,83 @@ cambia de color.
   fallar, no caer en un texto genérico.
 
 **Commit:** `feat(ui): esqueletos, vacíos diferenciados y errores sin jerga`
+
+:::danger[Notas de ejecución — T7 cerrada el 22-ago-2026]
+**R52 · el mapa no traduce todo, y esa fue la decisión importante.**
+
+`api/` ya manda mensajes humanos en español para las violaciones de regla —«la
+cantidad tiene que ser mayor que cero», «no hay unidades suficientes en el
+lote»—. Reemplazarlos por un genérico **perdería lo único útil**: quien está en
+el mostrador necesita saber QUÉ regla frenó la operación, no que «algo salió
+mal».
+
+Así que el cuerpo del servidor se usa **solo** en 409 y 422, que son los que
+emite `ErrorDeNegocio`. En cualquier otro se ignora, porque un 500 puede traer un
+stack y un 400 el nombre de un campo de Zod — confiar en esos sería filtrar
+exactamente la jerga que R52 prohíbe. Hay tests para las dos mitades.
+
+La lista de status no es la de todos los códigos HTTP: es la que sale de **leer
+las rutas de `api/`** — 400, 401, 403, 404, 409, 422, 429 y 500.
+
+── **Lo que encontró la verificación con los ojos** ─────────────────────────────
+
+El boundary mostraba `aquazaku-api:500` como código de soporte, y tenía **dos**
+problemas a la vez.
+
+Decía «500», que a la persona no le significa nada y que R52 no quiere en
+pantalla. Y era el **mismo string para todas las fallas del sistema**: alguien lo
+reportaba, soporte lo buscaba en los logs y encontraba cuatrocientas.
+
+Ahora el digest lleva también el `requestId` —el mismo que viajó en
+`x-request-id` hacia api/— y lo que se muestra es solo eso. Verificado en el
+browser contra una falla real: cero jerga, un botón, y un identificador que
+encuentra **esa** petición.
+
+Un test existente falló al cambiarlo, y **estuvo bien que fallara**: decía una
+verdad que dejó de serlo.
+
+── **R50 · «no ofrecer crear» pasó a ser un error de compilación** ─────────────
+
+La regla es que un vacío de filtro nunca sugiera crear, porque empuja a cargar un
+producto que ya existe y ese duplicado después hay que descubrirlo y limpiarlo.
+
+Un test que revisara el texto renderizado solo probaría lo que se escribió hoy.
+Así que `sin-resultados` **no acepta una acción propia**: pide una ruta sin
+filtros y arma el enlace por su cuenta. Verificado — intentar pasarle un botón de
+«crear» da **TS2322**.
+
+── **R49 · cada `loading.tsx` describe SU grilla** ─────────────────────────────
+
+`EsqueletoDeTabla` pide columnas y anchos, y los pide obligatorios. Un esqueleto
+genérico de tres columnas delante de una tabla de siete vuelve a producir el
+salto que R49 quiere evitar — el mismo *layout shift* de Core Web Vitals, que en
+un punto de venta se paga en clics equivocados.
+
+En stock el esqueleto dibuja **tres** columnas y no cuatro: la de vencidos
+aparece solo cuando hay algo vencido, y dibujar una que puede no llegar es el
+mismo salto al revés.
+
+── **R51 · el sello de hora, y por qué el servidor la calcula** ────────────────
+
+`leidoEn` se toma **después** del `await`, no antes: la hora que interesa es
+cuándo se leyó la base, no cuándo empezó a renderizarse la pantalla. Y llega por
+parámetro en vez de salir de `new Date()` en el componente, porque en el browser
+mediría cuándo se pintó — y entre las dos cosas hay una carga de red y un render,
+que es justamente el rato que se quiere reportar.
+
+── **Una deuda que se deja a propósito** ───────────────────────────────────────
+
+Los textos nuevos están escritos en **voseo**, como el resto de la app. Es
+incoherente con el destino —T8 pasa todo a usted— pero escribir estos en usted
+dejaría dos voces conviviendo en la misma pantalla hasta que T8 corra. Una voz
+mezclada se nota más que una voz que todavía no cambió.
+
+**Verificado quitando el mecanismo:** sacar un status del mapa hace fallar 2
+tests —no cae en un genérico, que es lo que el plan pedía comprobar— y ofrecer
+«crear» en un filtro vacío no compila.
+
+**Resultado:** 44 tests nuevos, suite de `web/` en **399** (venía de 355).
+:::
 
 ---
 
