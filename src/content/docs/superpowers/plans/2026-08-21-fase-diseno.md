@@ -10,7 +10,7 @@ modo oscuro vivo, marca, estados por cuatro canales, accesibilidad y voz única.
 **Sistema de diseño:** `claude-design/` — tokens, 13 diseños de referencia y
 `reglas-como-tests.md` (R40, R49–R55).
 
-**Estado:** 🚧 En curso — T1 a T5 cerradas. **12 tasks** (T2 se agregó el 22-ago-2026).
+**Estado:** 🚧 En curso — T1 a T6 cerradas. **12 tasks** (T2 se agregó el 22-ago-2026).
 
 ---
 
@@ -736,6 +736,60 @@ forma, icono y texto en mayúsculas — y eso se escribe una sola vez.
   distinguibles. Ese es el punto de la regla.
 
 **Commit:** `feat(ui): estado por color, forma, icono y texto`
+
+:::danger[Notas de ejecución — T6 cerrada el 22-ago-2026]
+**Dos cosas que el plan daba por sentadas y no existían.**
+
+**La forma no puede ser el contenedor.** `.aq-forma-justo` y `.aq-forma-expuesto`
+son `clip-path`: recortan el elemento al que se aplican. Puestas en la insignia
+se llevarían el texto por delante — un triángulo con letras adentro corta las
+letras. La forma quedó como una marca de 10 px al principio, pintada con
+`currentColor` para que siga al tono sin declararlo dos veces.
+
+**«Vence pronto» no tiene regla.** El dominio fija la vida útil en 30 días
+([RN-STK-08](/dominio/stock/)) y bloquea lo vencido, pero **no define cuántos
+días antes avisar**. Se implementó con 7 días —una cuarta parte de la vida, y
+«lo que vence esta semana» se dice fácil en la planta— marcado en el código como
+propuesta y no como regla. Es la **pregunta 36**. El test no valida el número:
+valida que la frontera esté donde diga la constante, sea cual sea.
+
+── **La violación que encontró la propia task** ─────────────────────────────────
+
+El paso 2 pedía «nunca dos iconos distintos para el mismo concepto». Al aplicar
+el componente apareció que **ya estaba rota**: la tabla de stock marcaba las
+unidades vencidas con un triángulo de alerta mientras la insignia de lotes usaba
+una equis. Los dos decían «vencido» y no se parecían en nada.
+
+Se rompía en dos archivos que nadie mira juntos, así que documentarla de nuevo no
+servía. Ahora hay **una sola fuente** —`ICONO_DE_ESTADO`— y los dos lugares leen
+de ahí: divergir exige cambiarla, y ahí se ve que cambia en todos lados.
+
+── **Los tres estados, siempre** ───────────────────────────────────────────────
+
+La tabla de lotes mostraba insignia solo cuando el lote estaba vencido. «Sin
+insignia» significaba vigente, y eso obliga a deducir por ausencia: quien mira
+rápido no distingue «está bien» de «no se calculó». Ahora los tres se dicen.
+
+── **La prueba en escala de grises** ───────────────────────────────────────────
+
+Es la que importa, y necesitó una **ruta descartable**: los datos sembrados
+tienen un solo lote y está vigente, así que la pantalla real nunca muestra los
+tres juntos. Se creó fuera de todo route group, se miró y se borró.
+
+En gris los tres se siguen distinguiendo por forma —círculo, triángulo, rombo— y
+por icono —✓, ⚠, ✕—. Eso es R40 funcionando: el color no carga solo el
+significado. Protege a quien no distingue verde de rojo, y también a una pantalla
+al sol en la planta, un teléfono en ahorro de batería o una foto en blanco y
+negro por WhatsApp.
+
+**Verificado quitando cada canal**, como pide el plan. Los cinco casos rompen
+tests: sin forma (4), las tres formas iguales (2), sin icono (4), los tres con el
+mismo icono (1), y sin `.aq-micro` (3). El caso «todas las formas iguales» es el
+que de verdad cuida la regla: sin él, los tests pasarían con un semáforo que solo
+cambia de color.
+
+**Resultado:** 22 tests nuevos, suite de `web/` en **355** (venía de 333).
+:::
 
 ---
 
