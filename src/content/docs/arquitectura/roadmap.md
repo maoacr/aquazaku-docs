@@ -181,7 +181,7 @@ porque todo lo demás lo necesita, no porque sea el más visible.
 | M9 | **Proveedores y compras** | Mixto contado/transferencia/crédito, sin módulo de CxP completo | `admin`, `pos`, `contador` | M0, M3 | 🔲 pendiente |
 | M10 | **Precios y promociones** | Listas residencial/comercial con piso, códigos de descuento con piso absoluto | `admin`, `pos`, `seller`, `contador` | M0, M1 | 🔲 pendiente |
 | M11 | **Contador** | Panel solo lectura: cartera por edad, facturas sin emitir, descarga CSV/PDF | `contador`, `admin` | M0, M5, M6, M7, M9, M10 | 🔲 pendiente |
-| M12 | **Alertas** | Alimenta al panel de planta y al panel admin; umbrales configurables | `admin`, `pos` | M0, M2, M3, M4 | 🔲 pendiente |
+| M12 | **Alertas** | Alimenta al panel de planta y al panel admin; umbrales configurables — incluye el aviso de vencimiento próximo ([RN-STK-11](/dominio/stock/)), hoy fijo en 7 días | `admin`, `pos` | M0, M2, M3, M4 | 🔲 pendiente |
 | M13 | **Auditoría** | Quién hizo qué cuándo; transversal — todo módulo registra | `admin` (consulta) | M0 + transversal | 🔲 pendiente |
 
 ### Reglas del orden

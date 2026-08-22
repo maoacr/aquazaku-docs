@@ -195,6 +195,31 @@ nunca debió haberse duplicado.
 
 ### RN-STK-08 — Cada cierre de producción genera un lote, vencimiento automático a 30 días
 
+### RN-STK-11 — El aviso de vencimiento próximo se configura, no se codifica
+
+**Estado:** ✅ Confirmada — cierra la [pregunta 36](/empezar/pendientes/)
+(22-ago-2026).
+
+Un lote se marca **«vence pronto»** cuando le quedan **7 días o menos** de vida.
+
+Ese número es el **valor inicial**, no una constante del negocio: tiene que poder
+ajustarse desde la administración sin tocar código. Va con los demás umbrales
+configurables de [M12 · Alertas](/arquitectura/roadmap/).
+
+**Por qué 7 para empezar:** la vida útil son 30 días
+([RN-STK-08](#rn-stk-08--cada-cierre-de-producción-genera-un-lote-vencimiento-automático-a-30-días)),
+así que siete deja una cuarta parte para reaccionar — y «lo que vence esta
+semana» se dice fácil en la planta.
+
+**Por qué configurable:** el número correcto depende de la rotación real, y esa
+todavía no se midió. Un umbral que avisa tarde no sirve; uno que avisa demasiado
+pronto entrena a ignorar el aviso, que es peor. Cuando haya datos de venta se va
+a querer moverlo, y eso no puede exigir un despliegue.
+
+**Hoy** vive en `DIAS_DE_AVISO_DE_VENCIMIENTO`, en `web/src/components/ui/estado.tsx`.
+Al implementarse M12 pasa a parámetro y esa constante se va.
+
+
 **Estado:** ✅ Confirmada — cerrá la pregunta 🟢
 "¿Hay control de lotes o vencimiento?" de
 [Qué falta preguntar](/empezar/pendientes/).

@@ -32,7 +32,7 @@ Reusar el número de una pregunta cerrada rompe esa cita en silencio — apunta 
 otra cosa y nadie se entera. **Una pregunta nueva toma el siguiente libre, aunque
 queden huecos.**
 
-Máximo asignado hasta hoy: **31**. La próxima es la 32.
+Máximo asignado hasta hoy: **36**. La próxima es la 37.
 :::
 
 ---
@@ -74,7 +74,6 @@ Se pueden dejar para después sin frenar el diseño.
 | 34 | **¿Quién puede editar los datos de otra persona, y qué pasa con el email?** | El email es la identidad de acceso. Si se puede cambiar, hay que resolver verificación del nuevo correo antes de que reemplace al viejo |
 | 35 | **¿Cómo funciona hoy pedir un día libre?** ¿Se avisa por WhatsApp, se anota en un cuaderno, lo aprueba una sola persona? | Mao propuso un formulario de solicitud de permiso dentro del perfil. Antes de diseñarlo hay que saber a qué proceso real reemplaza — un formulario que nadie mira es peor que el WhatsApp |
 
-| 36 | **¿Cuántos días antes de vencer conviene avisar?** La vida útil es de 30 días ([RN-STK-08](/dominio/stock/)) y lo vencido se bloquea solo, pero no hay regla para el aviso previo | La insignia «vence pronto» ya está implementada con **7 días** como propuesta —una cuarta parte de la vida, y «lo que vence esta semana» se dice fácil en la planta—. Si el número es otro, se cambia una constante en `estado.tsx` y nada más |
 ---
 
 ## Módulo pendiente: Mi perfil
@@ -102,7 +101,8 @@ Es un milestone propio. Las preguntas 32 a 35 son lo que hay que responder antes
 de escribir la primera línea.
 
 *(A la fecha de la última sesión de planning quedan las 4 mediciones 🟠 de
-planta y las 4 preguntas 🟢 de perfil.)*
+planta y las 4 preguntas 🟢 de perfil — 32 a 35. La **36** se cerró el
+22-ago-2026: ver [RN-STK-11](/dominio/stock/).)*
 
 ---
 
