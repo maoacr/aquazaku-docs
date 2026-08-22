@@ -139,8 +139,12 @@ utilidades sueltas que permiten separarlos dejan de usarse en componentes.
 | `bg-error-fondo` | `text-error-texto` | Error de formulario |
 
 El menú lateral, además, **no usa `bg-accion` para el hover**. El hover es un
-cambio de superficie (`bg-tarjeta`), no un cambio de acción. `bg-accion` queda
-reservado para el módulo **activo**, y ahí sí con `text-invertido`.
+cambio de superficie, no un cambio de acción. `bg-accion` queda reservado para
+el módulo **activo**, y ahí sí con `text-invertido`.
+
+La superficie del hover es **`bg-fondo`**, no `bg-tarjeta`: el `<nav>` ya es
+`bg-tarjeta`, así que ese hover no se vería. `bg-fondo` es además el mismo hover
+que usan los iconos de la cabecera, que está sobre la misma superficie.
 
 ### D3 · La marca aparece en superficies de marca, nunca detrás de datos
 

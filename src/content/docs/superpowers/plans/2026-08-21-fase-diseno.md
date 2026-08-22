@@ -10,7 +10,7 @@ modo oscuro vivo, marca, estados por cuatro canales, accesibilidad y voz única.
 **Sistema de diseño:** `claude-design/` — tokens, 13 diseños de referencia y
 `reglas-como-tests.md` (R40, R49–R55).
 
-**Estado:** 🚧 En curso — T1 y T2 cerradas. **12 tasks** (T2 se agregó el 22-ago-2026).
+**Estado:** 🚧 En curso — T1, T2 y T3 cerradas. **12 tasks** (T2 se agregó el 22-ago-2026).
 
 ---
 
@@ -391,6 +391,81 @@ declarado del sistema sea ilegible.
   fallar.
 
 **Commit:** `fix(ui): cerrar el contraste del menú y barrer color fuera de tokens`
+
+:::danger[Notas de ejecución — T3 cerrada el 22-ago-2026]
+**El barrido fue chico; lo que apareció debajo, no.** No había un solo hex suelto
+en `web/src` —todos viven en `tokens.css` y `globals.css`, que es donde van— y
+las clases de paleta cruda eran 19 en 8 archivos. Se mapearon **por rol y no por
+número**: `text-red-*` con `role="alert"` es `text-error-texto`, `text-emerald-*`
+con `role="status"` es `text-exito-texto`, y el trío ámbar de los avisos es
+`border-alerta-borde bg-alerta-fondo text-alerta-texto`.
+
+**Faltaba un token: el velo.** El fondo del cajón usaba `bg-neutral-950/50`, y no
+tenía token porque no encaja en ninguna familia. Es el único color del sistema
+que **no cambia** entre claro y oscuro, y es a propósito: un velo tiene que
+apagar lo que hay debajo, y si se invirtiera en oscuro quedaría un velo claro
+iluminando el fondo. Se agregó `--aq-velo` con esa explicación al lado.
+
+**El hover del menú no podía ser `bg-tarjeta`.** La spec lo pedía así, pero el
+`<nav>` ya es `bg-tarjeta`: ese hover era invisible. Quedó `bg-fondo`, que es el
+mismo hover que usan los iconos de la cabecera sobre esa misma superficie. La
+spec (D2) se corrigió.
+
+**Y apareció el estado activo, que no existía.** `bg-accion` + `text-invertido`
+se usaba en el hover de *todos* los enlaces, así que dos enlaces se veían igual
+—uno porque estabas ahí, otro porque tenías el mouse encima— y el activo no
+significaba nada. Ahora el par está reservado para el módulo activo, con
+`aria-current="page"`. Vive en `enlace-de-menu.tsx`, un componente de cliente
+aparte: `usePathname()` es un hook y el armazón es de servidor, y extraer el
+enlace es más barato que volver cliente al armazón entero.
+
+── **El test de contraste encontró dos defectos reales** ────────────────────────
+
+**Uno: el fondo de éxito en oscuro daba 4,46:1.** Falla por 0,04. La causa era un
+hex escrito a mano —`#14603F`— en el único lugar donde el resto de los estados
+usa `var(--aq-*-900)`. Ese hex es una parada del gradiente de marca: alguien usó
+un color de gradiente como superficie. Siguiendo el patrón del sistema
+(`var(--aq-exito-900)`) da **5,47:1**.
+
+**Dos, y más grave: toda la jerarquía de texto estaba corta.** `--aq-texto-tenue`
+daba 3,65:1 en claro y 4,04:1 sobre una tarjeta en oscuro. Y no es problema de
+uso: `text-tenue` sostiene contenido real en veinte lugares —el email en la tabla
+de auditoría, "(cuenta eliminada)", el link de recuperar contraseña—. Nada
+decorativo, así que el que se movió fue el token. Correr `secundario` y `tenue`
+un paso en los dos modos conserva los tres niveles bien separados y deja todo por
+encima de 4,5:1 en las tres superficies.
+
+**Lo importante de ese segundo hallazgo: el ojo no lo vio.** El barrido sobre el
+DOM dijo "sin hallazgos" en oscuro, porque en la pantalla mirada ese texto caía
+sobre `fondo` (4,69:1, pasa) y no sobre `tarjeta` (4,04:1, falla). **El ojo
+revisa lo que está a la vista; la tabla revisa lo que el sistema permite.** Por
+eso el test cubre las nueve combinaciones —tres niveles × tres superficies— y no
+solo las que hoy se usan.
+
+── **Dos trampas de medición** ──────────────────────────────────────────────────
+
+**El barrido del DOM mide mal si hay `transition-colors`.** Cambiar `data-tema` y
+medir en el mismo tick devuelve el color **en vuelo**: el selector de tema marcó
+1,59:1 cuando en reposo da 8,45:1. Falso positivo, y peligroso al revés — un
+color a mitad de camino puede *pasar* y tapar un defecto. Hay que esperar la
+transición antes de medir.
+
+**El test de sincronía comparaba nombres, no valores.** Se fortaleció para
+comparar `nombre → valor`, que es exactamente el defecto que acababa de pasar:
+corregir `--aq-texto-tenue` en el bloque explícito y dejar el generado con el
+valor viejo. Los nombres coincidían; la pantalla no.
+
+**Verificado quitando el peso**, como el resto de la fase: un par ilegible puesto
+a mano hace fallar el test de contraste, y un valor cambiado en un solo bloque
+hace fallar el de sincronía.
+
+**Queda anotado, fuera de T3:** quien tiene rol admin y contador ve **dos ítems
+de menú llamados "Auditoría"**. La duplicación de rutas es intencional —alcances
+distintos— pero las etiquetas idénticas no se pueden distinguir. Es una decisión
+de producto sobre cómo nombrarlas.
+
+**Resultado:** 29 tests nuevos, suite de `web/` en **319** (venía de 288).
+:::
 
 ---
 
