@@ -57,6 +57,30 @@ necesitar colores de texto propios**. Cuando el panel era oscuro en los dos
 modos hacían falta `--aq-menu-texto` y `--aq-menu-apagado`; ahora usa
 `text-principal` y `text-secundario` como todo lo demás.
 
+## Un solo canal de alineación
+
+Todo lo que vive en la columna de contenido —los iconos de la cabecera, los
+títulos, las tarjetas y el pie— comparte **el mismo borde izquierdo y el mismo
+borde derecho**.
+
+Suena obvio y es exactamente el tipo de cosa que se rompe sola: cada pieza llega
+con su propio padding razonable, ninguno está mal por separado, y el conjunto
+queda desalineado. Acá llegaron a convivir tres bordes derechos —16 px en la
+cabecera, 24 en el contenido y 12 en el pie—. Ocho y doce píxeles: poco para
+nombrarlo, suficiente para que la pantalla se sienta torcida sin saber por qué.
+
+La regla es que el **padding horizontal de la cabecera y los márgenes del pie son
+el mismo valor que el padding del contenido**. Y se verifica midiendo, no
+mirando:
+
+```js
+const der = el => Math.round(el.getBoundingClientRect().right)
+new Set([iconos, titulo, tarjeta, pie].map(der)).size === 1
+```
+
+El menú es la excepción, y a propósito: es una tarjeta que flota contra el borde
+de la ventana, no contenido de la columna.
+
 ## Las tres capas de una lámina
 
 Translucidez más desenfoque **no es vidrio**: es un rectángulo con opacidad. Lo
