@@ -10,7 +10,7 @@ modo oscuro vivo, marca, estados por cuatro canales, accesibilidad y voz única.
 **Sistema de diseño:** `claude-design/` — tokens, 13 diseños de referencia y
 `reglas-como-tests.md` (R40, R49–R55).
 
-**Estado:** 🚧 En curso — T1 a T7 cerradas. **12 tasks** (T2 se agregó el 22-ago-2026).
+**Estado:** 🚧 En curso — T1 a T8 cerradas. **12 tasks** (T2 se agregó el 22-ago-2026).
 
 ---
 
@@ -932,6 +932,63 @@ tests —no cae en un genérico, que es lo que el plan pedía comprobar— y ofr
   tutea, falta una.
 
 **Commit:** `fix(ui): la interfaz habla de usted, como manda el sistema de diseño`
+
+:::danger[Notas de ejecución — T8 cerrada el 22-ago-2026]
+**43 líneas en 15 archivos. Cero tuteo: era todo voseo**, lo cual al menos era
+consistente. El sistema de diseño lo dice sin margen — *«Español de Colombia,
+trato de "usted". No voseo, no "tú"»*.
+
+── **El bug que casi deja el guardián inservible** ─────────────────────────────
+
+El primer barrido —hecho con Python— dio 46 casos. Al escribir el test en
+TypeScript, el mismo patrón no encontraba **nada**.
+
+En JavaScript `\b` se define contra `\w`, que es `[A-Za-z0-9_]`. Una `á` **no**
+es carácter de palabra, así que entre `á` y un espacio **no hay frontera**:
+`/\bprobá\b/` no coincide jamás con «probá de nuevo». En Python el mismo patrón
+sí funciona, porque ahí `á` cuenta como letra.
+
+Es una trampa silenciosa y cara: el precio es un guardián que pasa en verde
+mientras la app entera vosea. Lo atrapó el test de autocontrol —el que verifica
+que las reglas detecten lo que dicen detectar— antes de que llegara a producción.
+El cierre pasó a ser `(?![a-záéíóúüñ])`.
+
+── **Dos voces, a propósito** ──────────────────────────────────────────────────
+
+El paso 4 del plan dice que `/docs` no se toca. Al barrer aparecieron tres
+mensajes que **también** quedan en voseo por la misma razón:
+
+```
+'Copiá .env.example a .env.local y completala.'
+```
+
+Eso no lo lee un usuario de Aquazaku: lo lee quien levanta el servidor y le falta
+una variable de entorno. Misma audiencia que `/docs`.
+
+La excepción va en el test como **lista de frases exactas, no de archivos**. Un
+archivo excluido deja de mirarse entero, y el día que alguien le agregue un texto
+de interfaz nadie se entera. Así, agregar un mensaje de arranque obliga a
+anotarlo — o sea, a decidirlo a propósito.
+
+── **Y una regla que evita un guardián mentiroso** ────────────────────────────
+
+La detección es por lista de raíces verbales, no por un patrón genérico tipo
+`\w+á`. En español hay muchísimas palabras que terminan en vocal con tilde y no
+son imperativos: «está», «acá», «quizá», «allá», «café». Un test que grite por
+esas se apaga solo, porque nadie tolera un guardián que miente. Hay un caso
+propio que lo verifica.
+
+**Los tests que fallaron, fallaron bien.** Cuatro afirmaban la voz vieja —«no
+tenés acceso», «¿olvidaste tu contraseña?», «todas tus sesiones», «Completá»—.
+Decían una verdad que dejó de serlo.
+
+**Verificado quitando el mecanismo:** devolver un imperativo voseante, un
+posesivo de vos o un tuteo hace fallar el guardián en los tres casos. Y con los
+ojos, recorriendo las pantallas y barriendo el DOM renderizado —no el código—:
+cero hallazgos en stock, perfil y acceso.
+
+**Resultado:** 4 tests nuevos, suite de `web/` en **403** (venía de 399).
+:::
 
 ---
 
