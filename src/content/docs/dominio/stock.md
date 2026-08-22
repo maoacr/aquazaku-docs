@@ -167,9 +167,10 @@ Tener los insumos en stock es lo que permite responder la pregunta que importa:
 Sin eso, el control de producción está incompleto.
 :::
 
-:::caution[A confirmar]
-¿Se controlan también las **bolsas** de 600 ml y 300 ml como insumo? Siguen la
-misma lógica —se consumen al envasar— pero no fueron mencionadas.
+:::tip[Confirmado el 22-ago-2026]
+Las **bolsas** de 600 ml y 300 ml **también se controlan**, con una vuelta: se
+compran por **kilo** y se guardan por **unidad**. Ver
+[RN-INS-02](/dominio/insumos/).
 
 Si se controlan, la receta de consumo por paca es: `20 bolsas de 600 ml` para una
 paca de 600, `50 bolsas de 300 ml` para una de 300.

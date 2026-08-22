@@ -19,7 +19,7 @@ Lo que sí se compra:
 | **Tapas** y **sellos termoencogibles** | Insumo de empaque ([RN-STK-04](/dominio/stock/)) |
 | **Botellones** | Activo retornable ([RN-ENV-06](/dominio/botellones-y-bases/)) |
 | **Bases** | Activo retornable identificado |
-| Bolsas de 600 ml y 300 ml | Insumo — *a confirmar si se controlan* |
+| Bolsas de 600 ml y 300 ml | Insumo — se controlan, **por kilo al comprar** ([RN-INS-02](/dominio/insumos/)) |
 
 Una compra que suma producto terminado al stock de bodega es, casi seguro, un
 error de registro.
@@ -72,11 +72,14 @@ guardado en la recepción y no se reescribe con compras posteriores.
 
 ## Preguntas abiertas
 
-- ¿Se compran también insumos de tratamiento de agua (cloro, filtros)? ¿Se
-  controlan en stock o se consideran gasto?
+- ~~¿Se compran también insumos de tratamiento de agua (cloro, filtros)? ¿Se
+  controlan en stock o se consideran gasto?~~ ✅ **Respondida el 22-ago-2026**:
+  son **gasto**, no inventario — [RN-INS-04](/dominio/insumos/).
 - ¿Se compra el agua a granel, o viene de pozo propio? Es la misma pregunta que
   [RN-PRD-03](/dominio/produccion/) — y sigue sin respuesta.
-- ¿Se controla stock de insumos de empaque (bolsas, tapas), o solo del producto
-  terminado? Si se controla, la producción también los consume.
+- ~~¿Se controla stock de insumos de empaque (bolsas, tapas), o solo del producto
+  terminado?~~ ✅ **Respondida el 22-ago-2026**: se controlan tapas, sellos **y
+  bolsas** — [insumos](/dominio/insumos/). Las bolsas se compran por kilo y se
+  guardan por unidad ([RN-INS-02](/dominio/insumos/)).
 - ¿Se lleva cuenta corriente con proveedores, o se paga contra entrega?
 - ¿Hay control de lotes o vencimiento?

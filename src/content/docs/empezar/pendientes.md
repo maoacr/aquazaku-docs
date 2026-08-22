@@ -32,7 +32,7 @@ Reusar el número de una pregunta cerrada rompe esa cita en silencio — apunta 
 otra cosa y nadie se entera. **Una pregunta nueva toma el siguiente libre, aunque
 queden huecos.**
 
-Máximo asignado hasta hoy: **36**. La próxima es la 37.
+Máximo asignado hasta hoy: **37**. La próxima es la 38.
 :::
 
 ---
@@ -60,6 +60,7 @@ No son decisiones: son números que hay que ir a tomar.
 | 5 | **Tiempo de llenado de un tanque de 2.000 L** → de ahí sale el caudal real. | [RN-PRD-18](/dominio/produccion/) |
 | 6 | **Litros que consume lavar un botellón.** | [RN-PRD-05](/dominio/produccion/) |
 | 7 | **Consumo diario promedio en litros.** *Se autocalcula a las semanas de registrar cierres de producción — un estimado inicial alcanza.* | [RN-PRD-13](/dominio/produccion/) |
+| 37 | **Cuántas bolsas trae un kilo** — por separado para la de 600 ml y la de 300 ml. El grosor varía entre lotes, así que conviene pesar varias veces y promediar. | [RN-INS-02](/dominio/insumos/) — sin esto el sistema no puede convertir la compra a unidades |
 
 ---
 
@@ -100,9 +101,9 @@ sube, además subida de archivos, que hoy el sistema no hace en ningún lado.
 Es un milestone propio. Las preguntas 32 a 35 son lo que hay que responder antes
 de escribir la primera línea.
 
-*(A la fecha de la última sesión de planning quedan las 4 mediciones 🟠 de
-planta y las 4 preguntas 🟢 de perfil — 32 a 35. La **36** se cerró el
-22-ago-2026: ver [RN-STK-11](/dominio/stock/).)*
+*(A la fecha de la última sesión de planning quedan **5 mediciones** 🟠 de planta
+—las 4 de producción más la 37 de bolsas— y las 4 preguntas 🟢 de perfil, 32 a
+35. La **36** se cerró el 22-ago-2026: ver [RN-STK-11](/dominio/stock/).)*
 
 ---
 

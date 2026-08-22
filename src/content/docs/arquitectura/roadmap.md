@@ -212,7 +212,7 @@ linkea.
 | --- | --- | --- |
 | M1 | [Productos y catálogo](/dominio/productos/) | RN-CAT-01 a 11 (catálogo cerrado, desactivar sin borrar, precio en el producto, piso absoluto, paca indivisible) |
 | M2 | [Stock](/dominio/stock/) | RN-STK-01 a 08 (ubicación, motivos, FIFO, devoluciones, descarte, lote y vencimiento 30d) |
-| M3 | — *(a documentar)* | pendiente confirmar stock mínimo default 200/200 |
+| M3 | [Insumos](/dominio/insumos/) | ✅ documentado el 22-ago-2026. Mínimo 200/200 confirmado como valor inicial configurable ([RN-INS-03](/dominio/insumos/)); falta la equivalencia kg→unidades de bolsas ([pregunta 37](/empezar/pendientes/)) |
 | M4 | [Producción](/dominio/produccion/) | RN-PRD-02 a 24 (tanques separados, cierre diario, lote, encendido/apagado, etc.) |
 | M5 | [Clientes](/dominio/clientes/) | RN-CLI-08 (documento único), RN-CLI-12 (crédito), RN-CLI-15 (verificación) |
 | M6 | [Ventas](/dominio/ventas/) | RN-VEN-01 a 13 (inmutabilidad, anulación, precios, descuentos, factura) |
