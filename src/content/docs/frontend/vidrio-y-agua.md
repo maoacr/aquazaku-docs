@@ -81,6 +81,40 @@ new Set([iconos, titulo, tarjeta, pie].map(der)).size === 1
 El menú es la excepción, y a propósito: es una tarjeta que flota contra el borde
 de la ventana, no contenido de la columna.
 
+## Rendimiento: el desenfoque casi no se usa, y hay una razón
+
+`backdrop-filter` es **caro**. Cada elemento que lo lleva fuerza una capa de
+composición propia y se vuelve a desenfocar en cada frame.
+
+Medido en el tablero, con cuatro productos:
+
+| | fps | peor frame |
+| --- | --- | --- |
+| Con desenfoque en las 6 piezas | 43,1 | 50,9 ms |
+| Sin desenfoque | **60** | **17,4 ms** |
+
+**17 fps.** Y las capturas con y sin salieron **idénticas**.
+
+La explicación es la misma que hace que el vidrio funcione, dada vuelta: detrás
+de las piezas está el agua, que es un gradiente suave — o sea **ya borroso**.
+Desenfocar algo borroso da lo mismo borroso.
+
+> El desenfoque solo aporta cuando detrás pasa **contenido con detalle**.
+
+En este sistema eso pasa en un lugar: **el cajón del menú en teléfono**, que se
+abre sobre la pantalla que se está leyendo. Ahí está, y solo ahí.
+
+Lo que sí sostiene el efecto —y no cuesta— son las otras tres capas: la
+translucidez, el canto y las sombras.
+
+### Qué se anima
+
+Solo `transform` y `opacity`. Las dos las resuelve el compositor sin repintar.
+
+La primera versión animaba `box-shadow` y `background-color`: las dos obligan a
+repintar la pieza entera en cada frame. La sombra del hover ahora vive en el
+mismo `box-shadow` de reposo y lo que se mueve es la elevación.
+
 ## Las tres capas de una lámina
 
 Translucidez más desenfoque **no es vidrio**: es un rectángulo con opacidad. Lo
@@ -215,6 +249,11 @@ flotar: se metía en el grid como un ítem más, con un `grid-area` que en móvi
 existe, y el armazón se llenaba de filas y columnas implícitas.
 
 **Regla:** una clase del sistema no declara `position`. Lo pone quien la usa.
+
+Apareció **tres veces** — el toggle de tema con `display`, el panel con
+`position`, y otra vez al consolidar las reglas de vidrio en una sola base. Ya
+hay un test que lo impide: verifica que `.aq-panel-marca` no declare ni
+`position` ni `display`, y que el componente siga declarando su `fixed`.
 
 Es el mismo defecto que tuvo el toggle de tema con `display`. La solución
 general —que una regla gane por **especificidad** y no por orden de aparición—
