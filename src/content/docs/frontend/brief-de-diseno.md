@@ -5,17 +5,27 @@ sidebar:
   order: 2
 ---
 
+:::danger[Documento histórico — no diseñes a partir de esto]
+**Este brief ya se usó.** Es el insumo que produjo el sistema de diseño que hoy
+vive en `claude-design/`, y se conserva porque explica **por qué** ese sistema
+quedó como quedó.
+
+**Ante cualquier contradicción, manda `claude-design/`.** Para diseñar una
+pantalla nueva, el punto de partida son [La marca](/frontend/marca/) y
+[Vidrio y agua](/frontend/vidrio-y-agua/), no este documento.
+
+Y hay partes que **describen un sistema que no se está construyendo**. Están
+marcadas una por una más abajo; el resumen es que la app móvil del `seller` es
+**post-MVP (M8)** y el MVP entero es **web responsiva**. Corregido el
+22-ago-2026.
+:::
+
 Este documento está escrito para **copiarse y pegarse completo** en una
 herramienta de diseño asistida por IA. Es autocontenido: no asume que quien lo
 lea conozca el resto de esta documentación.
 
 Antes de pegarlo, adjuntá los assets de marca (logotipo, isotipo) y los colores
 corporativos en hexadecimal.
-
-:::note[Mantenelo sincronizado]
-Si el dominio cambia, este brief cambia. Es la traducción del dominio a
-pantallas — si se desactualiza, se diseña sobre reglas viejas.
-:::
 
 ---
 
@@ -44,7 +54,16 @@ tienen consecuencias visuales:
    que saber siempre cuántos hay y dónde.
 2. **Balance de agua.** La planta convierte litros en producto, con pérdidas en
    el camino. El agua es finita y el suministro municipal es intermitente.
-3. **Operación sin señal.** El vendedor de ruta trabaja donde no hay internet.
+3. **Suministro intermitente.** La red municipal no da agua de forma continua.
+   Los 13.000 litros de almacenamiento son lo que sostiene el servicio cuando la
+   red falla, así que **cuántos días de producción quedan** es el indicador
+   crítico de la planta.
+
+   > **Corregido.** Acá decía *«Operación sin señal: el vendedor de ruta trabaja
+   > donde no hay internet»*. No hay vendedores de calle: los pedidos llegan por
+   > **WhatsApp** al teléfono de la planta o del punto de venta, y el cliente
+   > **recoge** o paga un **flete externo**. Quien contesta el chat es la misma
+   > persona que atiende el mostrador.
 
 ## 2. Las superficies
 
@@ -54,19 +73,24 @@ El sistema tiene exactamente **cuatro roles**, cada uno con su contexto:
 | --- | --- | --- |
 | `admin` | Web de escritorio | Oficina, pantalla grande, sesiones largas |
 | `pos` | Web / terminal | Mostrador, uso rápido y repetitivo, con conexión |
-| `seller` | **App móvil** | Calle, sol directo, sin señal, una sola mano |
+| `seller` | Web responsiva | Contacta clientes y registra ventas a distancia |
 | `contador` | Web de escritorio | Oficina externa, **solo lectura**, genera reportes PDF para DIAN |
 
-Diseñá las tres. No son la misma aplicación con distinto menú: son contextos de
-uso muy diferentes.
+Son contextos de uso distintos sobre **una sola aplicación web responsiva**.
 
-**Sobre el `seller`:** técnicamente podrá entrar por la web, pero **la app móvil
-es su superficie real y la que hay que diseñar**. El acceso web es un respaldo de
-emergencia —se rompió el teléfono, hay que consultar algo desde la oficina—, no
-una experiencia a diseñar en paralelo.
-
-No dupliques el trabajo: diseñá la app móvil bien. Para el respaldo web alcanza
-con que la interfaz de `admin` permita consultar la información del `seller`.
+> **⚠️  CORREGIDO — acá decía que había que diseñar una app móvil**
+>
+> El texto original ponía al `seller` en una **app móvil** —«calle, sol directo,
+> sin señal, una sola mano»— y decía que **esa** era «su superficie real y la que
+> hay que diseñar».
+>
+> La app móvil es **post-MVP (M8)** por decisión explícita
+> ([roadmap](/arquitectura/roadmap/)), y el proyecto `mobile/`
+> [todavía no existe](/mobile/). El MVP entero es web.
+>
+> Lo que **sí** sigue vigente es *mobile-first como metodología*: la web se diseña
+> primero para el teléfono y crece hacia el escritorio. Eso no es lo mismo que
+> diseñar una app nativa, y confundir las dos cosas es lo que este brief hacía.
 
 ## 3. Restricciones de diseño que vienen del negocio
 
@@ -106,17 +130,26 @@ como el elemento jerárquicamente dominante de esa pantalla.
 
 ### 3.3 Nada se edita: se anula y se rehace
 
-Las ventas, los cierres de producción y las rendiciones de ruta son
-**inmutables**. Una vez confirmados no se editan.
+Las ventas y los cierres de producción son **inmutables**. Una vez confirmados
+no se editan. (El original incluía las *rendiciones de ruta*, que son del modelo
+descartado.)
 
 La interfaz no debe ofrecer "editar" en ninguno de esos objetos. Solo **anular**,
 y la anulación **exige un motivo escrito**.
 
 Diseñá un patrón de "acción irreversible con motivo obligatorio" y usalo
-consistentemente: anular venta, ajustar inventario, descartar activos, cerrar
-ruta con faltante.
+consistentemente: anular venta, ajustar inventario, descartar activos.
 
-### 3.4 Estado de sincronización siempre visible (móvil)
+**Se implementó** y es una de las cosas del brief que mejor sobrevivió: hoy todo
+motivo pide un mínimo de diez caracteres, porque «ajuste» no explica nada dentro
+de tres meses.
+
+### 3.4 Estado de sincronización siempre visible (móvil) · post-MVP
+
+> **Esta sección describe la app móvil, que es M8 y está fuera del MVP.** Se
+> conserva porque el patrón sirve el día que M8 se retome. En el MVP web la
+> conexión se asume: lo que hay que resolver es el fallo de red, y eso está en
+> [Vidrio y agua](/frontend/vidrio-y-agua/) y en los estados de interfaz.
 
 El `seller` opera sin conexión y sincroniza cuando llega a su casa. **Nunca debe
 tener dudas sobre si sus datos están guardados en el servidor o solo en el
@@ -128,7 +161,11 @@ pendiente de subir · sincronizando · al día · error.
 Debe ser visible desde cualquier pantalla de la app, sin ser intrusivo. Es el
 elemento que sostiene la confianza en toda la aplicación móvil.
 
-### 3.5 Legibilidad bajo sol directo (móvil)
+### 3.5 Legibilidad bajo sol directo (móvil) · post-MVP
+
+> **Ídem: M8.** Pero dos cosas de acá **sí** quedaron en el sistema vigente y no
+> por el sol sino por el mostrador: contraste medido por encima del mínimo, y
+> objetivos táctiles amplios — el sistema usa **44 px** (R54), no 48.
 
 El `seller` trabaja al aire libre en la costa Caribe colombiana, con sol muy
 fuerte y a menudo con las manos ocupadas o mojadas.
@@ -152,7 +189,8 @@ es el error más caro del negocio.
 
 ### 3.7 Cada rol ve solo lo suyo
 
-El `seller` ve únicamente sus propias ventas y su ruta. El `pos` ve las suyas.
+El `seller` ve únicamente sus propias ventas. El `pos` ve las suyas. (El
+original decía «y su ruta».)
 Diseñá los listados asumiendo que el alcance de datos ya viene filtrado, y no
 muestres controles de "ver todo" en las superficies de `seller` y `pos`.
 
@@ -167,8 +205,12 @@ A partir de los colores corporativos que te adjunto, derivá y documentá:
    autonomía debe salir de acá.
 4. **Escala de grises** — neutros para texto, bordes, fondos y superficies.
    Definí explícitamente los niveles de superficie (fondo, tarjeta, elevada).
-5. **Modo claro y modo oscuro.** El modo oscuro no es opcional: la app móvil se
-   usa de madrugada al cargar la ruta.
+5. **Modo claro y modo oscuro.** El modo oscuro no es opcional.
+
+   > **Corregido.** La razón original era *«la app móvil se usa de madrugada al
+   > cargar la ruta»*, y esa app no existe. La razón vigente es más simple: la
+   > planta arranca de madrugada y quien abre el sistema a esa hora agradece no
+   > recibir una pantalla blanca en la cara. El modo oscuro se implementó.
 6. **Escala tipográfica** — familia, pesos, tamaños y altura de línea, con una
    escala separada para móvil.
 7. **Sistema de espaciado** — basado en una unidad consistente (sugerido: 4 px),
@@ -181,8 +223,11 @@ A partir de los colores corporativos que te adjunto, derivá y documentá:
 
 Requisitos transversales:
 
-- **Accesibilidad**: contraste mínimo AA en toda la interfaz; AAA en la app móvil
-  por el uso a la intemperie.
+- **Accesibilidad**: contraste mínimo **AA en toda la interfaz**. El brief pedía
+  AAA en la app móvil por el uso a la intemperie; esa app es post-MVP, y lo que
+  se implementó es AA medido —componiendo cada superficie translúcida con lo que
+  tiene detrás, no confiando en el color declarado— más objetivos táctiles de
+  44 px y foco siempre visible.
 - **La información nunca se codifica solo por color**: siempre acompañada de
   texto, icono o forma.
 - Entregá los tokens de diseño con nombres semánticos, no literales
@@ -206,7 +251,7 @@ Marcadas por prioridad: **[1]** núcleo del MVP · **[2]** segunda fase.
 - **[1]** Stock de producto por ubicación
 - **[1]** Insumos (tapas y sellos) con alerta de mínimo
 - **[1]** Ajuste de inventario con motivo
-- **[1]** Panel de botellones — cuántos hay y dónde (bodega, rutas, clientes)
+- **[1]** Panel de botellones — cuántos hay y dónde (bodega, clientes)
 - **[1]** Listado de bases con ID, estado y ubicación
 - **[1]** Ficha de base — historial completo de dónde estuvo
 - **[1]** Listado y búsqueda de clientes
@@ -214,8 +259,8 @@ Marcadas por prioridad: **[1]** núcleo del MVP · **[2]** segunda fase.
   (dinero, botellones, bases)
 - **[1]** Alta y edición de cliente
 - **[1]** Listado y detalle de ventas
-- **[1]** Armado y carga de ruta
-- **[1]** Rendición de ruta — pantalla de cuadre
+- ~~**[1]** Armado y carga de ruta~~ · **descartado**, ver [Rutas](/dominio/rutas/)
+- ~~**[1]** Rendición de ruta — pantalla de cuadre~~ · **descartado**
 - **[1]** Usuarios y roles
 - **[1]** Configuración — presentaciones, equivalencias, precios, parámetros de planta
 - **[2]** Proveedores, órdenes de compra y recepción
@@ -231,11 +276,20 @@ Marcadas por prioridad: **[1]** núcleo del MVP · **[2]** segunda fase.
 - **[1]** Registro de cobro
 - **[2]** Cierre de turno
 
-### Móvil — `seller`
+### Móvil — `seller` · **descartado del MVP**
 
-**Esta es la superficie con más peso del proyecto.** El `seller` es quien más
-horas pasa dentro del sistema y en las peores condiciones. Si algo se diseña con
-especial cuidado, que sea esto.
+> **🚫 DESCARTADO — Ninguna de estas vistas se está construyendo**
+>
+> El texto original decía que esta era **«la superficie con más peso del
+> proyecto»**. Es una superficie que **no existe**: la app móvil es M8, post-MVP.
+>
+> Y estas vistas describen el modelo de **ruta** —salir con producto cargado y
+> rendir al cierre— que el dominio **ya descartó**: el `seller` no visita con
+> producto, y hay una sola ubicación de stock
+> ([RN-STK-01](/dominio/stock/), [Rutas](/dominio/rutas/)).
+>
+> Se conservan como material del día que M8 se retome, **reescritas contra el
+> modelo vigente**, no copiadas.
 
 - **[1]** Inicio de ruta — confirmación de la carga recibida
 - **[1]** Lista de visitas del día
@@ -251,8 +305,14 @@ especial cuidado, que sea esto.
 
 ## 6. Detalles concretos de dos vistas críticas
 
-### Rendición de ruta (móvil)
-Es la pantalla más importante de la app. Al cerrar el día debe cuadrar:
+### Rendición de ruta (móvil) · **descartado del MVP**
+
+> **No es «la pantalla más importante»: es de un modelo descartado.** Ver
+> [Rutas](/dominio/rutas/). Se conserva porque la idea del cuadre —que una
+> operación no se cierre sin que los números den— sí sobrevivió, y hoy vive en
+> el registro de stock.
+
+Al cerrar el día debe cuadrar:
 
 ```
 PRODUCTO   lo que salió = vendido + devuelto + faltante

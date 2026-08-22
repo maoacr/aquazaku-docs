@@ -10,7 +10,7 @@ modo oscuro vivo, marca, estados por cuatro canales, accesibilidad y voz única.
 **Sistema de diseño:** `claude-design/` — tokens, 13 diseños de referencia y
 `reglas-como-tests.md` (R40, R49–R55).
 
-**Estado:** 🚧 En curso — T1 a T10 cerradas. **12 tasks** (T2 se agregó el 22-ago-2026).
+**Estado:** 🚧 En curso — T1 a T11 cerradas. **12 tasks** (T2 se agregó el 22-ago-2026).
 
 ---
 
@@ -1233,6 +1233,51 @@ como está sigue costando decisiones equivocadas.
   tiene que estar marcado como descartado.
 - Leerlo entero de corrido: al terminar, el modelo que describe tiene que ser el
   de WhatsApp y mostrador.
+
+:::danger[Notas de ejecución — T11 cerrada el 22-ago-2026]
+**Las cinco citas del plan eran exactas**, verificadas línea por línea antes de
+tocar nada. Y `rutas.md` sí tiene su banner de modelo descartado, así que se pudo
+enlazar con confianza.
+
+── **La verdad era más matizada que «no hay app móvil»** ───────────────────────
+
+El plan decía que el `seller` entra por navegador. Cierto, pero incompleto: la
+app móvil **no está descartada, está diferida** — es M8, post-MVP, por decisión
+explícita, y el proyecto `mobile/` todavía no existe.
+
+Y el roadmap agrega algo que el plan no dice: **mobile-first sigue vigente como
+metodología**, aplicada a la web responsiva. El error del brief no era pedir
+mobile-first: era confundir la metodología con una plataforma nativa. Las
+correcciones dicen eso, no «se canceló».
+
+── **La deriva no estaba solo en el brief** ────────────────────────────────────
+
+`dominio/roles-y-permisos.md` afirmaba lo mismo: `seller` → **App móvil**, con
+una nota entera explicando que la web era «un respaldo». Eso es **dominio**, o
+sea lo que se consulta primero y con más confianza — más peligroso que el brief.
+
+Se corrigió también, aunque el plan solo mandaba a revisar `frontend/index.md`
+(que ya estaba limpio: hasta marca «❌ Deriva» en la carga de camión).
+
+── **Un detalle de forma que importaba** ───────────────────────────────────────
+
+El cuerpo del brief vive dentro de un bloque de código para **copiarse y pegarse
+completo** en una herramienta de diseño. Las primeras correcciones se escribieron
+como `:::caution` de Starlight y ahí adentro no renderizan: quedaban como texto
+literal en pantalla y como sintaxis rara al pegarlas.
+
+Se pasaron a citas en prosa —`> ⚠️ CORREGIDO — …`— que se leen bien en los dos
+lados. Las directivas quedaron solo **fuera** del bloque, donde sí renderizan.
+
+**Verificado con un barrido que entiende la estructura**, no solo el texto: busca
+menciones de móvil, offline y ruta, y las da por buenas solo si están dentro de
+una sección marcada como descartada o llevan la marca a menos de tres líneas.
+Resultado: **4 secciones marcadas, 0 afirmaciones sueltas**.
+
+**No se borró nada.** El brief explica por qué el sistema de diseño quedó como
+quedó, y varias de sus decisiones sobrevivieron intactas — el patrón de acción
+irreversible con motivo obligatorio es una de ellas.
+:::
 
 **Commit:** `docs(frontend): el brief describía un modelo descartado`
 

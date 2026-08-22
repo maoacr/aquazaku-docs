@@ -15,18 +15,26 @@ es una decisión de negocio, no una comodidad de implementación.
 | Rol | Quién es | Dónde opera | Qué hace |
 | --- | --- | --- | --- |
 | `admin` | Dueño / administración | Web (remoto, visita la planta cuando viaja) | Configuración, auditoría, ajustes sensibles |
-| `seller` | Vendedor | **App móvil** | Contacta clientes y registra ventas a distancia |
+| `seller` | Vendedor | Web responsiva | Contacta clientes y registra ventas a distancia |
 | `pos` | Planta + mostrador | Web / terminal en la planta | Venta de mostrador, preparación de pedidos, despacho, cierre de producción |
 | `contador` | Contador externo o interno | Web, **solo lectura** | Genera reportes PDF para temas impositivos y legales |
 
-:::note[El `seller` es un usuario de app móvil]
-El acceso web para el `seller` puede existir como respaldo —teléfono roto,
-consulta desde la oficina— pero **no es su superficie de trabajo**. La app móvil
-es la que se diseña y la que define sus flujos.
+:::caution[El `seller` trabaja en la web — la app móvil es post-MVP]
+Este documento decía que el `seller` era **usuario de app móvil** y que esa era
+su superficie de trabajo. **No lo es**, y no por un cambio de opinión: la app
+móvil es **M8, fuera del MVP**, por decisión explícita
+([roadmap](/arquitectura/roadmap/)), y el proyecto `mobile/`
+[todavía no existe](/mobile/).
 
-Esto no es un detalle de implementación: condiciona el modo offline
-([RN-RUT-05](/dominio/rutas/)), la validación local de documentos
-([RN-CLI-11](/dominio/clientes/)) y toda la operación de ruta.
+Lo que sigue en pie es **mobile-first como metodología**: la web se diseña
+primero para el teléfono y crece hacia el escritorio. No es lo mismo que una app
+nativa, y confundirlas hizo que el
+[brief de diseño](/frontend/brief-de-diseno/) mandara a diseñar una superficie
+que no existe.
+
+Las consecuencias que este texto citaba —modo offline, validación local de
+documentos— **cuelgan de esa app**, así que también son post-MVP. Corregido el
+22-ago-2026.
 :::
 
 La diferencia entre `seller` y `pos` no es de jerarquía: es de **contexto de
