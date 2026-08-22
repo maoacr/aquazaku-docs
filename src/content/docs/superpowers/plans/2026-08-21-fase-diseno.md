@@ -10,7 +10,7 @@ modo oscuro vivo, marca, estados por cuatro canales, accesibilidad y voz única.
 **Sistema de diseño:** `claude-design/` — tokens, 13 diseños de referencia y
 `reglas-como-tests.md` (R40, R49–R55).
 
-**Estado:** 🚧 En curso — T1 a T8 cerradas. **12 tasks** (T2 se agregó el 22-ago-2026).
+**Estado:** 🚧 En curso — T1 a T9 cerradas. **12 tasks** (T2 se agregó el 22-ago-2026).
 
 ---
 
@@ -1017,6 +1017,89 @@ auditoría, usando las 13 pantallas de referencia como especificación visual.
 - Recorrido con `Tab` en cada pantalla.
 
 **Commit:** uno por pantalla, no uno gigante. `feat(ui): repintar <pantalla> con el sistema de diseño`
+
+:::danger[Notas de ejecución — T9 cerrada el 22-ago-2026]
+**Se abrieron las 13 pantallas de referencia, que hasta esta task nunca se habían
+mirado.** El paso 1 lo pedía desde el principio y las tasks anteriores aplicaron
+reglas del sistema sin ver el arte. Fue el cambio más grande de toda la fase.
+
+Los valores se sacaron **midiendo sus estilos inline**, no a ojo: 47 usos de
+`border-radius: 12px`, 36 de 8 px, 32 pills de 999 px, 38 bordes de 1 px — y
+**cinco sombras en tres archivos**, todas en cosas que flotan. El menú en
+`#0E2A3C`, el módulo activo en `#12525C` con barra aqua.
+
+Tres cosas que el arte contradecía:
+
+**El activo no es azul.** D2 pedía `bg-accion`. El azul es el color de los
+BOTONES: usarlo para «estás acá» mezcla acción con ubicación y deja al menú
+compitiendo con el botón primario de la pantalla.
+
+**Las tarjetas no llevan sombra.** El lenguaje es superficie plana con borde y
+radio generoso. Se quitaron las nueve que había.
+
+**Las insignias son pills**, no rectángulos redondeados.
+
+── **Y después Mao cambió el destino, con razón** ───────────────────────────────
+
+A mitad de la task pidió *liquid glass* y que el agua estuviera presente en el
+sistema. Eso pesa más que el arte de referencia, que es anterior — pero no lo
+reemplaza: **el vidrio va en el chrome y las superficies de marca; la estructura,
+el espaciado y los radios siguen siendo los del arte.**
+
+El detalle completo está en [Vidrio y agua](/frontend/vidrio-y-agua/). Lo que
+importa registrar acá es el error, porque es el tipo de cosa que se repite:
+
+> El vidrio estaba puesto y no se veía. La reacción natural es pensar que quedó
+> flojo y subir los valores. Es la reacción equivocada: `backdrop-filter`
+> desenfoca **lo que hay detrás**, y detrás había una superficie plana. El efecto
+> no estaba tenue, **no tenía qué mostrar**.
+
+La solución fue de arquitectura, no de valores: **una sola agua para toda la
+app**, y menú, tarjetas y pie flotando encima. Antes el menú tenía su propio
+gradiente y el contenido su propio resplandor — dos fuentes de luz en la misma
+pantalla, y por eso el menú se leía como un bloque pegado al costado.
+
+Unificar **simplificó** el sistema: el menú dejó de necesitar colores de texto
+propios y usa los del tema como todo lo demás.
+
+── **Dos decisiones tomadas en contra de lo pedido** ───────────────────────────
+
+**La barra dura del activo era un canal de FORMA.** Hacía distinguible el módulo
+actual en escala de grises, igual que las formas del semáforo (R40). Al sacarla
+por el vidrio, la reemplazan el canto encendido y la sombra de contacto — que
+tampoco son color.
+
+**El hover de tarjeta vive en el selector, no en el criterio.** Una tarjeta que
+se levanta enseña que se puede tocar; si no lleva a ningún lado, esa promesa es
+falsa. Por eso está en `a.aq-tarjeta` y `button.aq-tarjeta` y no en `.aq-tarjeta`
+— una tarjeta de solo lectura no puede tenerlo ni por accidente. Al pedirse la
+animación, las tarjetas del tablero **pasaron a ser enlaces** a los lotes del
+producto, que además era lo que hacía falta.
+
+── **Un defecto de marca que nadie habría reportado** ──────────────────────────
+
+La parada azul de la cinta —`#0A8CBE`— daba **3,89:1** sobre el panel: las
+primeras letras de «AQUAZAKU» quedaban bajo AA. No se ve como un error, se ve
+como un logo un poco apagado. Ahora hay una versión clara del gradiente y el
+nombre elige según la superficie donde se apoya.
+
+── **La trampa de CSS, por segunda vez** ───────────────────────────────────────
+
+`.aq-panel-marca` declaraba `position: relative` para sus pseudo-elementos. Como
+las clases del sistema van sin capa, esa regla le ganaba a la utilidad `fixed` de
+Tailwind y en teléfono el cajón dejaba de flotar — se metía en el grid con un
+`grid-area` que en móvil no existe y el armazón se llenaba de filas implícitas.
+
+**Regla nueva: una clase del sistema no declara `position`.** Lo pone quien la
+usa. Es el mismo defecto que tuvo el toggle de tema con `display`.
+
+**Verificación:** contraste medido **componiendo** cada lámina sobre el agua —no
+sobre su color declarado, que da bien y miente— con el peor caso del fondo.
+Tarjetas 8,29:1 en claro y 9,07:1 en oscuro; pie 5,73:1; nada bajo AA. Y el borde
+inferior del pie cae en el mismo píxel que el del menú.
+
+**Resultado:** suite de `web/` en **404**. Seis commits, uno por pieza.
+:::
 
 ---
 
