@@ -10,7 +10,7 @@ modo oscuro vivo, marca, estados por cuatro canales, accesibilidad y voz única.
 **Sistema de diseño:** `claude-design/` — tokens, 13 diseños de referencia y
 `reglas-como-tests.md` (R40, R49–R55).
 
-**Estado:** 🚧 En curso — T1 cerrada. **La compuerta pasó.**
+**Estado:** 🚧 En curso — T1 y T2 cerradas. **12 tasks** (T2 se agregó el 22-ago-2026).
 
 ---
 
@@ -190,7 +190,108 @@ existe dentro de una petición.
 
 ---
 
-## T2 · Barrido de hex sueltos y el par fondo/texto
+## T2 · La app ocupa el viewport y funciona en un teléfono
+
+**Por qué va acá y no al final:** es estructura, no pintura. Repintar pantallas
+—T9— sobre un layout que después cambia es trabajo hecho dos veces. Y el bug del
+menú que crece con el contenido se ve en **cada** pantalla, no en una.
+
+:::danger[Esta task no estaba en el plan, y debió estar]
+Mobile-first ya era un principio declarado del proyecto —*"touch targets ≥ 44px,
+sticky bottom CTAs, responsive de entrada"*, en las convenciones del
+[roadmap](/arquitectura/roadmap/)— y esta fase lo pasó por alto: escribí once
+tasks de color, marca y estados sin una sola de disposición.
+
+Lo encontró Aquazaku usando la app desde el teléfono. Todo lo de abajo son
+defectos reportados, no mejoras imaginadas.
+:::
+
+**Los defectos, tal como aparecen:**
+
+| Qué pasa | Dónde |
+| --- | --- |
+| El menú lateral **crece con el contenido**: en Auditoría, el selector de tema y el botón de salir quedan fuera de la pantalla | `(app)/layout.tsx` — `flex flex-1` sin altura |
+| **No hay menú en mobile**: el lateral ocupa 256 px fijos y come la pantalla | `sidebar.tsx` — `w-64` sin responsive |
+| El scroll es de la página entera en vez del contenido | mismo layout |
+| Los campos numéricos abren **teclado alfabético** en el teléfono | 5 `type="number"` sin `inputMode` |
+| La ruta `/` es un título y una línea de bienvenida | `(app)/page.tsx` |
+
+**Pasos:**
+
+1. **El armazón ocupa exactamente el viewport.** `h-dvh` y no `h-screen`: en
+   iOS, `100vh` incluye la barra de direcciones y deja el pie cortado. El
+   scroll vive **solo** en el `<main>`, con `overflow-y-auto` y `min-h-0` —
+   sin `min-h-0` un hijo flex no se encoge y el scroll se escapa al documento.
+2. **El menú lateral se esconde bajo `sm`.** Botón hamburguesa, panel que entra
+   desde la izquierda, fondo que lo cierra al tocar. Con `<details>` y CSS, sin
+   JavaScript: es un menú, no una aplicación.
+3. **Cerrar con `Escape` y devolver el foco** al botón que lo abrió.
+4. **`inputMode="numeric"`** en todo campo de cantidad. Con `decimal` donde
+   aceptamos decimales — los precios.
+5. **La ruta `/` muestra algo que sirve**: qué hay para hacer hoy, según el rol.
+   No un panel de métricas: los datos que ya existen —stock por vencer, productos
+   sin precio— y el camino a la pantalla que los resuelve.
+
+**Verificación:**
+- A 375 px: el menú está cerrado, el hamburguesa se ve, abre y cierra.
+- A 1280 px: el menú está fijo y **no hay hamburguesa**.
+- En Auditoría, con la tabla larga: el selector de tema y el botón de salir
+  **siguen visibles** sin scrollear.
+- **Sacarle el peso:** quitar `min-h-0` del `main`. El scroll tiene que
+  escaparse al documento y el test tiene que fallar.
+
+**Commit:** `feat(ui): la app ocupa el viewport y el menú se esconde en mobile`
+
+:::danger[Notas de ejecución — T2: el `<details>` no alcanzaba]
+El primer intento fue **un solo `<details>`** con una regla de CSS que mostrara
+el panel siempre en pantalla ancha. **No funciona.** El navegador esconde el
+contenido de un `<details>` cerrado, y ni `display: flex` ni
+`content-visibility: visible` lo revierten de forma confiable: en escritorio el
+menú reservaba sus 256 px y no pintaba nada.
+
+**Lo encontró una captura de pantalla, no un test.** Y algo peor:
+`checkVisibility()` devolvía `false` incluso con el panel **abierto** y midiendo
+256 px. Ni los tests ni la API del navegador decían la verdad — mirarlo fue lo
+único que la dijo.
+
+La solución es **dos instancias del mismo componente**: un cajón `<details>` para
+el teléfono y una columna estática para escritorio, y cuál se ve lo decide
+`display`, que sí es determinista. La oculta sale del árbol de accesibilidad, así
+que un lector de pantalla ve un solo menú.
+
+**Costo en tests:** jsdom no aplica media queries, así que las dos instancias
+existen y cada consulta encuentra todo dos veces. **11 tests cayeron.** Se
+acotaron con `data-testid`, y se agregó uno que verifica que las dos rendericen
+los mismos módulos: si divergen, alguien editó una copia y no la otra.
+:::
+
+:::note[Otras notas — T2 cerrada el 22-ago-2026]
+**`h-dvh` y no `h-screen`.** En iOS, `100vh` incluye la barra de direcciones: el
+pie del menú queda debajo del borde visible y hay que scrollear la página entera
+para llegar al botón de salir.
+
+**`min-h-0` en el `<main>` es lo que encierra el scroll.** Sin él, un hijo de
+flex no se encoge por debajo de su contenido: el `main` crece, empuja al
+contenedor, y el scroll se escapa al documento **arrastrando el menú con él**.
+Era exactamente el bug reportado en Auditoría.
+
+Verificado midiendo, no mirando: `document.documentElement.scrollHeight <=
+innerHeight` ⇒ el documento no scrollea.
+
+**Para verificar el armazón hizo falta una página descartable.** El menú solo
+existe con sesión, y el panel del browser no la tiene. Se creó una ruta temporal
+que renderiza el `Sidebar` sin auth, se verificó a 375 y a 949 px, y se borró.
+
+Ojo con dónde se pone: la primera versión quedó dentro de `(auth)`, que centra
+su contenido en `max-w-sm` — las mediciones salieron polucionadas y parecían un
+bug del menú. Una ruta de verificación va **fuera de todo route group**.
+
+**Resultado:** 10 tests nuevos, suite de `web/` en **281** (venía de 271).
+:::
+
+---
+
+## T3 · Barrido de hex sueltos y el par fondo/texto
 
 **Objetivo:** cerrar el bug de contraste del menú y dejar el sistema sin colores
 que el modo oscuro no controle.
@@ -233,7 +334,7 @@ declarado del sistema sea ilegible.
 
 ---
 
-## T3 · Accesibilidad transversal (R54, R55)
+## T4 · Accesibilidad transversal (R54, R55)
 
 **Objetivo:** foco siempre visible y objetivos táctiles que se puedan tocar.
 
@@ -257,7 +358,7 @@ declarado del sistema sea ilegible.
 
 ---
 
-## T4 · La marca aparece
+## T5 · La marca aparece
 
 **Objetivo:** isotipo y gradiente, solo en superficies de marca.
 
@@ -289,7 +390,7 @@ declarado del sistema sea ilegible.
 
 ---
 
-## T5 · El componente `<Estado>` (R40)
+## T6 · El componente `<Estado>` (R40)
 
 **Objetivo:** un estado se comunica por **cuatro canales a la vez** — color,
 forma, icono y texto en mayúsculas — y eso se escribe una sola vez.
@@ -319,7 +420,7 @@ forma, icono y texto en mayúsculas — y eso se escribe una sola vez.
 
 ---
 
-## T6 · Estados de interfaz (R49–R53)
+## T7 · Estados de interfaz (R49–R53)
 
 **Objetivo:** carga, vacíos y errores implementados una vez, no por pantalla.
 
@@ -359,7 +460,7 @@ forma, icono y texto en mayúsculas — y eso se escribe una sola vez.
 
 ---
 
-## T7 · La interfaz habla de usted
+## T8 · La interfaz habla de usted
 
 **Objetivo:** una sola voz en el producto — usted, español de Colombia.
 
@@ -384,7 +485,7 @@ forma, icono y texto en mayúsculas — y eso se escribe una sola vez.
 
 ---
 
-## T8 · Repintar las pantallas que ya tienen backend
+## T9 · Repintar las pantallas que ya tienen backend
 
 **Objetivo:** aplicar todo lo anterior a acceso, productos, stock, usuarios y
 auditoría, usando las 13 pantallas de referencia como especificación visual.
@@ -412,7 +513,7 @@ auditoría, usando las 13 pantallas de referencia como especificación visual.
 
 ---
 
-## T9 · `docs/` con los tokens de Aquazaku
+## T10 · `docs/` con los tokens de Aquazaku
 
 **Objetivo:** que el sitio de documentación deje de usar el tema por defecto de
 Starlight.
@@ -433,7 +534,7 @@ Starlight.
 
 ---
 
-## T10 · El brief de diseño describe un proyecto que no existe
+## T11 · El brief de diseño describe un proyecto que no existe
 
 **Objetivo:** que `/frontend/brief-de-diseno/` deje de mandar a quien lo lea a
 diseñar el sistema equivocado.
@@ -489,7 +590,7 @@ como está sigue costando decisiones equivocadas.
 
 ---
 
-## T11 · Cierre
+## T12 · Cierre
 
 **Pasos:**
 
