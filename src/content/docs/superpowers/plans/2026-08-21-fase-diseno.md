@@ -10,7 +10,7 @@ modo oscuro vivo, marca, estados por cuatro canales, accesibilidad y voz única.
 **Sistema de diseño:** `claude-design/` — tokens, 13 diseños de referencia y
 `reglas-como-tests.md` (R40, R49–R55).
 
-**Estado:** 🚧 En curso — T1 a T4 cerradas. **12 tasks** (T2 se agregó el 22-ago-2026).
+**Estado:** 🚧 En curso — T1 a T5 cerradas. **12 tasks** (T2 se agregó el 22-ago-2026).
 
 ---
 
@@ -601,6 +601,111 @@ accesibilidad.
   layout de acceso y del token, está mal.
 
 **Commit:** `feat(marca): isotipo y gradiente en las superficies de marca`
+
+:::danger[Notas de ejecución — T5 cerrada el 22-ago-2026, y el plan estaba mal]
+**Los pasos 1 y 2 de arriba se hicieron al revés de como están escritos.** El
+plan se redactó sin tener el arte de la marca; cuando Mao lo entregó, dos
+decisiones dejaron de tener sentido.
+
+── **El isotipo NO es un SVG con `currentColor`** ───────────────────────────────
+
+El paso 1 pedía redibujarlo en línea. Se hizo, y **estuvo mal**. El argumento era
+"el original pesa 9,7 MB y una cabecera no manda eso"; el argumento es cierto y
+la conclusión no. Mao lo dijo en una línea: *«¿por qué no simplemente usás el
+asset que te di?»*.
+
+**El peso se arregla optimizando, no redibujando.** Ese mismo arte a 240 px en
+WebP pesa **11 KB** — de 9,7 MB— y es la marca de verdad, con su bisel, su
+cavidad y sus ondas. El redibujo, puesto al lado, se veía genérico: le faltaba
+justamente lo que hace especial al arte.
+
+Queda como regla: **antes de recrear un asset, probá optimizarlo.**
+
+Y `currentColor` tampoco iba: la marca es de tres colores. Un isotipo monocromo
+que hereda el color del texto no es esta marca.
+
+── **Los colores no se eligen: se cuentan** ────────────────────────────────────
+
+El paso 2 fijaba el gradiente en `#0E2A3C, #12525C, #14603F`. Muestreando el
+archivo original con Pillow, los colores reales de las tres gotas son otros:
+
+| Gota | Honda | Media | Luz |
+| --- | --- | --- | --- |
+| Azul | `#003250` | `#0A8CBE` | `#8CF0FA` |
+| Aqua | `#005A50` | `#3CBEAA` | `#BEF0F0` |
+| Verde | `#003C1E` | `#1EAA64` | `#DCFAAA` |
+
+La copia del sistema traía aproximaciones: el azul en `#1D78B3` contra el
+`#0A8CBE` real, el verde en `#33BD73` contra el `#1EAA64`. El aqua sí estaba
+bien (`#5CD9CC` contra `#54D8CC` medido). Los dos gradientes del sistema se
+rearmaron sobre los colores reales, y **verificado en el browser**: la cinta
+resuelve a `#0a8cbe → #3cbeaa → #1eaa64`.
+
+── **Cada pieza en su superficie** ─────────────────────────────────────────────
+
+| Superficie | Pieza | Por qué |
+| --- | --- | --- |
+| Acceso | Lockup completo | Es grande y es el único momento en que se mira la marca sin estar haciendo otra cosa |
+| Cabecera | Isotipo + nombre en **texto** | A 28 px el wordmark con extrusión se embarra, y sus tonos oscuros desaparecen en modo oscuro |
+| Favicon e iOS | La gota sola | Tres gotas a 16 px son una mancha |
+
+El icono de iOS es el único que **no** puede ser transparente: iOS lo compone
+sobre negro y la gota oscura desaparecería. Va sobre el gradiente de marca.
+
+── **Vidrio, que no estaba en el plan** ────────────────────────────────────────
+
+Mao pidió un sistema con aspecto *liquid glass*. La primera versión era una
+lámina translúcida con desenfoque, y él fue directo: *«el card tiene
+transparencia pero no se ve liquid glass»*. Tenía razón — eso es un rectángulo
+con opacidad. El vidrio son **tres** cosas:
+
+1. **El canto refracta**, encendido donde pega la luz y apagado en la diagonal
+   opuesta. Un borde con degradado no existe en CSS: se pinta en un `::after` y
+   se le recorta el centro con dos máscaras que se excluyen (`mask-composite`).
+2. **Hay un reflejo especular**: un óvalo de luz corrido fuera del panel, del que
+   solo se ve la caída.
+3. **La pieza tiene espesor**: dos sombras, no una — una difusa que la separa del
+   fondo y una corta de contacto que dice a qué distancia está.
+
+En oscuro el canto **no es blanco**, es el aqua de la marca: el canto tiene que
+ser del color de lo que lo ilumina.
+
+Y el vidrio necesita algo detrás. Sobre un gris plano, `backdrop-filter`
+desenfoca un gris plano. De ahí `--aq-ambiente`, un resplandor de marca amplísimo
+y muy tenue. **Ojo con D3**: eso no contradice la regla. `--aq-gradiente-marca`
+es el degradado FUERTE y sigue yendo solo en acceso —verificado, aparece
+únicamente ahí—; `--aq-ambiente` es otra cosa, sin bordes visibles, y no compite
+con una cifra.
+
+Un detalle medido: una lámina fina sobre fondo oscuro compone **color sucio**.
+Blanco al 0,62 sobre el verde de marca da `rgb(158,186,183)`, y ahí el link de
+recuperar contraseña caía a 2,88:1. Por eso los paneles que se apoyan sobre la
+marca usan una lámina con más cuerpo.
+
+── **Regla de oro nueva: un módulo llega con su icono** ────────────────────────
+
+Mao la pidió explícitamente. Está implementada **en el tipo**, no acá:
+`MenuModule.icono` es obligatorio y sin él el proyecto no compila. Una regla
+escrita solo en documentación se olvida en el décimo módulo.
+
+Los dos de auditoría llevan iconos distintos —escudo y calculadora— a propósito:
+quien tiene los dos roles ve las dos entradas, y el icono es lo primero que las
+separa.
+
+── **Un defecto de T4 que apareció acá** ───────────────────────────────────────
+
+Mao reportó que en auditoría los campos se montaban unos sobre otros. Era mío:
+subir la tipografía de 12 a 14 px en T4 ensanchó los inputs de 145 a 168 px
+dentro de columnas de 131. **Un `<input>` sin ancho declarado mide su ancho
+intrínseco, que depende del tamaño de fuente**, y como ítem de grid trae
+`min-width: auto`, que le prohíbe encogerse. Arreglado con una regla global.
+
+**Verificado quitando el mecanismo**: sacarle `decorativo` al isotipo de la
+cabecera hace que la marca diga su nombre dos veces y falla un test; sacarle el
+`alt` al lockup lo deja mudo y falla otro.
+
+**Resultado:** 4 tests nuevos, suite de `web/` en **333** (venía de 329).
+:::
 
 ---
 

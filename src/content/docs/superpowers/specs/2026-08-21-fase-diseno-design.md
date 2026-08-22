@@ -152,9 +152,30 @@ Regla dura del sistema de diseño, y la respetamos literal:
 
 | Superficie | Qué lleva |
 | --- | --- |
-| Pantallas de acceso | Isotipo + gradiente de marca de fondo |
-| Cabecera del menú lateral | Isotipo + palabra "Aquazaku" |
+| Pantallas de acceso | Lockup completo + gradiente de marca de fondo |
+| Cabecera | Isotipo + "Aquazaku" en texto, con el gradiente de la cinta |
+| Favicon e icono de iOS | La gota sola |
 | Todo lo demás | Nada. El gradiente **nunca** va detrás de una tabla ni de una cifra |
+
+### El resplandor de ambiente NO es el gradiente de marca
+
+Hay dos cosas distintas y conviene no confundirlas, porque una está prohibida
+fuera de las superficies de marca y la otra no:
+
+| Token | Qué es | Dónde va |
+| --- | --- | --- |
+| `--aq-gradiente-marca` | El degradado **fuerte**, las tres hondas en diagonal | Solo la pantalla de acceso |
+| `--aq-gradiente-cinta` | La secuencia azul → aqua → verde | La línea de la cabecera y el nombre en texto |
+| `--aq-ambiente` | Un resplandor amplísimo al 2–16 % de opacidad, sin bordes | Toda la app, detrás de todo |
+
+`--aq-ambiente` existe por una razón técnica, no decorativa: **una lámina de
+vidrio no se ve por ser translúcida, se ve por lo que deja pasar**. Sobre un gris
+plano, `backdrop-filter` desenfoca un gris plano y el panel queda como un
+rectángulo con opacidad. El resplandor es lo que el vidrio refracta.
+
+Al 2 % en claro no tiene borde visible ni compite con una cifra, que es lo que
+D3 protege. En oscuro sube al 16 %: sobre un fondo casi negro el mismo 2 % no se
+ve, y el ojo necesita más señal para leer el mismo gesto.
 
 El isotipo —tres gotas— se implementa como **componente SVG en línea**, no como
 imagen: tiene que heredar `currentColor` para funcionar en claro y en oscuro sin
