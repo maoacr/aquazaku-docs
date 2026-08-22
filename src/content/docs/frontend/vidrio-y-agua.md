@@ -81,6 +81,52 @@ new Set([iconos, titulo, tarjeta, pie].map(der)).size === 1
 El menú es la excepción, y a propósito: es una tarjeta que flota contra el borde
 de la ventana, no contenido de la columna.
 
+## La navegación cambia de forma según el ancho
+
+No es la misma navegación encogida: son dos, y cada una responde a cómo se
+sostiene el aparato.
+
+| Ancho | Navegación | Créditos |
+| --- | --- | --- |
+| Teléfono | **Barra inferior** + cajón para el resto | Al fondo del cajón |
+| Tablet y escritorio | Panel lateral fijo | En el pie |
+
+Con el cajón como única navegación, cambiar de módulo son **tres gestos**: abrir,
+elegir, y esperar que se cierre. En un mostrador eso se hace decenas de veces por
+turno. Abajo es **un toque**, y es la zona que el pulgar alcanza sin recolocar la
+mano — la parte de arriba de un teléfono grande no se llega sin hacer malabares.
+
+### El desborde
+
+Cinco ranuras es lo que entra a 375 px conservando los 44 px de objetivo táctil
+(R54). Quien ve cuatro módulos o menos los ve todos; a quien ve más —un admin con
+varios roles ve seis entradas— la última ranura se convierte en **«Más»** y abre
+el cajón.
+
+Se prefiere eso a apretar seis iconos: **una barra donde no se le puede pegar a
+nada es peor que una con un botón extra.**
+
+El cajón no desaparece nunca: sigue siendo donde vive todo. La barra es el atajo
+a lo que más se usa.
+
+:::caution[Un componente no cruza la frontera servidor/cliente]
+La barra recibía los módulos ya resueltos, y eso **rompió la aplicación entera**:
+
+```
+Functions cannot be passed directly to Client Components
+  {$$typeof: ..., render: function Package}
+```
+
+`MenuModule.icono` es un componente, o sea una función. Un componente de servidor
+no puede pasarle una función a uno de cliente — React no la sabe serializar.
+
+La barra recibe los **roles**, que son texto, y resuelve sus módulos importando
+`computeVisibleModules`. Del lado del cliente los iconos sí están.
+
+**Regla:** lo que cruza de servidor a cliente tiene que ser serializable. Datos,
+no comportamiento.
+:::
+
 ## Rendimiento: el desenfoque casi no se usa, y hay una razón
 
 `backdrop-filter` es **caro**. Cada elemento que lo lleva fuerza una capa de
@@ -268,3 +314,24 @@ está registrada en las notas de T5 del
 
 Cada escalón le gana al anterior en cualquier orden, y sin depender de si
 Tailwind dejó sus utilidades dentro de `@layer`.
+
+## Dos huecos de verificación que hay que conocer
+
+Los tests de este sistema pasaron en verde con la aplicación rota. **Dos veces**,
+por razones distintas, y conviene saberlo antes de confiar en un check verde.
+
+**Los tests de CSS leen el archivo como texto.** Se rompió la sintaxis del
+`globals.css` —un bloque sin cerrar— y los 404 tests siguieron pasando, porque
+ninguno lo compila. La verificación real fue pedirle la hoja al servidor:
+
+```bash
+curl -s http://localhost:3000/login | rg -o '/_next/static/[^"]*\.css'
+```
+
+**Los tests de componentes no tienen frontera servidor/cliente.** Renderizan todo
+en un proceso, así que un componente pasado como prop de servidor a cliente pasa
+sin protestar — y en la aplicación real revienta la pantalla entera. Eso lo agarra
+el log del servidor de desarrollo, no la suite.
+
+En los dos casos la lección es la misma: **la suite verifica lo que sabe
+verificar.** Para lo demás hay que mirar la aplicación corriendo.
