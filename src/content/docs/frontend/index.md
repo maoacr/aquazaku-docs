@@ -17,8 +17,16 @@ Documentación del proyecto `web/`: el panel de administración que usa la ofici
 
 ## Estado actual
 
-**M0 — Auth + RBAC: ✅ implementado** (20-ago-2026). 176 tests, verificado en el
-browser contra `api/` real.
+**Al 22-ago-2026:**
+
+- **M0 — Auth + RBAC**: ✅ implementado (20-ago-2026)
+- **M1 — Productos y catálogo**: ✅ implementado (22-ago-2026)
+- **M2 — Stock de producto terminado**: ✅ implementado (22-ago-2026)
+- **Fase de diseño**: ✅ aplicada (22-ago-2026) — marca real, vidrio y agua,
+  semáforo de estados, vacíos diferenciados, errores sin jerga, voz de usted,
+  accesibilidad medida (anillo de foco y objetivos táctiles).
+
+**434 tests** en `web/`, verificados en el browser contra `api/` real.
 
 Repositorio: [`aquazaku-web`](https://github.com/maoacr/aquazaku-web).
 

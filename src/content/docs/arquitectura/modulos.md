@@ -91,13 +91,26 @@ las reglas de negocio de cada módulo, ver [Dominio](/dominio/).
 ## M3 — Insumos
 
 - **Propósito:** control de tapas, sellos termoencogibles y bolsas como
-  stock. Stock mínimo configurable con default sugerido 200/200. Alerta de
+  stock. Stock mínimo configurable con default 200/200. Alerta de
   reposición.
 - **Roles:** `admin`, `pos`.
 - **Depende de:** M0.
-- **Doc de dominio:** *(a documentar)* — base en RN-STK-04 y RN-PRD-09.
-- **Estado:** 🔲 pendiente.
-- **Pendiente:** confirmar default 200/200 con Aquazaku.
+- **Doc de dominio:** [Insumos](/dominio/insumos/) — RN-INS-01 a 04 (todas ✅
+  confirmadas el 22-ago-2026).
+- **Spec de diseño:** [`/superpowers/specs/2026-08-22-m3-insumos-design.md`](/superpowers/specs/2026-08-22-m3-insumos-design)
+- **Estado:** 🟡 spec y dominio listos — pendiente codificar.
+- **Notas:**
+  - Las bolsas se compran por kilo y se guardan por unidad
+    ([RN-INS-02](/dominio/insumos/)). La conversión la hace el sistema al
+    recibir la compra o al conteo físico, **no** en producción.
+  - El cloro y los filtros **NO** entran al inventario — son gasto, no stock
+    ([RN-INS-04](/dominio/insumos/)).
+  - El stock mínimo es **configurable** desde la administración, igual que el
+    aviso de vencimiento de stock ([RN-STK-11](/dominio/stock/))
+    ([RN-INS-03](/dominio/insumos/)).
+  - Falta la equivalencia kg→unidades para bolsas
+    ([pregunta 37](/empezar/pendientes/)): hasta tenerla, el sistema no
+    convierte kilos a unidades solo.
 
 ## M4 — Producción y cierre del día
 

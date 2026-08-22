@@ -172,7 +172,7 @@ porque todo lo demás lo necesita, no porque sea el más visible.
 | M1 | **Productos y catálogo** | Qué se vende: pacas 600ml/300ml, botellones con sus unidades y conversiones | `admin`, `pos`, `seller`, `contador` | M0 | ✅ terminado |
 | M2 | **Stock de producto terminado** | Lotes, vencimiento 30d, FIFO, bloqueo de vencidos | `admin`, `pos`, `seller`, `contador` | M0, M1 | ✅ terminado |
 | — | **Fase de diseño** | Sistema de diseño aplicado: marca real, vidrio y agua, semáforo de estados, vacíos, errores sin jerga, voz de usted, accesibilidad medida | — | M2 | ✅ terminada |
-| M3 | **Insumos** | Tapas, sellos, bolsas por kg con stock mínimo configurable (default 200/200) | `admin`, `pos` | M0 | 🟡 por arrancar |
+| M3 | **Insumos** | Tapas, sellos, bolsas por kg con stock mínimo configurable (default 200/200) | `admin`, `pos` | M0 | 🟡 spec lista, por codear |
 | M4 | **Producción y cierre del día** | Tandas, lote generado automáticamente, mermas, descartes con causa, mantenimiento de filtros | `admin`, `pos` | M0, M1, M2, M3 | 🔲 pendiente |
 | M5 | **Clientes** | Alta con verificación de documento, ficha, segmentación residencial/comercial, bloqueo de baja con cifras | `admin`, `pos`, `seller`, `contador` | M0 | 🔲 pendiente |
 | M6 | **Ventas** | POS, pedidos WhatsApp, devoluciones con motivo, descuentos con piso absoluto, factura electrónica como intención | `admin`, `pos`, `seller`, `contador` | M0, M1, M2, M5 | 🔲 pendiente |
@@ -264,11 +264,11 @@ puede arrancar en `design` mientras el anterior está en `apply`, pero no antes.
 
 | Fase | Módulo |
 | --- | --- |
-| ✅ **Terminado** | **M0 — Auth + RBAC** · **M1 — Productos** · **M2 — Stock** |
+| ✅ **Terminado** | **M0 — Auth + RBAC** · **M1 — Productos** · **M2 — Stock** · **Fase de diseño** (marca, vidrio, agua, estados, vacíos, voz de usted, accesibilidad) |
 | Design en curso | — |
 | Apply en curso | — |
-| **Por arrancar** | **Fase de diseño** — UI, modo oscuro y marca |
-| Pendiente | M3–M7, M9–M13 |
+| **Spec lista, por codear** | **M3 — Insumos** (dominio y spec cerrados el 22-ago-2026) |
+| Pendiente | M4–M7, M9–M13 |
 | Diferido (post-MVP) | M8 — Rutas y seller mobile |
 
 :::tip[M0 cerrado el 20-ago-2026]
@@ -284,6 +284,19 @@ Salieron dos ADR ([0004](/decisiones/0004-audit-log-inmutable) y
 había escrito antes: [RN-ACC-06 y RN-ACC-07](/dominio/roles-y-permisos/).
 :::
 
+:::tip[M2 cerrado el 22-ago-2026]
+Las 9 tasks del plan implementadas y verificadas contra la base: el libro
+explica el saldo, el FIFO se respeta bajo concurrencia y la cadena de auditoría
+no tiene huecos.
+
+Estado de las suites a esa fecha: **`api/` con 548 tests, `web/` con 434**,
+Bruno corriendo en CI. La fase de diseño posterior aplicó el sistema completo
+a todo lo construido hasta acá — ver [El sistema, aplicado](/frontend/sistema-aplicado/).
+
+Surgió una regla nueva al implementar: [RN-STK-11](/dominio/stock/)
+(umbral configurable del aviso de vencimiento, 7 días por defecto).
+:::
+
 El resto del documento de dominio está cerrado: las reglas RN-\* que ya están
 publicadas en `/dominio/` cubren lo que el módulo necesita **definir**, no
 cómo lo **implementa**. El SDD de cada módulo traduce esas reglas en código.
@@ -297,12 +310,23 @@ Preguntas que siguen sin resolverse y que pueden frenar la spec de algún módul
 1. **Nombre del módulo de retornables** — `entrega` (como aparece en
    `claude-design/`) o `retornables` (como aparece en el modelo de datos y en
    el dominio). Coexisten hoy; hay que unificar antes de la spec de **M7**.
-2. **Stock mínimo default de insumos** — el plan de M3 asume 200/200 (tapas y
-   sellos) pero el número no está confirmado por Aquazaku. Confirmar antes del
-   diseño de **M3**.
 
 Ver también [Qué falta preguntar](/empezar/pendientes/) — las cuatro mediciones
 🟠 que requieren ir a la planta.
+
+### Resueltas al diseñar M3 (22-ago-2026)
+
+| Pregunta | Cómo quedó |
+|---|---|
+| Stock mínimo default de insumos | **200 tapas / 200 sellos** como valor inicial, configurable desde la administración ([RN-INS-03](/dominio/insumos/)) |
+| Las bolsas se cuentan por kilo o por unidad | Se **compran por kilo** y se **guardan por unidad** ([RN-INS-02](/dominio/insumos/)). La conversión es una medición de planta, no una constante ([pregunta 37](/empezar/pendientes/)) |
+| El cloro y los filtros entran como stock | **No** — son gasto, no inventario ([RN-INS-04](/dominio/insumos/)) |
+
+### Resueltas al implementar M2 (22-ago-2026)
+
+| Pregunta | Cómo quedó |
+|---|---|
+| Umbral del aviso de vencimiento próximo | **7 días** como valor inicial, configurable desde la administración ([RN-STK-11](/dominio/stock/)) — pregunta 36 cerrada |
 
 ### Resueltas al implementar M0
 

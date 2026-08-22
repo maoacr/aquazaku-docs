@@ -28,8 +28,14 @@ esquema de permisos por rol.
 
 ## Estado actual
 
-**M0 — Auth + RBAC: ✅ implementado** (20-ago-2026). 349 tests, verificado de
-punta a punta contra `web/` en un browser real.
+**Al 22-ago-2026:**
+
+- **M0 — Auth + RBAC**: ✅ implementado (20-ago-2026)
+- **M1 — Productos y catálogo**: ✅ implementado (22-ago-2026)
+- **M2 — Stock de producto terminado**: ✅ implementado (22-ago-2026)
+
+**548 tests** en `api/` (32 archivos), verificados de punta a punta contra
+`web/` y la base. Bruno corriendo en CI contra un servidor real.
 
 Repositorio: [`aquazaku-api`](https://github.com/maoacr/aquazaku-api).
 
