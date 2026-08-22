@@ -289,6 +289,66 @@ bug del menú. Una ruta de verificación va **fuera de todo route group**.
 **Resultado:** 10 tests nuevos, suite de `web/` en **281** (venía de 271).
 :::
 
+:::danger[Notas de ejecución — los controles de sesión y una cascada que dependía del orden]
+**Perfil, tema y salida se mudaron del pie del menú a la derecha de la cabecera.**
+En un teléfono el menú vive detrás de un cajón: cambiar el tema exigía abrirlo,
+bajar y cerrarlo. Ahora son tres iconos de 44 px, y el cambio de tema es un toque.
+
+**El toggle es claro ↔ oscuro; `sistema` se mudó al perfil.** Con tres opciones
+en línea el control quedaba apretado, y `sistema` es una preferencia de fondo:
+ocupando un botón obligaba a pasar por él para algo que se hace de un toque.
+
+**Se renderizan los dos botones y el CSS muestra uno.** Cuando el tema es
+`sistema`, el servidor no puede saber qué prefiere el sistema operativo de quien
+mira. Preguntarlo con JavaScript al montar traería de vuelta el destello que la
+cookie evita, así que la decisión la toma la cascada.
+
+**Y ahí estuvo el bug: la cascada dependía del orden de aparición.** Los botones
+llevan utilidades de Tailwind, y `.flex` declara `display` igual que la regla que
+esconde. Las dos tenían especificidad `0,1,0`, así que ganaba la que saliera
+después. En desarrollo eso no es estable —el CSS se reconstruye por partes— y en
+el browser de otra persona salió al revés: **se veían la luna y el sol a la vez**.
+
+El arreglo no fue reordenar, fue sacar el orden de la ecuación con una escalera
+de especificidad, que sí es invariante:
+
+| escalón | regla | especificidad |
+|---|---|---|
+| utilidades | `.flex` | `0,1,0` |
+| esconder | `.aq-toggle-tema .aq-en-*` | `0,2,0` |
+| mostrar | `[data-tema=…] .aq-toggle-tema .aq-en-*` | `0,3,0` |
+
+Y los tres casos de "mostrar" se hicieron **mutuamente excluyentes** —explícito
+claro, explícito oscuro, o sin atributo con lo que diga el sistema— para que
+ninguno necesite pisar a otro. Las dos consultas de `prefers-color-scheme` son
+complementarias (`not all and (…)` cubre incluso al browser que no la entienda),
+así que siempre se ve exactamente uno.
+
+**Dos lecciones que costaron tiempo.** La primera: leer el archivo CSS servido y
+contar llaves para adivinar si una regla quedó dentro de `@layer` **da respuestas
+falsas**. La medición buena es preguntarle al CSSOM del browser recorriendo
+`document.styleSheets`, que dice la capa real de cada regla. La primera lectura
+dijo que `.flex` estaba fuera de capa; el CSSOM mostró que estaba dentro.
+
+La segunda: **el chunk de CSS en desarrollo no cambia de nombre al editar
+`globals.css`**. Navegando por links, el App Router trae markup nuevo por RSC y
+no vuelve a pedir la hoja. Markup nuevo + CSS viejo explica síntomas que parecen
+imposibles. Ante un "en mi browser se ve distinto", recargar duro es el primer
+descarte.
+
+**Verificado quitando el mecanismo**, como el resto de la fase: sin la clase
+`aq-toggle-tema` se ven los dos botones —el síntoma reportado, reproducido— y el
+test nuevo falla. Los cuatro casos dan exactamente un icono, y siempre el
+contrario del tema que se está viendo.
+
+**Se agrega la pantalla de perfil**, que no existía: quién es, qué habilita cada
+uno de sus roles y desde dónde cambiar la contraseña. Los roles se ven pero no se
+editan ahí — los asigna un admin desde Usuarios, y dejarlos editables sugeriría
+que uno puede darse permisos.
+
+**Resultado:** suite de `web/` en **288**.
+:::
+
 ---
 
 ## T3 · Barrido de hex sueltos y el par fondo/texto
