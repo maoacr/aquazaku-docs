@@ -10,7 +10,7 @@ modo oscuro vivo, marca, estados por cuatro canales, accesibilidad y voz única.
 **Sistema de diseño:** `claude-design/` — tokens, 13 diseños de referencia y
 `reglas-como-tests.md` (R40, R49–R55).
 
-**Estado:** 🚧 En curso — T1 a T9 cerradas. **12 tasks** (T2 se agregó el 22-ago-2026).
+**Estado:** 🚧 En curso — T1 a T10 cerradas. **12 tasks** (T2 se agregó el 22-ago-2026).
 
 ---
 
@@ -1121,6 +1121,64 @@ Starlight.
 - **Con los ojos:** el sitio en claro y en oscuro.
 
 **Commit:** `feat(docs): el sitio usa los tokens de Aquazaku`
+
+:::danger[Notas de ejecución — T10 cerrada el 22-ago-2026]
+**La polaridad de Starlight está invertida respecto de la nuestra.** Su `:root`
+es el modo **oscuro** y `[data-theme='light']` es la excepción; en Aquazaku los
+tokens base son claros. Mapearlos «en el mismo orden» da un sitio con los modos
+cambiados, y eso no se ve como un error: se ve como un tema raro.
+
+El archivo de tokens de `docs/` se **genera** desde `web/src/app/tokens.css` más
+las correcciones de `globals.css`, que no son opcionales — la jerarquía de texto
+corrida un paso y los colores muestreados del arte viven ahí. Sin ellas los dos
+sitios se verían distintos.
+
+── **Lo que Mao pidió además, y cambió el alcance** ────────────────────────────
+
+Branding completo —logo, favicon, imagen para compartir— y convertir la portada
+en una landing de verdad. Y una idea que ordenó todo: **que bajar se sienta como
+hundirse en el agua**.
+
+── **El descenso: el mejor efecto es el que no hay que calcular** ─────────────
+
+El primer intento fue una animación ligada al scroll (`animation-timeline`).
+Falló dos veces por razones distintas, las dos instructivas:
+
+1. El atajo `animation:` sin duración la deja en **`0s`**, y una línea de tiempo
+   de scroll necesita `auto`. La animación existía, corría, y nunca avanzaba.
+2. El enganche era `body:has([data-has-hero])`, y ese atributo está en `<html>`.
+   `:has()` mira **descendientes**: nunca matcheó.
+
+Arreglado lo segundo y con propiedades largas, la línea de tiempo seguía en cero.
+Y ahí apareció que **sobraba todo**:
+
+> El fondo del `<body>` cubre el alto del **documento**, no el de la ventana. Un
+> gradiente de superficie a profundidad pintado ahí ya está desplegado a lo largo
+> de la página. Bajar revela la parte de abajo. El descenso no se anima — **se
+> recorre**.
+
+Cero JavaScript, cero animación, cero coste por frame, y funciona en cualquier
+navegador.
+
+── **Y el descenso rompió el contraste, como era de esperar** ─────────────────
+
+Si el fondo cambia con el scroll, un color que pasa arriba puede fallar abajo. En
+claro los enlaces daban **4,19:1** en la parada más profunda — pasan en la
+superficie y fallan a mitad del scroll, sin que nada avise. El acento subió a
+`acento-800`: 7,08:1 arriba y 5,87:1 abajo.
+
+En claro además el descenso **no llega a agua oscura**: se queda en laguna aqua.
+Hundirse hasta el navy dejaría el texto oscuro del modo claro sobre fondo oscuro,
+y eso no es un efecto, es una página ilegible.
+
+**Verificación:** contraste medido componiendo cada superficie contra las **dos
+puntas** del recorrido —superficie y fondo— en los dos modos: sin hallazgos. Y
+46 páginas, 902 anclas, 2475 enlaces internos, **0 rotos**.
+
+**Una trampa de medición más:** `getComputedStyle` devuelve `color(srgb r g b /
+a)` con floats de 0 a 1 y sin número antes de los canales. Un parser que asuma
+`rgb()` corre los canales una posición y reporta defectos graves que no existen.
+:::
 
 ---
 

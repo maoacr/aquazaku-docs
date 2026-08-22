@@ -1,0 +1,149 @@
+/*
+ * Tokens de Aquazaku para el sitio de documentación.
+ *
+ * ── Por qué hay una copia acá ───────────────────────────────────────────────
+ *
+ * `docs/` es un repo aparte de `web/`, así que no puede importar sus tokens.
+ * Este archivo se GENERA desde `web/src/app/tokens.css` más las correcciones de
+ * `web/src/app/globals.css` — que no son opcionales: la jerarquía de texto
+ * corrida un paso y los colores de marca muestreados del arte real viven ahí, y
+ * sin ellas los dos sitios se verían distintos.
+ *
+ * Si el sistema de diseño cambia, se vuelve a generar. No se edita a mano.
+ */
+:root {
+  /*
+   * La onda del isotipo, como máscara. En línea y no como archivo: usada de
+   * máscara solo aporta la FORMA, y el color lo pone quien la usa — así no hace
+   * falta una versión por tema.
+   */
+  --aq-onda-marca: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 240 120' preserveAspectRatio='none'%3E%3Cpath d='M0 46c20-20 40-20 60 0s40 20 60 0 40-20 60 0 40 20 60 0v74H0Z' fill='%23fff' opacity='.55'/%3E%3Cpath d='M0 74c20-20 40-20 60 0s40 20 60 0 40-20 60 0 40 20 60 0v46H0Z' fill='%23fff'/%3E%3C/svg%3E");
+
+  /*
+   * ── El agua del descenso ──────────────────────────────────────────────────
+   *
+   * En claro el descenso NO llega a agua oscura: va de superficie casi blanca a
+   * una laguna aqua, y ahí se queda. Hundirse hasta el navy dejaría el texto
+   * oscuro del modo claro sobre un fondo oscuro, y eso no es un efecto: es una
+   * página ilegible a mitad del scroll.
+   *
+   * El gesto se siente igual — lo que cambia es cuánto se puede bajar sin que
+   * el contraste deje de dar.
+   */
+  --aq-tarjeta-portada: rgb(255 255 255 / 0.72);
+  --aq-canto-portada:   rgb(255 255 255 / 0.9);
+  --aq-fluido: cubic-bezier(0.22, 0.85, 0.3, 1);
+  --aq-fluido-medio: 260ms;
+  --aq-agua-superficie: linear-gradient(180deg, #FBFDFE 0%, #F2F9FA 60%, #EFF8F4 100%);
+  /*
+   * El recorrido completo, de superficie a fondo. En claro NO llega a agua
+   * oscura: se queda en laguna aqua. Hundirse hasta el navy dejaría el texto
+   * oscuro del modo claro sobre fondo oscuro a mitad del scroll — y eso no es
+   * un efecto, es una página ilegible.
+   */
+  --aq-agua-descenso: linear-gradient(180deg, #FBFDFE 0%, #F1F8F9 28%, #E4F1F3 62%, #DBEBE8 100%);
+  --aq-accion-destructiva: #C0362A;
+  --aq-accion-primaria: #1D78B3;
+  --aq-accion-primaria-hover: #1A6091;
+  --aq-acento-100: #D0F8F3;
+  --aq-acento-200: #A3F0E8;
+  --aq-acento-300: #6FE2D8;
+  --aq-acento-400: #5CD9CC;
+  --aq-acento-50: #EFFDFB;
+  --aq-acento-500: #26BDB1;
+  --aq-acento-600: #199990;
+  --aq-acento-700: #187A74;
+  --aq-acento-800: #18615D;
+  --aq-acento-900: #12525C;
+  --aq-acento-950: #0A3538;
+  --aq-advertencia-300: #EFC55C;
+  --aq-advertencia-50: #FBF3DE;
+  --aq-advertencia-500: #E5A00D;
+  --aq-advertencia-700: #8A5F04;
+  --aq-advertencia-800: #6B4A03;
+  --aq-advertencia-900: #4A3305;
+  --aq-borde-fuerte: var(--aq-neutro-300);
+  --aq-borde-sutil: var(--aq-neutro-200);
+  --aq-error-300: #EE8377;
+  --aq-error-400: #E4574A;
+  --aq-error-50: #FDF3F2;
+  --aq-error-500: #C0362A;
+  --aq-error-700: #9E2A20;
+  --aq-error-800: #7F1F17;
+  --aq-error-900: #5A1610;
+  --aq-exito-100: #D7F5E4;
+  --aq-exito-200: #B1EACB;
+  --aq-exito-300: #7DD9A9;
+  --aq-exito-400: #4CC886;
+  --aq-exito-50: #EFFBF4;
+  --aq-exito-500: #33BD73;
+  --aq-exito-600: #1F9D5D;
+  --aq-exito-700: #1B7C4B;
+  --aq-exito-800: #19623E;
+  --aq-exito-900: #175134;
+  --aq-exito-950: #0A2E1E;
+  --aq-font-mono: var(--font-plex-mono), 'IBM Plex Mono', ui-monospace, monospace;
+  --aq-font-sans: var(--font-plex-sans), 'IBM Plex Sans', Helvetica, Arial, sans-serif;
+  --aq-neutro-0: #FFFFFF;
+  --aq-neutro-100: #EDF2F5;
+  --aq-neutro-200: #DDE5EA;
+  --aq-neutro-300: #C3CFD6;
+  --aq-neutro-400: #9AA9B3;
+  --aq-neutro-50: #F6F9FB;
+  --aq-neutro-500: #74848F;
+  --aq-neutro-600: #566670;
+  --aq-neutro-700: #414F58;
+  --aq-neutro-800: #2C383F;
+  --aq-neutro-900: #1B252B;
+  --aq-neutro-950: #101719;
+  --aq-primaria-100: #DAEEF9;
+  --aq-primaria-200: #B8DEF4;
+  --aq-primaria-300: #86C6EA;
+  --aq-primaria-400: #4EA9DA;
+  --aq-primaria-50: #EFF8FD;
+  --aq-primaria-500: #2A8CC4;
+  --aq-primaria-600: #1D78B3;
+  --aq-primaria-700: #1A6091;
+  --aq-primaria-800: #1B5178;
+  --aq-primaria-900: #12384F;
+  --aq-primaria-950: #0E2A3C;
+  --aq-radio-0: 0;
+  --aq-radio-lg: 12px;
+  --aq-radio-md: 8px;
+  --aq-radio-pill: 999px;
+  --aq-radio-sm: 4px;
+  --aq-radio-xl: 16px;
+  --aq-superficie-elevada: var(--aq-neutro-0);
+  --aq-superficie-fondo: var(--aq-neutro-50);
+  --aq-superficie-tarjeta: var(--aq-neutro-0);
+  --aq-texto-invertido: var(--aq-neutro-0);
+  --aq-texto-principal: var(--aq-neutro-900);
+  --aq-texto-secundario: var(--aq-neutro-700);
+  --aq-texto-tenue: var(--aq-neutro-600);
+}
+
+/*
+ * El modo oscuro. Solo lo que CAMBIA respecto de arriba — lo demás se hereda,
+ * que es cómo está pensada la escala.
+ */
+:root[data-theme='dark'] {
+
+  /* En oscuro sí se baja de verdad: de agua a media luz a fondo sin luz. */
+  --aq-tarjeta-portada: rgb(22 34 42 / 0.55);
+  --aq-canto-portada:   rgb(190 245 245 / 0.14);
+  --aq-agua-superficie: linear-gradient(180deg, #0F2836 0%, #103440 60%, #103A32 100%);
+  /* En oscuro sí se baja de verdad: de media luz a fondo sin luz. */
+  --aq-agua-descenso: linear-gradient(180deg, #0F2836 0%, #0C2430 30%, #071823 66%, #04121A 100%);
+  --aq-accion-destructiva: #E4574A;
+  --aq-accion-primaria: #4EA9DA;
+  --aq-accion-primaria-hover: #86C6EA;
+  --aq-borde-fuerte: var(--aq-neutro-600);
+  --aq-borde-sutil: var(--aq-neutro-800);
+  --aq-superficie-elevada: var(--aq-neutro-800);
+  --aq-superficie-fondo: var(--aq-neutro-950);
+  --aq-superficie-tarjeta: var(--aq-neutro-900);
+  --aq-texto-invertido: var(--aq-neutro-950);
+  --aq-texto-principal: var(--aq-neutro-100);
+  --aq-texto-secundario: var(--aq-neutro-300);
+  --aq-texto-tenue: var(--aq-neutro-400);
+}

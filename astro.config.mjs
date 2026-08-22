@@ -11,6 +11,51 @@ export default defineConfig({
 	integrations: [
 		starlight({
 			title: 'Aquazaku Docs',
+			// El isotipo real de la marca, en la barra superior. `replacesTitle`
+			// queda en `false` a propósito: tres gotas de 32 px no dicen
+			// "documentación de Aquazaku" a quien llega por primera vez.
+			logo: {
+				src: './src/assets/isotipo.webp',
+				alt: 'Aquazaku',
+			},
+			// Reemplaza el favicon por defecto de Starlight. El `.ico` lo pide
+			// todavía algún lector de feeds y bastante bot.
+			favicon: '/favicon.png',
+			head: [
+				{
+					tag: 'link',
+					attrs: { rel: 'alternate icon', href: '/favicon.ico', sizes: '48x48' },
+				},
+				// La tarjeta que se ve al compartir el link: el lockup sobre el
+				// gradiente de marca. Sin esto, un link a la doc en WhatsApp es
+				// un rectángulo gris.
+				{ tag: 'meta', attrs: { property: 'og:image', content: '/og.jpg' } },
+				{ tag: 'meta', attrs: { name: 'twitter:card', content: 'summary_large_image' } },
+				{ tag: 'meta', attrs: { name: 'twitter:image', content: '/og.jpg' } },
+				// El color de la barra del navegador en Android, y el aqua de la
+				// marca como color de selección del sistema.
+				{ tag: 'meta', attrs: { name: 'theme-color', content: '#0E2A3C' } },
+				// IBM Plex, la misma del producto.
+				{ tag: 'link', attrs: { rel: 'preconnect', href: 'https://fonts.googleapis.com' } },
+				{
+					tag: 'link',
+					attrs: { rel: 'preconnect', href: 'https://fonts.gstatic.com', crossorigin: true },
+				},
+				{
+					tag: 'link',
+					attrs: {
+						rel: 'stylesheet',
+						href: 'https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap',
+					},
+				},
+			],
+			/*
+			 * El orden importa: primero los tokens y después el mapeo, porque el
+			 * segundo apunta a variables que define el primero.
+			 *
+			 * No se reescribe el tema de Starlight — se le pasan los valores.
+			 */
+			customCss: ['./src/styles/tokens.css', './src/styles/aquazaku.css'],
 			description:
 				'Documentación técnica del sistema de gestión de Aquazaku: ventas, stock, clientes, proveedores y app mobile.',
 			// Español sin prefijo /es/ en la URL.

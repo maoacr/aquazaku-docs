@@ -1,11 +1,15 @@
 ---
 title: Aquazaku
-description: Documentación técnica del sistema de gestión de Aquazaku.
+description: Documentación técnica del sistema de gestión de Aquazaku — la planta de agua de Campo de la Cruz.
 template: splash
+editUrl: false
 hero:
-  tagline: Documentación viva del sistema de gestión de Aquazaku — ventas, stock, clientes, proveedores y app mobile.
+  image:
+    file: ../../assets/lockup.webp
+    alt: Aquazaku
+  tagline: El sistema de gestión de una planta de agua en Campo de la Cruz, Atlántico. Esta documentación se escribe mientras se construye — si algo no está acá, no existe.
   actions:
-    - text: Visión general
+    - text: Empezar por el negocio
       link: /empezar/vision-general/
       icon: right-arrow
     - text: Decisiones técnicas
@@ -16,29 +20,78 @@ hero:
 
 import { Card, CardGrid } from '@astrojs/starlight/components';
 
+<div class="aq-cifras">
+  <div><strong>107</strong><span>reglas de negocio</span></div>
+  <div><strong>946</strong><span>tests</span></div>
+  <div><strong>8</strong><span>decisiones registradas</span></div>
+  <div><strong>45</strong><span>páginas</span></div>
+</div>
+
+## Qué hace distinto a este sistema
+
+Aquazaku **produce y vende** agua. No es un revendedor: tiene planta de empaque.
+Y eso mete tres cosas que un punto de venta común no tiene.
+
+<CardGrid>
+	<Card title="El envase vuelve" icon="approve-check">
+		Un botellón de 20 L sale, y **vuelve**. Un POS que solo sabe vender lo
+		cuenta como perdido: el inventario deja de cuadrar al primer día.
+	</Card>
+	<Card title="La base tiene dueño" icon="seti:db">
+		Cada base prestada está en una dirección concreta y hay que poder
+		reclamarla ahí. No es stock: es un préstamo con nombre.
+	</Card>
+	<Card title="El agua se pierde en el camino" icon="warning">
+		Entra agua cruda y sale menos: los filtros rechazan cerca del 30 %, y
+		lavar botellones gasta más. Cuadrar litros contra producto envasado
+		atraviesa las dos pérdidas.
+	</Card>
+</CardGrid>
+
+Y el suministro municipal **no es continuo**. Los 13.000 litros de
+almacenamiento son lo que sostiene el servicio cuando la red no da agua — así
+que saber cuántos días de producción quedan es el indicador crítico de la planta.
+
+## Por dónde entrar
+
 <CardGrid stagger>
-	<Card title="Dominio" icon="open-book">
-		El negocio antes que el código: pacas, botellones, rutas, vendedores y
-		el ciclo de recarga. [Ver dominio](/dominio/)
+	<Card title="El negocio, antes que el código" icon="open-book">
+		Pacas, botellones, rutas, el ciclo de recarga y las 107 reglas que
+		gobiernan el sistema. Es el mejor lugar para empezar.
+
+		[Ver el dominio](/dominio/)
 	</Card>
-	<Card title="Arquitectura" icon="setting">
-		Cómo están separadas las piezas del sistema y por qué.
-		[Ver arquitectura](/arquitectura/)
+	<Card title="Por qué está hecho así" icon="setting">
+		Ocho decisiones registradas con contexto, alternativas y consecuencias —
+		desde el patrón BFF hasta por qué los invariantes viven en la base.
+
+		[Ver las decisiones](/decisiones/)
 	</Card>
-	<Card title="Backend y API" icon="puzzle">
-		Contratos, endpoints, autenticación y permisos por rol.
-		[Ver backend](/backend/)
+	<Card title="La API y sus contratos" icon="puzzle">
+		Endpoints, autenticación, permisos por rol y la auditoría que registra
+		toda acción sensible.
+
+		[Ver el backend](/backend/)
 	</Card>
-	<Card title="Base de datos" icon="seti:db">
-		Modelo de datos, migraciones y decisiones de modelado.
-		[Ver base de datos](/base-de-datos/)
+	<Card title="El sistema de diseño" icon="star">
+		La marca, los tokens, y cómo está construido el vidrio y el agua que
+		usa el producto.
+
+		[Ver el frontend](/frontend/)
 	</Card>
 </CardGrid>
 
 ## Cómo se usa esta documentación
 
-Esta documentación se escribe **a medida que se construye**, no después.
-Cada decisión técnica que se toma queda registrada como un ADR en
-[Decisiones técnicas](/decisiones/) — con contexto, alternativas y consecuencias.
+Se escribe **a medida que se construye**, no después. Cada decisión técnica
+queda registrada como un ADR en [Decisiones técnicas](/decisiones/), con lo que
+se consideró y lo que se descartó.
 
-Si algo del sistema no está acá, no existe.
+Las reglas de negocio tienen identificador propio —`RN-STK-08`, `RN-ACC-02`— y
+el código las cita por ese nombre. Cuando una regla cambia, se puede encontrar
+todo lo que la implementa.
+
+Y lo que todavía no se sabe también está escrito: las preguntas abiertas viven
+en [Qué falta preguntar](/empezar/pendientes/), numeradas, con por qué importa
+cada una. Una pregunta sin responder es una decisión que alguien va a tomar sin
+darse cuenta.

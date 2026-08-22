@@ -1,0 +1,296 @@
+/*
+ * El sitio de documentación con los colores y la tipografía de Aquazaku.
+ *
+ * ── No se reescribe el tema de Starlight: se le pasan los valores ───────────
+ *
+ * Starlight construye todo sobre sus propias custom properties (`--sl-*`). Lo
+ * único que hace este archivo es apuntarlas a los tokens de Aquazaku. Nada de
+ * selectores de componentes, nada de `!important`: si Starlight cambia su
+ * markup, esto sigue funcionando porque nunca dependió de él.
+ *
+ * ── El detalle que hay que tener presente: la polaridad está invertida ──────
+ *
+ * En Starlight `:root` es el modo **oscuro** y `:root[data-theme='light']` es la
+ * excepción. En Aquazaku es al revés — los tokens base son claros.
+ *
+ * Así que acá el `:root` recibe los valores OSCUROS de Aquazaku y el bloque de
+ * `light` los claros. Mapearlos "en el mismo orden" da un sitio con los modos
+ * cambiados, y eso no se ve como un error: se ve como un tema raro.
+ */
+
+/* ── El modo por defecto de Starlight: oscuro ─────────────────────────────── */
+:root {
+  --sl-color-white: var(--aq-neutro-0);
+  --sl-color-gray-1: var(--aq-neutro-100);
+  --sl-color-gray-2: var(--aq-neutro-300);
+  --sl-color-gray-3: var(--aq-neutro-400);
+  --sl-color-gray-4: var(--aq-neutro-600);
+  --sl-color-gray-5: var(--aq-neutro-800);
+  --sl-color-gray-6: var(--aq-neutro-900);
+  --sl-color-gray-7: var(--aq-neutro-950);
+  --sl-color-black: var(--aq-neutro-950);
+
+  --sl-color-bg: var(--aq-superficie-fondo);
+  --sl-color-bg-nav: var(--aq-superficie-tarjeta);
+  --sl-color-bg-sidebar: var(--aq-superficie-tarjeta);
+  --sl-color-bg-inline-code: var(--aq-superficie-elevada);
+
+  --sl-color-text: var(--aq-texto-secundario);
+  --sl-color-text-accent: var(--aq-acento-300);
+  --sl-color-text-invert: var(--aq-texto-invertido);
+
+  --sl-color-hairline: var(--aq-borde-sutil);
+  --sl-color-hairline-light: var(--aq-borde-sutil);
+  --sl-color-hairline-shade: var(--aq-borde-fuerte);
+
+  /*
+   * El acento es el AQUA de la marca, no el azul de acción.
+   *
+   * En el producto el azul significa «esto es un botón». Acá no hay botones que
+   * confundir, y el aqua es lo que hace que el sitio se lea como Aquazaku desde
+   * la primera pantalla.
+   */
+  --sl-color-accent: var(--aq-acento-600);
+  --sl-color-accent-high: var(--aq-acento-200);
+  --sl-color-accent-low: var(--aq-acento-900);
+
+  /* Los asides de Starlight, en los colores de estado del sistema. */
+  --sl-color-blue: var(--aq-primaria-400);
+  --sl-color-blue-high: var(--aq-primaria-200);
+  --sl-color-blue-low: var(--aq-primaria-900);
+  --sl-color-green: var(--aq-exito-400);
+  --sl-color-green-high: var(--aq-exito-200);
+  --sl-color-green-low: var(--aq-exito-900);
+  --sl-color-orange: var(--aq-advertencia-400);
+  --sl-color-orange-high: var(--aq-advertencia-200);
+  --sl-color-orange-low: var(--aq-advertencia-900);
+  --sl-color-red: var(--aq-error-400);
+  --sl-color-red-high: var(--aq-error-200);
+  --sl-color-red-low: var(--aq-error-900);
+  --sl-color-purple: var(--aq-acento-400);
+  --sl-color-purple-high: var(--aq-acento-200);
+  --sl-color-purple-low: var(--aq-acento-900);
+
+  /*
+   * La misma tipografía que el producto. Sin esto el sitio queda con la fuente
+   * del sistema y la documentación se siente de otra empresa.
+   */
+  --sl-font: 'IBM Plex Sans', var(--sl-font-system);
+  --sl-font-mono: 'IBM Plex Mono', var(--sl-font-system-mono);
+}
+
+/* ── La excepción de Starlight: claro ─────────────────────────────────────── */
+:root[data-theme='light'] {
+  --sl-color-white: var(--aq-neutro-950);
+  --sl-color-gray-1: var(--aq-neutro-900);
+  --sl-color-gray-2: var(--aq-neutro-700);
+  --sl-color-gray-3: var(--aq-neutro-600);
+  --sl-color-gray-4: var(--aq-neutro-500);
+  --sl-color-gray-5: var(--aq-neutro-300);
+  --sl-color-gray-6: var(--aq-neutro-100);
+  --sl-color-gray-7: var(--aq-neutro-50);
+  --sl-color-black: var(--aq-neutro-0);
+
+  --sl-color-bg: var(--aq-superficie-fondo);
+  --sl-color-bg-nav: var(--aq-superficie-tarjeta);
+  --sl-color-bg-sidebar: var(--aq-superficie-tarjeta);
+  --sl-color-bg-inline-code: var(--aq-neutro-100);
+
+  --sl-color-text: var(--aq-texto-secundario);
+  /*
+   * `acento-800` y no `700`, por el descenso.
+   *
+   * El fondo del modo claro no es fijo: baja de `#FBFDFE` en la superficie a
+   * `#DBEBE8` en el fondo. Medido contra la parada más profunda, `acento-700`
+   * da 4,19:1 — pasa arriba y falla abajo, o sea que los enlaces se vuelven
+   * ilegibles a mitad del scroll sin que nada avise.
+   *
+   * `acento-800` da 7,08:1 arriba y 5,87:1 abajo: aguanta el recorrido entero.
+   */
+  --sl-color-text-accent: var(--aq-acento-800);
+  --sl-color-text-invert: var(--aq-neutro-0);
+
+  --sl-color-hairline: var(--aq-borde-sutil);
+  --sl-color-hairline-light: var(--aq-borde-sutil);
+  --sl-color-hairline-shade: var(--aq-borde-fuerte);
+
+  --sl-color-accent: var(--aq-acento-800);
+  --sl-color-accent-high: var(--aq-acento-900);
+  --sl-color-accent-low: var(--aq-acento-100);
+
+  --sl-color-blue: var(--aq-primaria-700);
+  --sl-color-blue-high: var(--aq-primaria-900);
+  --sl-color-blue-low: var(--aq-primaria-100);
+  --sl-color-green: var(--aq-exito-700);
+  --sl-color-green-high: var(--aq-exito-900);
+  --sl-color-green-low: var(--aq-exito-100);
+  --sl-color-orange: var(--aq-advertencia-700);
+  --sl-color-orange-high: var(--aq-advertencia-900);
+  --sl-color-orange-low: var(--aq-advertencia-100);
+  --sl-color-red: var(--aq-error-700);
+  --sl-color-red-high: var(--aq-error-900);
+  --sl-color-red-low: var(--aq-error-100);
+  --sl-color-purple: var(--aq-acento-700);
+  --sl-color-purple-high: var(--aq-acento-900);
+  --sl-color-purple-low: var(--aq-acento-100);
+}
+
+/*
+ * Los títulos usan el color de texto FUERTE, no el de párrafo.
+ *
+ * Starlight pinta los encabezados con `--sl-color-white`, que acá es el neutro
+ * más contrastado del modo. Es lo correcto, pero el cuerpo queda en
+ * `--sl-color-text` —nuestro `secundario`— y sin esto la diferencia entre
+ * título y párrafo se pierde.
+ */
+:root {
+  --sl-color-text-strong: var(--aq-texto-principal);
+}
+
+/*
+ * Las cifras en mono con `tabular-nums`, igual que en el producto.
+ *
+ * En la documentación hay tablas de tokens, de contrastes y de medidas. Sin
+ * `tabular-nums` las columnas de números bailan según los dígitos que toquen, y
+ * comparar dos filas deja de ser inmediato.
+ */
+.sl-markdown-content table td,
+.sl-markdown-content table th {
+  font-variant-numeric: tabular-nums;
+}
+
+/*
+ * El `code` en línea no grita.
+ *
+ * Starlight le da un fondo y su propio color; con los tokens de Aquazaku el
+ * fondo alcanza. Un `code` en cada segunda palabra con color propio convierte
+ * un párrafo en un semáforo.
+ */
+.sl-markdown-content code:not(:where(pre *)) {
+  color: inherit;
+  border: 1px solid var(--sl-color-hairline);
+}
+
+/*
+ * ═══ El descenso ════════════════════════════════════════════════════════════
+ *
+ * Bajar por la portada se siente como hundirse: arriba agua de superficie,
+ * abajo agua profunda.
+ *
+ * ── Sin animación, y esa es la gracia ─────────────────────────────────────
+ *
+ * El primer intento fue una animación ligada al scroll (`animation-timeline`).
+ * Funcionaba en teoría y no avanzaba en la práctica: la línea de tiempo quedaba
+ * en cero aunque el scroll se moviera.
+ *
+ * Y sobraba. El fondo del `<body>` cubre **todo el alto del documento**, no el
+ * de la ventana. Un gradiente de superficie a profundidad pintado ahí ya está
+ * desplegado a lo largo de toda la página: bajar revela la parte de abajo. El
+ * descenso no se anima — **se recorre**.
+ *
+ * Cero JavaScript, cero animación, cero coste por frame, y anda en cualquier
+ * navegador. El efecto que menos cuesta es el que no hay que calcular.
+ *
+ * `html` se queda con el color de superficie para que el rebote del scroll
+ * —cuando alguien tira de más arriba de todo— no muestre una franja blanca.
+ */
+[data-has-hero] {
+  background: var(--aq-agua-superficie);
+}
+
+[data-has-hero] body {
+  background: var(--aq-agua-descenso);
+  /*
+   * Sin esto, en una página corta el gradiente se comprime en poca altura y el
+   * descenso pasa de golpe. Con el mínimo, siempre hay recorrido.
+   */
+  min-height: 100vh;
+}
+
+/*
+ * La onda de la superficie: la línea del agua. Se queda arriba, así que al bajar
+ * se aleja — que es exactamente lo que hace la superficie cuando uno se hunde.
+ */
+[data-has-hero] .sl-container::before {
+  content: '';
+  position: absolute;
+  inset-inline: -50vw;
+  top: -2rem;
+  height: 7rem;
+  z-index: -1;
+  background: var(--aq-acento-400);
+  opacity: 0.1;
+  -webkit-mask: var(--aq-onda-marca) top / 100% 100% no-repeat;
+  mask: var(--aq-onda-marca) top / 100% 100% no-repeat;
+  pointer-events: none;
+}
+
+/*
+ * ═══ La portada ═════════════════════════════════════════════════════════════
+ *
+ * La plantilla `splash` de Starlight es un buen esqueleto y un mal final: un
+ * hero centrado y una grilla de tarjetas iguales. Lo que sigue le pone el
+ * lenguaje de Aquazaku encima sin tocar su markup.
+ */
+
+/* Las cifras del proyecto, en mono con `tabular-nums` como todo número acá. */
+.aq-cifras {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(8rem, 1fr));
+  gap: 1rem;
+  margin-block: 2.5rem 3rem;
+}
+
+.aq-cifras > div {
+  display: grid;
+  gap: 0.35rem;
+  justify-items: center;
+  text-align: center;
+  padding: 1.1rem 0.75rem;
+  border-radius: var(--aq-radio-lg);
+  background: var(--aq-tarjeta-portada);
+  border: 1px solid var(--sl-color-hairline);
+}
+
+.aq-cifras strong {
+  font-family: var(--aq-font-mono);
+  font-variant-numeric: tabular-nums;
+  font-size: 1.9rem;
+  line-height: 1;
+  color: var(--sl-color-white);
+}
+
+.aq-cifras span {
+  font-size: 0.8125rem;
+  color: var(--sl-color-text);
+}
+
+/*
+ * Las tarjetas de la portada, con el canto del sistema.
+ *
+ * Starlight ya les da borde y padding; lo que falta es que el canto se encienda
+ * arriba a la izquierda, que es lo que hace que una superficie se lea como una
+ * pieza y no como un recuadro.
+ */
+[data-has-hero] .card {
+  background: var(--aq-tarjeta-portada);
+  border-radius: var(--aq-radio-lg);
+  box-shadow: inset 0 1px 0 0 var(--aq-canto-portada);
+  transition: transform var(--aq-fluido-medio, 260ms) var(--aq-fluido, ease);
+}
+
+/* Solo las que llevan a algún lado se levantan. */
+[data-has-hero] .card:has(a):hover {
+  transform: translateY(-2px);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  [data-has-hero] .card { transition: none; }
+  [data-has-hero] .card:has(a):hover { transform: none; }
+}
+
+/* El lockup del hero respira y no se estira. */
+[data-has-hero] .hero img {
+  max-width: min(22rem, 70vw);
+  filter: drop-shadow(0 18px 36px rgb(6 24 34 / 0.35));
+}
