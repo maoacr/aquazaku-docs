@@ -10,7 +10,7 @@ modo oscuro vivo, marca, estados por cuatro canales, accesibilidad y voz única.
 **Sistema de diseño:** `claude-design/` — tokens, 13 diseños de referencia y
 `reglas-como-tests.md` (R40, R49–R55).
 
-**Estado:** 🚧 En curso — T1 a T11 cerradas. **12 tasks** (T2 se agregó el 22-ago-2026).
+**Estado:** ✅ **Terminada** — las 12 tasks cerradas el 22-ago-2026. **12 tasks** (T2 se agregó el 22-ago-2026).
 
 ---
 
@@ -1297,6 +1297,71 @@ irreversible con motivo obligatorio es una de ellas.
 5. Confirmar que `/frontend/` ya no contradice a `claude-design/` (T10).
 
 **Commit:** `docs: cerrar la fase de diseño`
+
+:::danger[Notas de ejecución — T12 cerrada el 22-ago-2026. Fase terminada.]
+**Recorrido visual y de teclado, auditado en vez de mirado.** En vez de recorrer
+pantallas a ojo, un barrido por pantalla y por modo que mide tres cosas: el
+contraste de cada texto **componiendo** su superficie con lo que tiene detrás,
+el alto de cada control, y el nombre accesible de cada elemento enfocable.
+
+Y el recorrido con teclado se auditó parada por parada: en Auditoría son **19
+paradas de foco**, todas con anillo visible, ninguna recortada por un ancestro
+con `overflow`, todas con nombre accesible. **Cero problemas** en claro y en
+oscuro.
+
+El único hallazgo recurrente es el falso positivo ya conocido: «Aquazaku» tiene
+`color: transparent` porque el gradiente va recortado sobre el texto, así que
+medir su `color` da ~1,2:1. Verificado midiendo las paradas del gradiente.
+
+── **Una contradicción que se resolvió sola, y para mejor** ────────────────────
+
+El sistema de diseño tiene una regla dura: *«el verde `#33BD73` nunca es
+decorativo»*. Al corregir los colores de marca contra el arte real (T5), la cinta
+decorativa pasó a usar `#1EAA64` — el verde del arte— y dejó de usar el verde
+reservado, que sigue siendo `--aq-exito-500`.
+
+O sea que muestrear el arte **reforzó** la regla sin que ese fuera el objetivo.
+
+── **Lo que la fase deja escrito** ─────────────────────────────────────────────
+
+[El sistema, aplicado](/frontend/sistema-aplicado/) es el índice de lo que ya
+existe y **no se vuelve a inventar**: el par fondo/texto, `<Estado>`, los tres
+vacíos, los esqueletos, el mapa de errores, el sello de hora, la voz de usted y
+la accesibilidad medida.
+
+Con una sección que vale tanto como el resto: **qué se decidió NO construir** —el
+semáforo de autonomía, la app móvil, el modo offline, las vistas de ruta, el
+`backdrop-filter` en las tarjetas y la animación ligada al scroll—. Evita rehacer
+la discusión.
+
+El roadmap ya la registra como fase terminada entre M2 y M3, y M3 queda **por
+arrancar**.
+:::
+
+---
+
+## Cierre de la fase
+
+**12 tasks, todas cerradas.** La suite de `web/` pasó de 265 a **407** tests.
+
+Lo que más se repitió, y conviene llevarse:
+
+**Medir, no mirar.** Casi todos los defectos de esta fase eran invisibles a ojo:
+el anillo de foco a 1,62:1, la jerarquía de texto a 3,65:1, el nombre de la marca
+a 3,89:1 sobre el panel, el `backdrop-filter` que costaba 17 fps sin mostrar
+nada. Ninguno se veía como un error — se veían como «algo apagado».
+
+**Convertir reglas en errores de compilación.** El icono obligatorio por módulo,
+el vacío de filtro que no acepta «crear», el status sin traducir que rompe el
+build. Una regla escrita en documentación se olvida; una que no compila, no.
+
+**Verificar quitando el mecanismo.** Cada test importante de esta fase se probó
+rompiendo a propósito lo que cuida. Un test que nunca vio fallar no es un test.
+
+**Y desconfiar de los checks verdes.** Aparecieron tres huecos: los tests de CSS
+leen el archivo como texto y no lo compilan, los de componentes no tienen
+frontera servidor/cliente, y el barrido del DOM miente si hay transiciones o
+`color: transparent`. La suite verifica lo que sabe verificar.
 
 ---
 

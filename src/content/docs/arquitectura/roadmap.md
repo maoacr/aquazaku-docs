@@ -49,6 +49,16 @@ y del Admin (que se opera desde el celular cuando el dueño viaja).
 
 ### 3. Build incremental — no más iteración de diseño
 
+:::note[La fase de diseño se hizo entre M2 y M3, y esto sigue en pie]
+Después de M2 se paró a aplicar el sistema de diseño en lugar de seguir sumando
+módulos. No fue una ronda de pulido: fue construir las piezas que **todos** los
+módulos siguientes necesitan —estados, vacíos, errores, accesibilidad, voz— una
+sola vez.
+
+El retorno se cobra desde M3: nada de eso se vuelve a diseñar. Ver
+[El sistema, aplicado](/frontend/sistema-aplicado/).
+:::
+
 El ciclo de iteración sobre los mockups de `claude-design/` está **cerrado**.
 Lo que falta se corrige al construir, no en una nueva ronda de diseño.
 
@@ -161,7 +171,8 @@ porque todo lo demás lo necesita, no porque sea el más visible.
 | M0 | **Auth + RBAC** | Identidad, login, permisos por rol y alcance | Todos | — | ✅ diseñado |
 | M1 | **Productos y catálogo** | Qué se vende: pacas 600ml/300ml, botellones con sus unidades y conversiones | `admin`, `pos`, `seller`, `contador` | M0 | ✅ terminado |
 | M2 | **Stock de producto terminado** | Lotes, vencimiento 30d, FIFO, bloqueo de vencidos | `admin`, `pos`, `seller`, `contador` | M0, M1 | ✅ terminado |
-| M3 | **Insumos** | Tapas, sellos, bolsas por kg con stock mínimo configurable (default 200/200) | `admin`, `pos` | M0 | 🔲 pendiente |
+| — | **Fase de diseño** | Sistema de diseño aplicado: marca real, vidrio y agua, semáforo de estados, vacíos, errores sin jerga, voz de usted, accesibilidad medida | — | M2 | ✅ terminada |
+| M3 | **Insumos** | Tapas, sellos, bolsas por kg con stock mínimo configurable (default 200/200) | `admin`, `pos` | M0 | 🟡 por arrancar |
 | M4 | **Producción y cierre del día** | Tandas, lote generado automáticamente, mermas, descartes con causa, mantenimiento de filtros | `admin`, `pos` | M0, M1, M2, M3 | 🔲 pendiente |
 | M5 | **Clientes** | Alta con verificación de documento, ficha, segmentación residencial/comercial, bloqueo de baja con cifras | `admin`, `pos`, `seller`, `contador` | M0 | 🔲 pendiente |
 | M6 | **Ventas** | POS, pedidos WhatsApp, devoluciones con motivo, descuentos con piso absoluto, factura electrónica como intención | `admin`, `pos`, `seller`, `contador` | M0, M1, M2, M5 | 🔲 pendiente |
