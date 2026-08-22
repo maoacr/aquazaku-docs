@@ -10,7 +10,7 @@ modo oscuro vivo, marca, estados por cuatro canales, accesibilidad y voz única.
 **Sistema de diseño:** `claude-design/` — tokens, 13 diseños de referencia y
 `reglas-como-tests.md` (R40, R49–R55).
 
-**Estado:** 🚧 En curso — T1, T2 y T3 cerradas. **12 tasks** (T2 se agregó el 22-ago-2026).
+**Estado:** 🚧 En curso — T1 a T4 cerradas. **12 tasks** (T2 se agregó el 22-ago-2026).
 
 ---
 
@@ -490,6 +490,85 @@ de producto sobre cómo nombrarlas.
   pierde de vista dónde está el foco, la task no está.
 
 **Commit:** `feat(ui): anillo de foco y objetivos táctiles del sistema`
+
+:::danger[Notas de ejecución — T4 cerrada el 22-ago-2026]
+**El anillo ya existía. Era casi invisible.**
+
+`tokens.css` traía la regla de foco, así que a primera vista T4 estaba hecha.
+Medido contra las superficies reales, el anillo daba **1,62:1** sobre el fondo
+claro: WCAG 2.2 pide **3:1** para un indicador de foco. La causa es que la copia
+del sistema usa el mismo aqua claro en los dos modos, y ese color solo funciona
+sobre oscuro (10,57:1). Ahora baja a `acento-700` en claro —4,87:1— y se queda en
+`acento-400` en oscuro. Misma familia: el foco conserva su identidad.
+
+**Y el mecanismo tenía dos defectos.** La regla resolvía el anillo con
+`box-shadow` en dos capas: 2 px del color de la tarjeta para abrir un hueco, y
+3 px del anillo afuera.
+
+El hueco estaba **fijo en `tarjeta`**, así que un control sobre el fondo de la
+página se rodeaba de un halo del color equivocado y el hueco dejaba de leerse
+como hueco. Y `box-shadow` es la misma propiedad que usan las elevaciones: un
+`shadow-elev-1` compite por ella con la misma especificidad, y gana el que salió
+último — el mismo defecto que tenía el toggle de tema.
+
+`outline` con `outline-offset` resuelve los dos de una. El hueco es
+**transparente**, así que muestra la superficie real sea cual sea, y `outline` es
+una propiedad propia que ninguna utilidad de sombra puede pisar. Además sigue el
+`border-radius`. Y `:is()` en vez de `:where()`, que aporta especificidad cero.
+
+**El anillo estaba recortado, y eso no se ve en una captura.** El `<ul>` del menú
+tiene `overflow-y-auto`, y el anillo sale 5 px del control —2 de separación más
+3 de grosor—, así que el primer y el último ítem se quedaban sin la mitad del
+anillo. Se detectó comparando la caja del anillo contra la de cada ancestro que
+recorta; se arregla con `p-[5px]` en la lista. **No es padding estético: es el
+lugar que el anillo necesita.**
+
+── **Objetivos táctiles: el hallazgo estructural** ──────────────────────────────
+
+`select` e `input` medían **42 px**. Dos píxeles cortos: invisible a la vista,
+molesto con el pulgar. Pero lo importante es por qué.
+
+**Hay campos de formulario en once archivos y no existe una primitiva
+compartida.** Cada módulo escribe sus propias clases. Arreglar los once
+funcionaría hoy y fallaría en la próxima pantalla que alguien escriba — que es
+exactamente como se llegó a los 42 px. El mínimo pasa a ser **una regla sobre los
+elementos**, que cubre lo que hay y lo que venga.
+
+Las casillas y los radios quedan afuera: estirarlos deforma el control en vez de
+agrandar el objetivo. El objetivo de una casilla lo da su `<label>`.
+
+**Los enlaces son caso por caso, y no se puede automatizar.** "Ver lotes" medía
+19 px y es la acción para entrar a un producto: lleva el mínimo. "Hecho con 💚 por
+**@maoacr**" mide 17 px y va dentro de una oración: **no puede** medir 44 px sin
+romper el renglón, y WCAG 2.2 lo exime justamente por eso. Los cuatro enlaces con
+forma de botón —Ver lotes, la marca, Limpiar, Cargar más— lo declaran en su lugar.
+
+── **La tipografía tampoco estaba en el sistema** ───────────────────────────────
+
+25 usos de `text-xs`, que en Tailwind son **12 px**. La escala del sistema **no
+tiene 12 px**: el piso de cuerpo es `cuerpo-chico` (14 px) y abajo solo `micro`
+(11 px, mayúsculas y tracking). Era un default de Tailwind filtrándose — el mismo
+tipo de filtración que las clases de paleta cruda que se barrieron en T3.
+
+Los dos que eran etiquetas de verdad —los encabezados de tabla, que traían
+`text-xs uppercase tracking-wide` escrito a mano, y la insignia de estado— pasan
+a `.aq-micro`, que es exactamente para eso. **Ojo: eso pone la insignia en
+mayúsculas** ("ACTIVO"). Es lo que el sistema dice para una etiqueta, y T6
+rediseña ese componente igual.
+
+**Se borró `cerrar-sesion.tsx`**, huérfano desde que los controles de sesión se
+mudaron a la cabecera.
+
+**Verificado quitando cada mecanismo**: volver a `box-shadow`, cambiar `:is()` por
+`:where()` y bajar el mínimo a 24 px hacen fallar un test cada uno.
+
+**Queda para T9:** en la tabla de usuarios, "Pendiente de cambiar contraseña"
+envuelve en tres líneas porque las columnas no tienen ancho asignado. Ya envolvía
+antes; subir de 12 a 14 px lo hizo más visible. Es repintado de tabla, no
+accesibilidad.
+
+**Resultado:** 10 tests nuevos, suite de `web/` en **329** (venía de 319).
+:::
 
 ---
 
