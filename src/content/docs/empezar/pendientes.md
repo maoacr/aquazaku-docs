@@ -67,8 +67,41 @@ No son decisiones: son números que hay que ir a tomar.
 
 Se pueden dejar para después sin frenar el diseño.
 
-*(A la fecha de la última sesión de planning, todas las preguntas 🟢 cerradas.
-Solo quedan las 4 mediciones 🟠 que requieren ir a la planta.)*
+| # | Pregunta | Por qué importa |
+| --- | --- | --- |
+| 32 | **¿Qué datos personales guarda y edita cada persona de sí misma?** Nombre, apellido, nombre preferido, teléfono, foto — ¿cuáles son obligatorios y cuáles opcionales? | Hoy `/perfil` solo muestra nombre, email y roles, y **no deja editar nada**. Sin la lista de campos no se puede definir la tabla ni el formulario |
+| 33 | **¿La foto de perfil se sube al sistema o alcanza con las iniciales?** Si se sube: ¿dónde se guarda y quién paga ese almacenamiento? | Una foto obliga a resolver subida de archivos, límite de tamaño, recorte y borrado — es la diferencia entre un formulario y un módulo |
+| 34 | **¿Quién puede editar los datos de otra persona, y qué pasa con el email?** | El email es la identidad de acceso. Si se puede cambiar, hay que resolver verificación del nuevo correo antes de que reemplace al viejo |
+| 35 | **¿Cómo funciona hoy pedir un día libre?** ¿Se avisa por WhatsApp, se anota en un cuaderno, lo aprueba una sola persona? | Mao propuso un formulario de solicitud de permiso dentro del perfil. Antes de diseñarlo hay que saber a qué proceso real reemplaza — un formulario que nadie mira es peor que el WhatsApp |
+
+---
+
+## Módulo pendiente: Mi perfil
+
+No es una pregunta suelta, así que va aparte.
+
+La pantalla `/perfil` existe desde la fase de diseño, pero **nació chica y a
+propósito**: se creó para darle casa al tercer estado del tema —`sistema`—
+cuando el toggle de la cabecera pasó a ser claro ↔ oscuro. Muestra quién sos,
+qué habilita cada rol y el link para cambiar la contraseña. Nada más.
+
+Como módulo de perfil no alcanza, y hace falta decir con qué se lo mide:
+
+- **no trae los datos de la persona** más allá de lo que ya tenía la sesión;
+- **no deja editar nada** — ni nombre, ni apellido, ni nombre preferido, ni
+  teléfono, ni foto;
+- no tiene lugar para lo que venga después, como pedir un día de permiso.
+
+Convertirlo en un módulo de verdad toca las cuatro capas: columnas nuevas en la
+base, endpoints de lectura y escritura en `api/`, auditoría de cada cambio
+—cambiarse el teléfono es una acción sensible— y la pantalla. Y si la foto se
+sube, además subida de archivos, que hoy el sistema no hace en ningún lado.
+
+Es un milestone propio. Las preguntas 32 a 35 son lo que hay que responder antes
+de escribir la primera línea.
+
+*(A la fecha de la última sesión de planning quedan las 4 mediciones 🟠 de
+planta y las 4 preguntas 🟢 de perfil.)*
 
 ---
 
