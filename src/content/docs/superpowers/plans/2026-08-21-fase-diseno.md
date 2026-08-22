@@ -10,7 +10,7 @@ modo oscuro vivo, marca, estados por cuatro canales, accesibilidad y voz única.
 **Sistema de diseño:** `claude-design/` — tokens, 13 diseños de referencia y
 `reglas-como-tests.md` (R40, R49–R55).
 
-**Estado:** 🔲 Por arrancar.
+**Estado:** 🚧 En curso — T1 cerrada. **La compuerta pasó.**
 
 ---
 
@@ -127,6 +127,66 @@ una cookie, sin destello, con tres valores.
   que fallar.
 
 **Commit:** `feat(tema): modo oscuro desde el servidor, sin destello`
+
+:::danger[Notas de ejecución — T1: el plan tenía un bug]
+**El paso 2 estaba mal.** Decía que con `claro` **no** se escribiera el
+atributo, igual que con `sistema`.
+
+Con eso, `:root:not([data-tema])` matchea y la media query
+`prefers-color-scheme: dark` se aplica: **alguien que eligió claro con el
+sistema en oscuro vería la app oscura.** Su elección explícita perdería contra
+el sistema, que es al revés de lo que significa elegir.
+
+`claro` **sí** escribe `data-tema="claro"`. No necesita reglas CSS propias —los
+tokens base ya son claros— pero el atributo tiene que **existir** para que
+`:not()` falle.
+:::
+
+:::danger[Y los tests no cubrían la costura]
+Al sacarle el peso al mecanismo apareció algo peor que el bug: **quitar
+`{...atributoDeTema(tema)}` del layout no rompía nada.** 265 tests en verde con
+la funcionalidad completamente desconectada.
+
+Las funciones estaban probadas. El CSS estaba probado. Nadie probaba que el
+layout **las usara**. Es la misma costura donde vivieron los dos peores bugs de
+M0: entre *"la pieza funciona"* y *"alguien la llama"*.
+
+Se agregó `layout-tema.test.tsx`, que inspecciona el árbol devuelto por el
+layout. Repetido el experimento, ahora **caen 2 tests**.
+
+La lección no es sobre el tema: es que **probar las piezas no prueba el
+cableado**, y el cableado es donde se rompen las cosas.
+:::
+
+:::note[Otras notas — T1 cerrada el 22-ago-2026]
+**El bloque de `prefers-color-scheme` se GENERA**, no se escribe a mano: repite
+las 27 declaraciones del bloque oscuro porque CSS no puede reusar un bloque bajo
+otro selector. `tema-css.test.ts` verifica que las dos listas declaren las
+mismas propiedades — sin eso, agregar un token y olvidarse del otro bloque deja
+el modo sistema **a medio pintar**, y no lo nota nadie hasta que un usuario con
+el sistema en oscuro abre la app.
+
+**El selector no lleva `'use client'`.** Son tres botones que envían un
+formulario a una Server Action: no hay estado que necesite JavaScript, y
+funcionan con JS deshabilitado.
+
+**Verificado en el HTML crudo, no solo en la pantalla.** Ver que se vea oscuro
+prueba que se ve oscuro; que el atributo venga en el HTML del servidor es lo que
+prueba que **no puede haber destello**:
+
+```
+cookie oscuro  → <html lang="es" data-tema="oscuro" …>
+cookie claro   → <html lang="es" data-tema="claro"  …>
+sin cookie     → <html lang="es" …>            ← decide el sistema
+cookie "azul"  → <html lang="es" …>            ← normalizado, no error
+```
+
+**Mocks que hicieron falta:** `next/font/google` es una transformación de build
+y fuera de Next devuelve `undefined`; `leerTema` va a `cookies()`, que solo
+existe dentro de una petición.
+
+**Resultado:** 32 tests nuevos, suite de `web/` en **270** (venía de 238).
+:::
 
 ---
 
