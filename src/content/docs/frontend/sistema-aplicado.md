@@ -43,6 +43,93 @@ Por eso la cinta de marca usa `#1EAA64` —el verde real del arte, muestreado—
 no el verde de éxito. Son dos verdes distintos a propósito.
 :::
 
+## La jerarquía de texto se separa por TONO, no por luminosidad
+
+Tres grises que solo cambian de claridad se distinguen en una tabla de tokens y
+**no en una pantalla**. Medido en el tablero: seis roles distintos —subtítulo,
+rótulo de sección, código de producto, icono de perfil, icono de tarjeta y
+créditos— renderizaban el mismo `rgb(195,207,214)`. La pantalla entera eran dos
+colores, y `tenue` no aparecía en ninguna parte.
+
+Los niveles tiran al azul de la marca, con más saturación a medida que el nivel
+se aleja. El aqua y el verde **no** se usan acá: están reservados a «agua» y a
+«cuadra».
+
+| Nivel | Para qué | Ejemplo |
+| --- | --- | --- |
+| `principal` | Lo que se vino a ver | Título, nombre del producto, la cifra |
+| `secundario` | Prosa de apoyo y controles | La bajada del título, los iconos de la cabecera |
+| `tenue` | Metadatos | Código, rótulo de sección, unidad, créditos |
+| `icono` | Glifos que son **textura** | El icono en la esquina de una tarjeta |
+
+`icono` existe porque los glifos decorativos venían robándose `secundario` —el
+mismo valor que la prosa— y competían con el texto que acompañan. No le aplica
+el 4,5:1 de texto: no transporta significado, y lo que dice está escrito al
+lado. Se verifica sobre 3:1, y que **no iguale a `tenue`** — si lo iguala no es
+una capa, es más texto.
+
+:::caution[El icono que es el control no es decorativo]
+Los de la cabecera y los del menú usan tokens de texto, porque ahí el glifo es
+la única etiqueta que hay.
+:::
+
+## Nadie escribe su propio campo ni su propio botón
+
+Diez archivos repetían `rounded border border-fuerte bg-transparent px-2 py-1.5`
+copiado, y los botones salían en tres alturas —`py-2`, `h-14`, `min-h-11`—. Por
+eso los formularios de auditoría y de usuarios se veían de otro sistema: **no
+había con qué construirlos**.
+
+| Clase | Qué es |
+| --- | --- |
+| `.aq-campo` | El control donde se escribe |
+| `.aq-etiqueta-campo` | Su etiqueta, en `tenue` |
+| `.aq-boton` + `-primario` / `-secundario` / `-destructivo` | 44 px de alto |
+| `.aq-boton-grande` | 56 px, para la pantalla que hace una sola cosa |
+| `.aq-boton-compacto` | Solo se angosta — el dedo no se achica en una tabla |
+
+**El campo es la operación inversa a la tarjeta.** Todo flota sobre el agua; el
+campo es el único lugar donde se escribe y tiene que leerse **hundido**. De ahí
+la sombra interna y el fondo más apagado que la lámina que lo contiene. Con
+`bg-transparent`, sobre el agua un campo no se lee como campo — se lee como un
+borde dibujado encima del gradiente.
+
+El campo **no declara `:focus`**: el anillo global ya lo cubre, y competir con él
+fue lo que dejó el foco invisible la primera vez.
+
+Tres tests recorren los `.tsx` y fallan con la lista de archivos culpables. No
+es hipotético: al escribirlos encontraron **tres botones a mano** que el barrido
+manual no había visto.
+
+## La escala tipográfica existe y ahora se usa
+
+Los tokens `--aq-titulo-*` estaban desde el primer día y ninguna pantalla los
+usaba — había **cuatro tamaños** para el mismo rol: 24 px, 28→32 y 32.
+
+La razón de que nadie los usara es que no había forma: un token `font:` no se
+puede escribir como clase de Tailwind. `.aq-titulo-pantalla`,
+`.aq-titulo-seccion`, `.aq-titulo-tarjeta` y `.aq-bajada` son ese puente, con el
+salto a móvil incluido — que es lo que cada pantalla venía reimplementando con un
+`sm:` distinto. Un `<h1>` que fija su tamaño a mano rompe el build.
+
+## La cabecera flota sobre el contenido
+
+En escritorio la cabecera **no ocupa fila propia**: se monta sobre el área del
+contenido con `z-index: 1`. Es lo que permite que el `<main>` empiece en el borde
+del viewport y que su primera línea quede a la misma altura que el borde del
+panel del menú.
+
+`justify-self: end` la encoge a su ancho y `pointer-events: none` —con `auto` en
+los hijos— evita que la banda invisible se coma los clics de la primera línea del
+contenido.
+
+:::caution[Un `style` inline le gana a cualquier media query]
+El área estaba como `style={{ gridArea: 'cabecera' }}`, y por eso la regla de
+escritorio no podía moverla por más que lo dijera la hoja de estilos. Es la
+tercera vez que un valor puesto en el lugar equivocado de la cascada rompe el
+armazón; ahora hay un test que lo prohíbe.
+:::
+
 ## `<Estado>` — un estado se dice por cuatro canales
 
 ```
@@ -134,6 +221,10 @@ documentación. Son otro lector.
 - **Contraste medido componiendo**, no leyendo el color declarado. Sobre una
   superficie translúcida el color declarado da bien y la pantalla igual es
   ilegible.
+- **Los cuatro niveles de texto** se verifican sobre las tres superficies, en
+  los dos modos, más el enlace suave. Sin esa fila, el celeste `#8CF0FA` que se
+  ve bien en oscuro cruzaba a modo claro —donde da 1,2:1— y no se enteraba nadie
+  hasta abrirlo de día.
 
 ## Qué se decidió NO construir
 
