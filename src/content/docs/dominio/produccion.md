@@ -360,31 +360,51 @@ planta — a verificar en una ronda posterior.
 
 ---
 
-### RN-PRD-19 — Procesar y envasar son dos eventos distintos
+### RN-PRD-19 — Procesar y envasar son dos MEDICIONES del mismo día
 
-**Estado:** 🟡 Supuesto
+**Estado:** ✅ Confirmada (26-ago-2026) — **corregida**: antes suponía lo contrario.
 
-Hay **dos transformaciones**, con instrumentación distinta y que no
-necesariamente ocurren al mismo tiempo:
+Hay **dos transformaciones** con instrumentación distinta, pero **ocurren siempre
+en la misma jornada**:
 
-| Evento | Convierte | Se mide con |
+| Transformación | Convierte | Se mide con |
 | --- | --- | --- |
-| **Corrida de procesamiento** | Crudo ➡️ Procesado | Caudal × tiempo ([RN-PRD-18](#rn-prd-18--la-corrida-de-procesamiento-se-mide-por-caudal-y-tiempo)) |
-| **Cierre de producción** | Procesado ➡️ Producto | Conteo de pacas y botellones ([RN-PRD-04](#rn-prd-04--cada-día-se-registra-un-cierre-de-producción)) |
+| Procesamiento | Crudo ➡️ Procesado | Caudal × tiempo ([RN-PRD-18](#rn-prd-18--la-corrida-de-procesamiento-se-mide-por-caudal-y-tiempo)) |
+| Envasado | Procesado ➡️ Producto | Conteo de pacas y botellones ([RN-PRD-04](#rn-prd-04--cada-día-se-registra-un-cierre-de-producción)) |
 
-**Por qué:** se puede procesar agua un día y envasarla al siguiente. Modelarlos
-como un solo evento obliga a que coincidan, y el saldo de agua procesada deja de
-tener sentido.
+**Las dos van en el MISMO documento**: el cierre de producción del día.
+
+### Por qué esta regla decía lo contrario, y qué cambió
+
+Estaba escrita como «dos eventos distintos que no necesariamente coinciden», con
+el argumento de que se podía procesar un día y envasar al siguiente.
+
+Aquazaku confirmó que **eso no pasa**: las dos actividades son siempre de la
+misma jornada.
+
+**Y la diferencia no es cosmética — es la forma de las tablas.** Con dos eventos
+harían falta dos flujos de documentos, cada uno con su fecha y su responsable, y
+un saldo de agua procesada que cruza días. Con uno, el cierre diario captura las
+dos mediciones y el saldo de los tanques se resuelve **dentro** del día.
+
+Modelar dos eventos «por si acaso» habría sido maquinaria que nadie usa: dos
+pantallas, dos rutas y un saldo que en la práctica siempre cierra el mismo día.
 
 :::tip[El balance del tanque procesado queda cerrado]
-Este es el primer saldo del sistema con **las dos puntas medidas**:
+Este es el primer saldo del sistema con **las dos puntas medidas**, y ahora las
+dos llegan juntas:
 
 ```
-+ corrida de procesamiento   ← caudal × tiempo   (medido)
++ procesamiento del día      ← caudal × tiempo   (medido)
 − consumo de envasado        ← pacas y botellones (calculado)
+= lo que queda en los tanques al cerrar
 ```
 
 Sin estimaciones visuales de por medio. Acá sí se puede detectar merma real.
+
+Que el sobrante quede en los tanques de un día para el otro **no rompe esto**: el
+cierre registra con cuánto se termina, y el día siguiente arranca de ahí. Lo que
+no hace falta es un evento aparte para el agua que se procesó y no se envasó.
 :::
 
 ---
@@ -757,7 +777,9 @@ nunca fijo en el código — va a cambiar cuando cambie el proceso de lavado.
 
 ### RN-PRD-06 — El balance diario de agua
 
-**Estado:** 🟡 Supuesto
+**Estado:** ✅ Confirmada (26-ago-2026) — al confirmarse
+[RN-PRD-19](#rn-prd-19--procesar-y-envasar-son-dos-mediciones-del-mismo-día), los
+cuatro términos de este balance llegan en el **mismo documento**.
 
 ```
 litros consumidos en el día =
@@ -771,10 +793,10 @@ Ese consumo sale del **agua procesada**. Y los dos saldos se mueven así:
 
 ```
 AGUA PROCESADA (2 × 2000 L)          ← balance CERRADO
-  saldo inicial
-    + corrida de procesamiento         caudal × tiempo   ✅ medido
+  saldo inicial                        ← con lo que cerró ayer
+    + procesamiento del día            caudal × tiempo   ✅ medido
     − litros consumidos en el día      pacas y botellones ✅ calculado
-  = saldo final
+  = saldo final                        ← con lo que arranca mañana
 
 AGUA CRUDA (13.000 L)                ← un término sin medir
   saldo inicial
@@ -888,11 +910,21 @@ Hasta entonces, es aspiracional.
 
 ### RN-PRD-08 — Un cierre de producción no se edita
 
-**Estado:** 🟡 Supuesto
+**Estado:** ✅ Confirmada (26-ago-2026) — **no por decisión nueva, sino porque el
+sistema ya lo hace en tres lugares**.
 
 Igual que [RN-VEN-02](/dominio/ventas/) y [RN-RUT-04](/dominio/rutas/): cerrado
 el día, el registro es inmutable. Una corrección es un ajuste posterior con
 motivo y responsable.
+
+Estaba como supuesto, y para cuando llegó M4 ya era el patrón establecido:
+`audit_log`, `movimientos_stock` y `movimientos_insumo` son los tres append-only,
+con el `UPDATE` y el `DELETE` revocados en la migración —no confiados al
+servicio— siguiendo [ADR-0006](/decisiones/0006-invariantes-en-la-base/).
+
+**Un libro editable no es un libro.** Y acá pesa doble: el cierre es el único
+evento que convierte litros en producto, así que editarlo cambia a la vez el
+agua, el stock y los insumos, sin dejar rastro de qué decía antes.
 
 ---
 
