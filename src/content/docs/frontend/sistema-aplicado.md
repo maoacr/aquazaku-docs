@@ -364,3 +364,35 @@ de vencimiento. **Nada de eso se diseña de nuevo**: `<Estado>`, `<Vacio>`, los
 esqueletos, el mapa de errores, el par fondo/texto y la voz ya existen.
 
 Ese es el retorno de haber hecho esta fase antes y no después.
+
+---
+
+## Pendiente de diseño: la barra de scroll como un tubo
+
+Mao lo pidió el 26-ago-2026 y todavía **no está implementado**. Queda anotado
+acá porque es una idea de identidad, no un capricho: el scroll del navegador es
+lo único de la pantalla que se ve genérico, y en un sistema que trata de agua
+tiene un lugar obvio a dónde ir.
+
+La forma: el canal del scroll como un **tubo**, y el pulgar como **líquido
+moviéndose adentro** — o el tubo llenándose y vaciándose según la posición.
+
+:::caution[Lo que hay que resolver antes de escribirlo]
+Una barra de scroll personalizada es de las cosas que se rompen en silencio:
+
+- **En qué se apoya.** `::-webkit-scrollbar` no existe en Firefox, y
+  `scrollbar-color` —que sí es estándar— solo acepta dos colores planos: no
+  alcanza para un líquido. Un pulgar realmente animado obliga a un scroll
+  sintético en JavaScript, y ahí se pierde el gesto nativo del trackpad y el
+  del teclado si se hace mal.
+- **Dónde aplica.** El scroll de esta app vive en `<main>`, no en el documento,
+  así que hay un solo contenedor que lo necesita — eso acota el problema.
+- **Objetivo táctil.** Sea lo que sea, tiene que seguir siendo agarrable
+  (R54), y un tubo angosto es más lindo y más difícil de tomar.
+- **`prefers-reduced-motion`.** Líquido moviéndose es movimiento, y hay que
+  poder apagarlo.
+
+No es «un CSS y listo». Vale la pena, pero entra como una tarea con su propia
+verificación, no colgada de otra cosa.
+:::
+
