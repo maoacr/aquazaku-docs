@@ -545,6 +545,53 @@ trabajo que preservar.
 
 ---
 
+### RN-ACC-08 — Nadie puede ver la contraseña de nadie
+
+**Estado:** ✅ Confirmada (26-ago-2026)
+
+Ni el administrador. **Ni el rootadmin.** No es una restricción de permisos: el
+sistema **no tiene** la contraseña de nadie.
+
+`accounts.password` guarda un **hash argon2id**, que es una función de una sola
+vía: sirve para verificar un intento, no para reconstruir el original. Mostrar
+«la contraseña registrada» exigiría dejar de hashear y guardarlas de forma
+recuperable.
+
+**Por qué no se haría aunque se pudiera, y es una razón de Aquazaku:** si existe
+alguien que puede leer esas claves, el `audit_log` deja de probar nada.
+«pos@aquazaku.com anuló esta venta» pasaría a significar «alguien que sabía esa
+clave lo hizo», y esa lista incluye a quien puede leerlas. Cualquiera podría
+decir «yo no fui» y tendría razón.
+
+El módulo de auditoría —la pieza más cara del sistema— quedaría decorativo.
+
+Y hay algo práctico: la gente reusa contraseñas. Una filtración no expondría el
+acceso a Aquazaku, expondría el correo y el banco de ocho personas.
+
+#### Lo que sí resuelve el problema real
+
+El problema que motivó el pedido es legítimo: **que nadie dependa del correo para
+volver a entrar.** Son ocho personas en Campo de la Cruz y no todas tienen correo
+a mano.
+
+Se resuelve con **restablecimiento en persona**: el admin genera una temporal, la
+ve **una sola vez** en pantalla, se la dice de viva voz, y `mustChangePassword`
+obliga a cambiarla al entrar. El admin **nunca conoce la contraseña final**, así
+que la auditoría sigue valiendo.
+
+La auditoría registra **el hecho, no el valor**: quién restableció, sobre quién y
+cuándo. Guardar la temporal en la bitácora la volvería permanente y legible por
+más gente que la que la necesita.
+
+:::caution[La fricción que queda, y no es el concepto]
+La temporal se genera hoy como **10 caracteres aleatorios** —`Yew6FHj7yp`— sin
+símbolos ni caracteres ambiguos. Dictarla por encima de un mostrador y que del
+otro lado se tipee en un teléfono es donde la gente se traba.
+
+Está sin resolver: la salida propuesta es una temporal **decible**, del estilo
+`paca-verde-38`, que conserva el mismo mecanismo.
+:::
+
 ## Preguntas abiertas
 
 - ¿`pos` vende contra el stock de bodega directamente, o el punto de venta tiene

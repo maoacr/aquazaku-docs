@@ -101,6 +101,124 @@ Tres tests recorren los `.tsx` y fallan con la lista de archivos culpables. No
 es hipotético: al escribirlos encontraron **tres botones a mano** que el barrido
 manual no había visto.
 
+## La ficha: cuando el objetivo táctil es la etiqueta entera
+
+Los roles se elegían con checkboxes **nativos de 16 px**. El problema no es
+estético: la regla de los 44 px **exime** a `checkbox` y a `radio` —agrandar la
+caja los deforma— y esa exención dejó el control más chico de la app en la
+pantalla donde se decide **quién puede hacer qué**. Fallar ahí es darle un rol a
+alguien sin querer.
+
+La salida no es agrandar la caja: es que el objetivo sea **la ficha entera**. El
+`<label>` pasa a ser una superficie de 44 px que se toca en cualquier parte, y la
+caja queda como indicador.
+
+El input sigue siendo un `checkbox` nativo, solo que `sr-only`: el lector de
+pantalla anuncia «casilla, admin, marcada», el formulario sigue enviando `roles`,
+y **no hay una línea de JavaScript**. Lo único que cambia es dónde se dibuja.
+
+`.aq-ficha-compacta` baja a 36 px para las filas de tabla — sigue siendo más del
+doble que el nativo que había.
+
+:::caution[El anillo de foco tiene que saltar del input a la ficha]
+El input mide 1 px, y ahí el anillo global se dibuja donde no lo ve nadie. Se
+resuelve con `:has(input:focus-visible)` sobre la ficha, **nunca** apagando la
+regla global — que es la trampa que ya dejó el foco invisible una vez.
+:::
+
+## Un canal, no cuatro márgenes
+
+Había **tres valores** para la misma distancia: el menú a 12 px del borde, el
+contenido a 24 y el pie con 24 a los lados y 12 abajo. Nadie eligió eso — cada
+pieza traía su propia clase de Tailwind y ninguna sabía de las otras.
+
+`--aq-canal` vive en `.aq-armazon` y lo aplica el armazón con `padding` y `gap`.
+Las piezas dejan de traer margen propio; su padding interno sigue siendo de cada
+una. Un test verifica que ninguna reponga la distancia a mano.
+
+## La cabecera flotante reclama el ángulo superior derecho
+
+En escritorio la cabecera **no ocupa fila propia**: se monta sobre el contenido
+con `z-index: 1`, y por eso el `<main>` puede empezar en el borde del viewport.
+
+La contrapartida es que **nada más puede vivir ahí**. Pasó con «Gestionar
+catálogo», que quedó literalmente debajo de los iconos de sesión.
+
+Hay dos remedios y el orden importa:
+
+1. **Mover la acción junto a lo que acciona.** Es lo que hace `/modulos/productos`:
+   el aviso y el botón comparten renglón, porque el aviso dice qué arreglar y el
+   botón lleva a arreglarlo. `ml-auto` mantiene el botón a la derecha haya o no
+   aviso, así que la pantalla no salta.
+2. **`.aq-cabecera-pantalla`**, que reserva `--aq-chrome-ancho`, para la pantalla
+   que de verdad necesite una acción en el encabezado.
+
+Un test verifica que la reserva alcance para los controles que el chrome
+realmente renderiza: si entra un cuarto icono, falla ahí en vez de taparle el
+botón a alguien.
+
+## El vidrio se mide en porcentaje del elemento, y eso no escala
+
+`.aq-panel-marca` y `.aq-tarjeta` comparten base y solo cambian tokens. Aun así
+se veían distintas, y por dos causas que no eran la opacidad.
+
+**La geometría.** El brillo es un `radial-gradient` medido en porcentaje del
+elemento: `120% 65%`. Sobre el menú —256 × 1170— da una elipse de ~307 × 760, un
+resplandor amplio. Sobre el pie —1215 × 44— la misma regla da ~1440 × 28: **una
+raya fina**. De ahí `.aq-panel-banda`, con la geometría de una caja ancha y baja.
+
+**Los reflejos.** La tarjeta tenía el brillo interno en 0,26 contra 0,10 del
+panel, y el canto en 0,42 contra 0,16 — **dos veces y media más fuertes**, con
+los rellenos ya casi iguales (0,52 y 0,50). Un borde brillante es lo que hace que
+algo se lea como un objeto apoyado encima en vez de una lámina que deja pasar el
+agua.
+
+## El modo claro necesita que el agua sea agua
+
+El síntoma reportado fue «un resplandor blanco que tapa el contenido». Medido con
+`elementsFromPoint`, **encima del contenido no hay ninguna capa**.
+
+Era la **ausencia** de contraste entre planos: el agua, el body y las láminas
+estaban los tres dentro del 5 % de luminancia. La separación panel/agua daba
+`1,053:1`, cuando en oscuro esa misma relación es `1,174`.
+
+Subir las láminas no alcanzaba —aun con un panel blanco y opaco el techo era
+`1,105`—, así que el agua bajó. Ahora la separación es `1,157`.
+
+`tenue` se recalibró a `#4E6475` porque sobre el agua nueva daba 4,10:1. **No se
+bajó más**, aunque los tonos más oscuros también pasan AA: a `#425665` la
+separación contra `secundario` cae a 1,08:1 y los dos niveles vuelven a ser el
+mismo gris. Pasar el test y no distinguirse no sirve de nada.
+
+:::danger[El test medía la superficie equivocada]
+`globals.contraste.test.ts` miraba `--aq-superficie-fondo`, un token **opaco que
+casi no se ve**: el fondo real de la app es `--aq-agua`, un gradiente fijo que
+cubre el viewport. Por eso hundir el agua dejó `tenue` fuera de AA con la suite
+en verde.
+
+Ahora mide **las tres paradas** del gradiente. Comprobado devolviendo el valor
+viejo: falla en las tres.
+:::
+
+## Una capacidad, una entrada de menú
+
+`auditoria` estuvo registrado **dos veces** —admin y contador—, con dos rutas que
+renderizaban el mismo componente con los mismos filtros. El alcance lo resuelve
+`api/` a partir de la **sesión**, no de la ruta (RN-ACC-03), así que las dos
+entradas eran indistinguibles.
+
+La tentación era filtrar por precedencia —«si es admin, escondé el de
+contador»—, y habría sido peor: los roles se **suman** (RN-ACC-01), meter
+precedencia contradice el modelo, y solo arregla ese par.
+
+La regla que cierra la clase entera: **una capacidad, una entrada**, con la lista
+de roles que la ven. Dos tests rechazan una etiqueta o una ruta repetida.
+
+:::caution[El test que tenía que atraparlo lo estaba sosteniendo]
+«multi-rol ve la unión» afirmaba que ver `auditoria` **y** `contador-auditoria`
+juntas era correcto. Por eso el defecto sobrevivió hasta que alguien miró el menú.
+:::
+
 ## La escala tipográfica existe y ahora se usa
 
 Los tokens `--aq-titulo-*` estaban desde el primer día y ninguna pantalla los
