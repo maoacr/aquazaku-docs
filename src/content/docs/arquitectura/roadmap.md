@@ -172,7 +172,7 @@ porque todo lo demás lo necesita, no porque sea el más visible.
 | M1 | **Productos y catálogo** | Qué se vende: pacas 600ml/300ml, botellones con sus unidades y conversiones | `admin`, `pos`, `seller`, `contador` | M0 | ✅ terminado |
 | M2 | **Stock de producto terminado** | Lotes, vencimiento 30d, FIFO, bloqueo de vencidos | `admin`, `pos`, `seller`, `contador` | M0, M1 | ✅ terminado |
 | — | **Fase de diseño** | Sistema de diseño aplicado: marca real, vidrio y agua, semáforo de estados, vacíos, errores sin jerga, voz de usted, accesibilidad medida | — | M2 | ✅ terminada |
-| M3 | **Insumos** | Tapas, sellos, bolsas por kg con stock mínimo configurable (default 200/200) | `admin`, `pos` | M0 | 🟡 en curso — T1 a T3 ✅ |
+| M3 | **Insumos** | Tapas, sellos, bolsas por kg con stock mínimo configurable (default 200/200) | `admin`, `pos` | M0 | ✅ terminado |
 | M4 | **Producción y cierre del día** | Tandas, lote generado automáticamente, mermas, descartes con causa, mantenimiento de filtros | `admin`, `pos` | M0, M1, M2, M3 | 🔲 pendiente |
 | M5 | **Clientes** | Alta con verificación de documento, ficha, segmentación residencial/comercial, bloqueo de baja con cifras | `admin`, `pos`, `seller`, `contador` | M0 | 🔲 pendiente |
 | M6 | **Ventas** | POS, pedidos WhatsApp, devoluciones con motivo, descuentos con piso absoluto, factura electrónica como intención | `admin`, `pos`, `seller`, `contador` | M0, M1, M2, M5 | 🔲 pendiente |
@@ -264,10 +264,10 @@ puede arrancar en `design` mientras el anterior está en `apply`, pero no antes.
 
 | Fase | Módulo |
 | --- | --- |
-| ✅ **Terminado** | **M0 — Auth + RBAC** · **M1 — Productos** · **M2 — Stock** · **Fase de diseño** (marca, vidrio, agua, estados, vacíos, voz de usted, accesibilidad) |
+| ✅ **Terminado** | **M0 — Auth + RBAC** · **M1 — Productos** · **M2 — Stock** · **Fase de diseño** (marca, vidrio, agua, estados, vacíos, voz de usted, accesibilidad) · **M3 — Insumos** |
 | Design en curso | — |
 | Apply en curso | — |
-| **En curso** | **M3 — Insumos** — dominio, [spec](/superpowers/specs/2026-08-22-m3-insumos-design/) y [plan](/superpowers/plans/2026-08-22-m3-insumos/) cerrados; **T1, T2 y T3 implementadas** el 26-ago-2026. Faltan endpoints, pantalla y cierre |
+
 | Pendiente | M4–M7, M9–M13 |
 | Diferido (post-MVP) | M8 — Rutas y seller mobile |
 

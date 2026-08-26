@@ -60,7 +60,7 @@ No son decisiones: son números que hay que ir a tomar.
 | 5 | **Tiempo de llenado de un tanque de 2.000 L** → de ahí sale el caudal real. | [RN-PRD-18](/dominio/produccion/) |
 | 6 | **Litros que consume lavar un botellón.** | [RN-PRD-05](/dominio/produccion/) |
 | 7 | **Consumo diario promedio en litros.** *Se autocalcula a las semanas de registrar cierres de producción — un estimado inicial alcanza.* | [RN-PRD-13](/dominio/produccion/) |
-| 37 | **Cuántas bolsas trae un kilo** — por separado para la de 600 ml y la de 300 ml. El grosor varía entre lotes, así que conviene pesar varias veces y promediar. | [RN-INS-02](/dominio/insumos/) — sin esto el sistema no puede convertir la compra a unidades |
+| 37 | **Cuántas bolsas trae un kilo** — por separado para la de 600 ml y la de 300 ml. El grosor varía entre lotes, así que conviene pesar varias veces y promediar. | [RN-INS-02](/dominio/insumos/) — **ya no bloquea el módulo**: M3 se entregó con la medición vacía. El sistema rechaza la compra en kilos diciendo qué medir, y acepta unidades. El número se carga desde la pantalla de Insumos, sin tocar código |
 
 ---
 
