@@ -173,7 +173,7 @@ porque todo lo demás lo necesita, no porque sea el más visible.
 | M2 | **Stock de producto terminado** | Lotes, vencimiento 30d, FIFO, bloqueo de vencidos | `admin`, `pos`, `seller`, `contador` | M0, M1 | ✅ terminado |
 | — | **Fase de diseño** | Sistema de diseño aplicado: marca real, vidrio y agua, semáforo de estados, vacíos, errores sin jerga, voz de usted, accesibilidad medida | — | M2 | ✅ terminada |
 | M3 | **Insumos** | Tapas, sellos, bolsas por kg con stock mínimo configurable (default 200/200) | `admin`, `pos` | M0 | ✅ terminado |
-| M4 | **Producción y cierre del día** | Tandas, lote generado automáticamente, mermas, descartes con causa, mantenimiento de filtros | `admin`, `pos` | M0, M1, M2, M3 | 🟡 spec lista, por planificar |
+| M4 | **Producción y cierre del día** | Tandas, lote generado automáticamente, mermas, descartes con causa, mantenimiento de filtros | `admin`, `pos` | M0, M1, M2, M3 | 🟡 plan listo, por codear |
 | M5 | **Clientes** | Alta con verificación de documento, ficha, segmentación residencial/comercial, bloqueo de baja con cifras | `admin`, `pos`, `seller`, `contador` | M0 | 🔲 pendiente |
 | M6 | **Ventas** | POS, pedidos WhatsApp, devoluciones con motivo, descuentos con piso absoluto, factura electrónica como intención | `admin`, `pos`, `seller`, `contador` | M0, M1, M2, M5 | 🔲 pendiente |
 | M7 | **Retornables (botellones y bases)** | Entrega con flujo híbrido, devoluciones, daño con tarifa fija, traza por `id_sticker` | `admin`, `pos`, `contador` | M0, M5 | 🔲 pendiente |
