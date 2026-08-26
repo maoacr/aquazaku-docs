@@ -10,7 +10,32 @@ transacción.
 
 **Dominio:** [Producción](/dominio/produccion/) — 21 reglas confirmadas de 24.
 
-**Estado:** 📝 Planificado — por implementar.
+**Estado:** ✅ **Terminado** (26-ago-2026) — las 7 tasks cerradas.
+
+| Task | | Commit |
+| --- | :-: | --- |
+| T1 — Schema, migración e invariantes | ✅ | `97e127b` |
+| T2 — La transacción de cuatro escritos | ✅ | `35a7030` |
+| T3 — Abrir `registrarEntrada` de M2 | ✅ | `8ca6aca` |
+| T4 — Balance de agua y reconciliación | ✅ | `e77da24` |
+| T5 — Endpoints | ✅ | `6ddc068` |
+| T6 — Pantalla del cierre y los tanques | ✅ | `3e9ac7c` (web) · `ef2049e` (api) |
+| T7 — Bruno, documentación y cierre | ✅ | este commit |
+
+**Lo que cambió respecto del plan.** T5 creció con un endpoint que el plan no
+tenía: `GET /produccion/parametros`. Apareció al escribir T6 — la vista previa
+necesita `3.785` y `0.70` para mostrar cuánta agua se va a procesar, y
+copiarlos al componente habría dejado dos fuentes de dos números que **están
+marcados para cambiar**. El día que se mida el caudal de verdad, la pantalla
+seguiría prometiendo el número viejo, y quien confirma una operación
+irreversible lo haría creyendo otra cosa.
+
+También creció el seed: `TAPA_20L` y `SELLO_BOTELLON` ahora se siembran. El
+servicio del cierre los busca **por código** y lanza si no están, así que son
+parte de la definición del sistema y no datos de cada instalación. Sin eso, una
+base recién migrada tenía el catálogo completo y aun así no podía hacer la
+operación central del negocio — y el error aparecía recién en la planta, con
+los botellones ya envasados.
 
 ---
 

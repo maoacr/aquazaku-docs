@@ -27,7 +27,9 @@ cambia una ruta y no toca la colección, se ve en el diff.
 | `3-Auditoria` | Consulta, filtro de denegados y validación de filtros |
 | `4-Productos` | Catálogo, piso de precio, auditoría del cambio y **un `pos` recibiendo 403** |
 | `5-Stock` | Lotes, ajuste, descarte, el libro y **un `contador` recibiendo 403** |
-| `6-Sesion` | Cierre de sesión y que la credencial deje de servir |
+| `6-Insumos` | Alta, entrada en unidades y en kilos, la conversión rechazada sin equivalencia, y **un `seller` recibiendo 403** |
+| `7-Produccion` | El cierre del día con sus cuatro escritos, la reposición **sin cantidad**, la reconciliación que no escribe, y **un `pos` que puede anotar pero no ajustar** |
+| `8-Sesion` | Cierre de sesión y que la credencial deje de servir |
 
 Las carpetas llevan número porque el orden importa: el login deja la cookie que
 usan los requests siguientes.
@@ -37,13 +39,18 @@ usan los requests siguientes.
 cookie** y falla entera con 401.
 
 Cuando se agregue una carpeta nueva, va **antes** de esa. Por eso `Sesion` ya se
-movió dos veces: de `4` a `5` cuando entró el catálogo, y de `5` a `6` cuando
-entró el stock.
+movió cuatro veces: de `4` a `5` con el catálogo, a `6` con el stock, a `7` con
+los insumos y a `8` con producción.
+
+Renumerarla cada vez es más trabajo que dejarla fija, y es a propósito: el
+número es lo que hace visible el orden en el árbol de archivos. Un `99-Sesion`
+que nunca se mueve esconde que hay un orden.
 :::
 
 ### El único lugar donde otro rol pega contra `api/`
 
-Dos carpetas cambian de sesión a mitad de camino y vuelven a admin al terminar.
+Cuatro carpetas cambian de sesión a mitad de camino y vuelven a admin al
+terminar.
 
 `4-Productos` entra como el `pos` que creó `2-Usuarios`, verifica que **no**
 pueda crear productos (403) y que **sí** pueda leer el catálogo (200).
@@ -54,6 +61,15 @@ pueda crear productos (403) y que **sí** pueda leer el catálogo (200).
 rechazo. El `contador` es el testigo externo —mira todo, no modifica nada— y es
 el rol correcto para verificar que lectura y escritura están separadas de
 verdad.
+
+`6-Insumos` entra como un `seller`: no toca la planta, así que no ve insumos.
+
+`7-Produccion` entra como un `pos`, y es la carpeta donde la separación se ve
+mejor. El `pos` **sí** puede anotar que llegó agua —es un hecho que observa
+parado en la planta— y **no** puede ajustar un saldo que no cuadra. Son dos
+permisos y no uno porque corregir un saldo no es contar un hecho: es decidir
+cuál de dos números es el bueno, y un registro que quien opera puede cuadrar
+solo deja de servir como registro.
 
 Los tests unitarios ya verifican que la matriz le niegue el permiso, pero esos
 no atraviesan un socket. Los dos peores bugs de M0 —el header `Origin` y el
@@ -81,6 +97,27 @@ You can run only at the root of a collection
 Y el flag `--recursive` ya no existe: es `-r`. Con la forma vieja el comando
 imprime la ayuda y sale con código 1, o sea que **el pipeline se pone rojo sin
 haber corrido ni un request** — fácil de confundir con un test que falla.
+:::
+
+:::danger[Contra otro puerto, hay que mover también `BETTER_AUTH_URL`]
+Correr la colección contra una instancia en un puerto distinto —por ejemplo una
+levantada contra `aquazaku_test` para no tocar la base de desarrollo— falla
+entera con **401 desde el login**, y el mensaje no dice por qué.
+
+La causa es que Better-Auth valida su propia base URL: si `BETTER_AUTH_URL`
+sigue apuntando al puerto de siempre, el `sign-in` se rechaza aunque la
+contraseña esté bien. Los 401 que siguen son consecuencia de no tener cookie, y
+mandan a buscar el problema al lugar equivocado.
+
+```bash
+DATABASE_URL='...aquazaku_test' PORT=3099 BETTER_AUTH_URL='http://localhost:3099' \
+  pnpm tsx --env-file-if-exists=.env src/server.ts
+```
+
+Y ojo con el limitador de login: son 5 intentos por IP+email cada 15 minutos.
+Un login exitoso limpia el contador, pero una tanda de fallidos deja la
+colección en 429 — que se confunde con un test roto. Vive en memoria, así que
+reiniciar el proceso lo borra.
 :::
 
 El entorno `local` deja `adminPassword` como variable **secreta**: no está en el
