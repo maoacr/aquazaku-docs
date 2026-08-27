@@ -22,15 +22,15 @@ cambia una ruta y no toca la colección, se ve en el diff.
 
 | Carpeta | Qué prueba |
 |---|---|
-| `1-Auth` | Señal de vida, login y perfil con permisos resueltos |
-| `2-Usuarios` | Listar, crear, asignar roles y la **protección del último admin** |
-| `3-Auditoria` | Consulta, filtro de denegados y validación de filtros |
-| `4-Productos` | Catálogo, piso de precio, auditoría del cambio y **un `pos` recibiendo 403** |
-| `5-Stock` | Lotes, ajuste, descarte, el libro y **un `contador` recibiendo 403** |
-| `6-Insumos` | Alta, entrada en unidades y en kilos, la conversión rechazada sin equivalencia, y **un `seller` recibiendo 403** |
-| `7-Produccion` | El cierre del día con sus cuatro escritos, la reposición **sin cantidad**, la reconciliación que no escribe, y **un `pos` que puede anotar pero no ajustar** |
-| `8-Clientes` | El dígito de verificación calculado, el cruce CC/NIT que **advierte sin bloquear**, el crédito rechazado sin verificación, y **un `contador` recibiendo 403** |
-| `9-Ventas` | El precio congelado, el piso que no se perfora, la anulación que devuelve al mismo lote, el cobro que no puede pasarse de la deuda, y **un `contador` recibiendo 403** |
+| `01-Auth` | Señal de vida, login y perfil con permisos resueltos |
+| `02-Usuarios` | Listar, crear, asignar roles y la **protección del último admin** |
+| `03-Auditoria` | Consulta, filtro de denegados y validación de filtros |
+| `04-Productos` | Catálogo, piso de precio, auditoría del cambio y **un `pos` recibiendo 403** |
+| `05-Stock` | Lotes, ajuste, descarte, el libro y **un `contador` recibiendo 403** |
+| `06-Insumos` | Alta, entrada en unidades y en kilos, la conversión rechazada sin equivalencia, y **un `seller` recibiendo 403** |
+| `07-Produccion` | El cierre del día con sus cuatro escritos, la reposición **sin cantidad**, la reconciliación que no escribe, y **un `pos` que puede anotar pero no ajustar** |
+| `08-Clientes` | El dígito de verificación calculado, el cruce CC/NIT que **advierte sin bloquear**, el crédito rechazado sin verificación, y **un `contador` recibiendo 403** |
+| `09-Ventas` | El precio congelado, el piso que no se perfora, la anulación que devuelve al mismo lote, el cobro que no puede pasarse de la deuda, y **un `contador` recibiendo 403** |
 | `10-Sesion` | Cierre de sesión y que la credencial deje de servir |
 
 Las carpetas llevan número porque el orden importa: el login deja la cookie que
@@ -41,8 +41,22 @@ usan los requests siguientes.
 cookie** y falla entera con 401.
 
 Cuando se agregue una carpeta nueva, va **antes** de esa. Por eso `Sesion` ya se
-movió seis veces: de `4` a `5` con el catálogo, a `6` con el stock, a `7` con
-los insumos, a `8` con producción, a `9` con clientes y a `10` con ventas.
+movió seis veces: de `04` a `05` con el catálogo, a `06` con el stock, a `07`
+con los insumos, a `08` con producción, a `09` con clientes y a `10` con ventas.
+
+:::danger[Los números llevan cero adelante, y no es estética]
+`bru` ordena las carpetas **alfabéticamente**, así que `"10" < "2"`. La primera
+vez que `Sesion` llegó a `10-Sesion`, el logout corrió SEGUNDO: dejó sin cookie
+a todo lo que venía después y **115 de 133 requests fallaron con 401**.
+
+Lo peor es dónde apuntaba el error. Los tests rojos eran los de `2-Usuarios`,
+`3-Auditoria`, `4-Productos` — módulos que no se habían tocado. Nada señalaba a
+la carpeta que se acababa de renombrar.
+
+Con `01`, `02`, … `10` el orden alfabético y el numérico coinciden, y la
+convención sobrevive pasado el noveno módulo. Quedan siete lugares antes de que
+haga falta pensarlo de nuevo.
+:::
 
 Renumerarla cada vez es más trabajo que dejarla fija, y es a propósito: el
 número es lo que hace visible el orden en el árbol de archivos. Un `99-Sesion`
@@ -54,31 +68,31 @@ que nunca se mueve esconde que hay un orden.
 Seis carpetas cambian de sesión a mitad de camino y vuelven a admin al
 terminar.
 
-`4-Productos` entra como el `pos` que creó `2-Usuarios`, verifica que **no**
+`04-Productos` entra como el `pos` que creó `02-Usuarios`, verifica que **no**
 pueda crear productos (403) y que **sí** pueda leer el catálogo (200).
 
-`5-Stock` **crea su propio `contador`**, y no por gusto: el usuario de
-`2-Usuarios` termina con `pos` + `seller`, y como los roles se **suman**
+`05-Stock` **crea su propio `contador`**, y no por gusto: el usuario de
+`02-Usuarios` termina con `pos` + `seller`, y como los roles se **suman**
 (RN-ACC-01), el `pos` puede ajustar stock. Ese usuario no sirve para probar un
 rechazo. El `contador` es el testigo externo —mira todo, no modifica nada— y es
 el rol correcto para verificar que lectura y escritura están separadas de
 verdad.
 
-`6-Insumos` entra como un `seller`: no toca la planta, así que no ve insumos.
+`06-Insumos` entra como un `seller`: no toca la planta, así que no ve insumos.
 
-`7-Produccion` entra como un `pos`, y es la carpeta donde la separación se ve
+`07-Produccion` entra como un `pos`, y es la carpeta donde la separación se ve
 mejor. El `pos` **sí** puede anotar que llegó agua —es un hecho que observa
 parado en la planta— y **no** puede ajustar un saldo que no cuadra. Son dos
 permisos y no uno porque corregir un saldo no es contar un hecho: es decidir
 cuál de dos números es el bueno, y un registro que quien opera puede cuadrar
 solo deja de servir como registro.
 
-`8-Clientes` entra como un `contador`: ve la cartera —la necesita para saber
+`08-Clientes` entra como un `contador`: ve la cartera —la necesita para saber
 cuánto debe cada uno— y no puede registrar ni verificar. Verificar un documento
 es afirmar que se lo tuvo en la mano, y el contador no está en el mostrador ni
 en la calle.
 
-`9-Ventas` vuelve a entrar como `contador`, y por una razón distinta: acá el
+`09-Ventas` vuelve a entrar como `contador`, y por una razón distinta: acá el
 alcance no es «ve o no ve», es **`propio` contra `todo`**. Un `pos` ve y anula
 sus ventas y no las de otro, y eso lo recorta `scopedCondition` a partir de la
 sesión. Es la primera carpeta donde el alcance —y no el permiso— es lo que se
@@ -89,7 +103,7 @@ no atraviesan un socket. Los dos peores bugs de M0 —el header `Origin` y el
 logout faltante— vivían justamente en costuras entre capas, donde ninguna suite
 unitaria mira por diseño.
 
-El request `13-Volver-como-admin` no es ceremonia: sin él, `5-Sesion` cerraría
+El request `13-Volver-como-admin` no es ceremonia: sin él, `05-Sesion` cerraría
 la sesión del `pos` y su verificación probaría algo distinto de lo que dice
 probar.
 
