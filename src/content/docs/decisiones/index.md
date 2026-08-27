@@ -55,7 +55,18 @@ Usá la [plantilla de ADR](/decisiones/plantilla/) para arrancar.
 | [0005](/decisiones/0005-scopes-fail-closed/) | Un alcance que no aplica falla, no devuelve todo | Implementación de M0 |
 | [0006](/decisiones/0006-invariantes-en-la-base/) | Los invariantes viven en la base; el servicio explica el error | Implementación de M1 |
 | [0007](/decisiones/0007-auditoria-bloqueante/) | Una acción sensible sin bitácora no se ejecuta | Implementación de M1 |
+| [0008](/decisiones/0008-saldo-derivado-o-materializado/) | Un saldo se materializa **solo** si hay que descontarlo atómicamente | Implementación de M2 a M7 |
 
-Los dos últimos salieron de **construir**, no de planear. Es el patrón esperable:
-un ADR de diseño elige entre alternativas conocidas; uno de implementación
-aparece cuando la realidad muestra una que nadie había visto.
+Los tres últimos salieron de **construir**, no de planear. Es el patrón
+esperable: un ADR de diseño elige entre alternativas conocidas; uno de
+implementación aparece cuando la realidad muestra una que nadie había visto.
+
+El `0008` es un caso aparte y vale la pena notarlo: **no apareció, se repitió**.
+La misma decisión se tomó cinco veces —en M2, M3, M4, M6 y M7— siempre igual y
+siempre por intuición. Se escribió recién cuando quedó claro que había un
+criterio y no cinco coincidencias.
+
+:::tip[Cuándo escribir un ADR de implementación]
+Cuando notás que ya tomaste esa decisión antes. La tercera vez es tarde, pero es
+mejor que la sexta.
+:::
