@@ -30,7 +30,8 @@ cambia una ruta y no toca la colección, se ve en el diff.
 | `6-Insumos` | Alta, entrada en unidades y en kilos, la conversión rechazada sin equivalencia, y **un `seller` recibiendo 403** |
 | `7-Produccion` | El cierre del día con sus cuatro escritos, la reposición **sin cantidad**, la reconciliación que no escribe, y **un `pos` que puede anotar pero no ajustar** |
 | `8-Clientes` | El dígito de verificación calculado, el cruce CC/NIT que **advierte sin bloquear**, el crédito rechazado sin verificación, y **un `contador` recibiendo 403** |
-| `9-Sesion` | Cierre de sesión y que la credencial deje de servir |
+| `9-Ventas` | El precio congelado, el piso que no se perfora, la anulación que devuelve al mismo lote, el cobro que no puede pasarse de la deuda, y **un `contador` recibiendo 403** |
+| `10-Sesion` | Cierre de sesión y que la credencial deje de servir |
 
 Las carpetas llevan número porque el orden importa: el login deja la cookie que
 usan los requests siguientes.
@@ -40,8 +41,8 @@ usan los requests siguientes.
 cookie** y falla entera con 401.
 
 Cuando se agregue una carpeta nueva, va **antes** de esa. Por eso `Sesion` ya se
-movió cinco veces: de `4` a `5` con el catálogo, a `6` con el stock, a `7` con
-los insumos, a `8` con producción y a `9` con clientes.
+movió seis veces: de `4` a `5` con el catálogo, a `6` con el stock, a `7` con
+los insumos, a `8` con producción, a `9` con clientes y a `10` con ventas.
 
 Renumerarla cada vez es más trabajo que dejarla fija, y es a propósito: el
 número es lo que hace visible el orden en el árbol de archivos. Un `99-Sesion`
@@ -50,7 +51,7 @@ que nunca se mueve esconde que hay un orden.
 
 ### El único lugar donde otro rol pega contra `api/`
 
-Cinco carpetas cambian de sesión a mitad de camino y vuelven a admin al
+Seis carpetas cambian de sesión a mitad de camino y vuelven a admin al
 terminar.
 
 `4-Productos` entra como el `pos` que creó `2-Usuarios`, verifica que **no**
@@ -76,6 +77,12 @@ solo deja de servir como registro.
 cuánto debe cada uno— y no puede registrar ni verificar. Verificar un documento
 es afirmar que se lo tuvo en la mano, y el contador no está en el mostrador ni
 en la calle.
+
+`9-Ventas` vuelve a entrar como `contador`, y por una razón distinta: acá el
+alcance no es «ve o no ve», es **`propio` contra `todo`**. Un `pos` ve y anula
+sus ventas y no las de otro, y eso lo recorta `scopedCondition` a partir de la
+sesión. Es la primera carpeta donde el alcance —y no el permiso— es lo que se
+está probando.
 
 Los tests unitarios ya verifican que la matriz le niegue el permiso, pero esos
 no atraviesan un socket. Los dos peores bugs de M0 —el header `Origin` y el

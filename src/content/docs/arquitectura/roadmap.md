@@ -175,7 +175,7 @@ porque todo lo demás lo necesita, no porque sea el más visible.
 | M3 | **Insumos** | Tapas, sellos, bolsas por kg con stock mínimo configurable (default 200/200) | `admin`, `pos` | M0 | ✅ terminado |
 | M4 | **Producción y cierre del día** | Cierre diario que mueve agua, stock e insumos en una transacción; balance de los dos tanques con reconciliación contra el nivel observado | `admin`, `pos`, `contador` | M0, M1, M2, M3 | ✅ terminado |
 | M5 | **Clientes** | Identidad con documento y dígito calculado, estado de verificación con responsable, tipo con lista de precios, direcciones como entidad y crédito que la base no deja habilitar sin verificar | `admin`, `pos`, `seller`, `contador` | M0 | ✅ terminado |
-| M6 | **Ventas** | POS, pedidos WhatsApp, devoluciones con motivo, descuentos con piso absoluto, factura electrónica como intención | `admin`, `pos`, `seller`, `contador` | M0, M1, M2, M5 | 🔲 pendiente |
+| M6 | **Ventas** | Venta inmutable con precio congelado, anulación que revierte al mismo lote, cobros como documento aparte, devoluciones, descuentos con piso sostenido por la base, factura electrónica como intención | `admin`, `pos`, `seller`, `contador` | M0, M1, M2, M5 | ✅ terminado |
 | M7 | **Retornables (botellones y bases)** | Entrega con flujo híbrido, devoluciones, daño con tarifa fija, traza por `id_sticker` | `admin`, `pos`, `contador` | M0, M5 | 🔲 pendiente |
 | M8 | **Rutas y seller mobile** | App nativa del seller, offline-first, cierre de ruta | `seller`, `admin`, `contador` | M0, M5, M6, M7 | ⏸ POST-MVP |
 | M9 | **Proveedores y compras** | Mixto contado/transferencia/crédito, sin módulo de CxP completo | `admin`, `pos`, `contador` | M0, M3 | 🔲 pendiente |

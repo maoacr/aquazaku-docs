@@ -192,6 +192,30 @@ Hay tres capas, en orden de prevención → contingencia → último recurso:
 | **Cancelación (último recurso)** | Solo si el cliente no acepta reprogramar. Generar reembolso. |
 | **Devolución de fondos** | Outcome posible al anular: registra el reembolso (medio-dependiente). |
 
+:::danger[La reserva de stock NO se construyó — decisión de M6]
+La reserva de cinco minutos que describe esta regla **no existe en el sistema**,
+y no es una deuda pendiente: es una decisión con razón escrita.
+
+El descuento de stock ya es atómico desde M2 —`UPDATE … WHERE cantidad >= :n`
+sobre lotes bloqueados en orden de vencimiento—, así que dos vendedores contra
+la última unidad **ya están serializados por la base**: uno gana y el otro
+recibe un rechazo con el número real. La reserva no agrega corrección; adelanta
+el mensaje.
+
+Y cuesta más de lo que parece: una tabla con vencimiento necesita limpieza,
+semántica de expiración y una respuesta para las reservas huérfanas de alguien
+que abrió la pantalla y se fue a almorzar.
+
+En su lugar: la pantalla compara contra el saldo y avisa —informativo, y se dice
+que puede estar viejo—, y al confirmar decide el descuento atómico.
+
+Es el mismo criterio con el que esta misma documentación descartó la pantalla de
+fusión de duplicados en [RN-CLI-11](/dominio/clientes/). **Si con más `seller` en
+calle el caso empieza a aparecer, se reevalúa.**
+
+Ver la [spec de M6](/superpowers/specs/2026-08-26-m6-ventas-design/#la-pieza-que-m6-decide-no-construir).
+:::
+
 #### Validación al escribir
 
 El sistema debe **reservar** el stock por algunos minutos cuando un `seller` o

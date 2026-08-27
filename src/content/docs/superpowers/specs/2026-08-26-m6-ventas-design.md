@@ -5,7 +5,7 @@ description: La venta como documento inmutable que mueve cuatro cosas a la vez, 
 
 **Dominio:** [Ventas](/dominio/ventas/) — 13 reglas, 9 confirmadas.
 
-**Estado:** 📝 Diseñado — por planificar.
+**Estado:** ✅ **Implementado** (26-ago-2026) — ver el [plan](/superpowers/plans/2026-08-26-m6-ventas/).
 
 ---
 
