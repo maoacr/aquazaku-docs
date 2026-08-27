@@ -5,7 +5,7 @@ description: Un documento que no se pide dos veces, un dígito que no se guarda,
 
 **Dominio:** [Clientes](/dominio/clientes/) — 16 reglas, 13 confirmadas.
 
-**Estado:** 📝 Diseñado — por planificar.
+**Estado:** ✅ **Implementado** (26-ago-2026) — ver el [plan](/superpowers/plans/2026-08-26-m5-clientes/).
 
 ---
 

@@ -29,7 +29,8 @@ cambia una ruta y no toca la colección, se ve en el diff.
 | `5-Stock` | Lotes, ajuste, descarte, el libro y **un `contador` recibiendo 403** |
 | `6-Insumos` | Alta, entrada en unidades y en kilos, la conversión rechazada sin equivalencia, y **un `seller` recibiendo 403** |
 | `7-Produccion` | El cierre del día con sus cuatro escritos, la reposición **sin cantidad**, la reconciliación que no escribe, y **un `pos` que puede anotar pero no ajustar** |
-| `8-Sesion` | Cierre de sesión y que la credencial deje de servir |
+| `8-Clientes` | El dígito de verificación calculado, el cruce CC/NIT que **advierte sin bloquear**, el crédito rechazado sin verificación, y **un `contador` recibiendo 403** |
+| `9-Sesion` | Cierre de sesión y que la credencial deje de servir |
 
 Las carpetas llevan número porque el orden importa: el login deja la cookie que
 usan los requests siguientes.
@@ -39,8 +40,8 @@ usan los requests siguientes.
 cookie** y falla entera con 401.
 
 Cuando se agregue una carpeta nueva, va **antes** de esa. Por eso `Sesion` ya se
-movió cuatro veces: de `4` a `5` con el catálogo, a `6` con el stock, a `7` con
-los insumos y a `8` con producción.
+movió cinco veces: de `4` a `5` con el catálogo, a `6` con el stock, a `7` con
+los insumos, a `8` con producción y a `9` con clientes.
 
 Renumerarla cada vez es más trabajo que dejarla fija, y es a propósito: el
 número es lo que hace visible el orden en el árbol de archivos. Un `99-Sesion`
@@ -49,7 +50,7 @@ que nunca se mueve esconde que hay un orden.
 
 ### El único lugar donde otro rol pega contra `api/`
 
-Cuatro carpetas cambian de sesión a mitad de camino y vuelven a admin al
+Cinco carpetas cambian de sesión a mitad de camino y vuelven a admin al
 terminar.
 
 `4-Productos` entra como el `pos` que creó `2-Usuarios`, verifica que **no**
@@ -70,6 +71,11 @@ parado en la planta— y **no** puede ajustar un saldo que no cuadra. Son dos
 permisos y no uno porque corregir un saldo no es contar un hecho: es decidir
 cuál de dos números es el bueno, y un registro que quien opera puede cuadrar
 solo deja de servir como registro.
+
+`8-Clientes` entra como un `contador`: ve la cartera —la necesita para saber
+cuánto debe cada uno— y no puede registrar ni verificar. Verificar un documento
+es afirmar que se lo tuvo en la mano, y el contador no está en el mostrador ni
+en la calle.
 
 Los tests unitarios ya verifican que la matriz le niegue el permiso, pero esos
 no atraviesan un socket. Los dos peores bugs de M0 —el header `Origin` y el
