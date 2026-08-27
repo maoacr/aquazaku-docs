@@ -187,6 +187,20 @@ descuento atómico que defender. Dos cobros simultáneos suman, no compiten.
 6. Un descuento que perforaría el piso cobra el piso y avisa; no rechaza.
 7. El `CHECK` del piso rechaza la fila aunque se esquive el servicio.
 8. Vender más de lo que hay se rechaza **con el número real**, sin reserva.
-9. Vender una recarga descuenta una tapa y un sello.
+9. Vender **NO** descuenta tapa ni sello. El cierre de producción ya los
+   consumió al llenar el botellón, incluidas las recargas
+   ([Producción](/dominio/produccion/)): descontarlos otra vez los contaría dos
+   veces, y un inventario que miente a la baja hace comprar de más.
+
+   :::caution[Este punto decía lo contrario]
+   La spec pedía que la venta consumiera los dos insumos, y el plan lo repetía.
+   Los dos estaban mal — el dominio lo dice explícito y la corrección se hizo al
+   escribir T3, pero **este punto quedó sin actualizar**.
+
+   Es exactamente el defecto contra el que este proyecto escribe: una regla de
+   negocio afirmada en dos lugares con signo opuesto. Y el riesgo no es teórico
+   — quien implemente el frontend leyendo el DoD y no el código pondría el
+   descuento de nuevo.
+   :::
 10. Un cobro parcial reduce la deuda sin cerrar la venta.
 11. El `contador` ve ventas y cobros, y no registra ninguno.
