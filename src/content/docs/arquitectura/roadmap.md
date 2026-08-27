@@ -176,7 +176,7 @@ porque todo lo demás lo necesita, no porque sea el más visible.
 | M4 | **Producción y cierre del día** | Cierre diario que mueve agua, stock e insumos en una transacción; balance de los dos tanques con reconciliación contra el nivel observado | `admin`, `pos`, `contador` | M0, M1, M2, M3 | ✅ terminado |
 | M5 | **Clientes** | Identidad con documento y dígito calculado, estado de verificación con responsable, tipo con lista de precios, direcciones como entidad y crédito que la base no deja habilitar sin verificar | `admin`, `pos`, `seller`, `contador` | M0 | ✅ terminado |
 | M6 | **Ventas** | Venta inmutable con precio congelado, anulación que revierte al mismo lote, cobros como documento aparte, devoluciones, descuentos con piso sostenido por la base, factura electrónica como intención | `admin`, `pos`, `seller`, `contador` | M0, M1, M2, M5 | ✅ terminado |
-| M7 | **Retornables (botellones y bases)** | Entrega con flujo híbrido, devoluciones, daño con tarifa fija, traza por `id_sticker` | `admin`, `pos`, `contador` | M0, M5 | 🔲 pendiente |
+| M7 | **Retornables (botellones y bases)** | Entrega con flujo híbrido, devoluciones, daño con tarifa fija, traza por `id_sticker` | `admin`, `pos`, `contador` | M0, M5 | ✅ terminado |
 | M8 | **Rutas y seller mobile** | App nativa del seller, offline-first, cierre de ruta | `seller`, `admin`, `contador` | M0, M5, M6, M7 | ⏸ POST-MVP |
 | M9 | **Proveedores y compras** | Mixto contado/transferencia/crédito, sin módulo de CxP completo | `admin`, `pos`, `contador` | M0, M3 | 🔲 pendiente |
 | M10 | **Precios y promociones** | Listas residencial/comercial con piso, códigos de descuento con piso absoluto | `admin`, `pos`, `seller`, `contador` | M0, M1 | 🔲 pendiente |
@@ -260,16 +260,20 @@ puede arrancar en `design` mientras el anterior está en `apply`, pero no antes.
 
 ## Estado actual
 
-**Hoy, 22-ago-2026:**
+**Hoy, 27-ago-2026:**
 
 | Fase | Módulo |
 | --- | --- |
-| ✅ **Terminado** | **M0 — Auth + RBAC** · **M1 — Productos** · **M2 — Stock** · **Fase de diseño** (marca, vidrio, agua, estados, vacíos, voz de usted, accesibilidad) · **M3 — Insumos** |
+| ✅ **Terminado** | **M0 — Auth + RBAC** · **M1 — Productos** · **M2 — Stock** · **Fase de diseño** (marca, vidrio, agua, estados, vacíos, voz de usted, accesibilidad) · **M3 — Insumos** · **M4 — Producción** · **M5 — Clientes** · **M6 — Ventas** · **M7 — Retornables** |
 | Design en curso | — |
 | Apply en curso | — |
 
-| Pendiente | M4–M7, M9–M13 |
+| Pendiente | M9–M13 |
 | Diferido (post-MVP) | M8 — Rutas y seller mobile |
+
+Los siete módulos operacionales del MVP están cerrados. Lo que queda —M9 a
+M13— son módulos de soporte: proveedores, precios, el panel del contador,
+alertas y configuración.
 
 :::tip[M0 cerrado el 20-ago-2026]
 Las 15 tasks del plan implementadas y verificadas de punta a punta en un browser

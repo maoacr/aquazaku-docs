@@ -1,6 +1,6 @@
 ---
 title: Plan de M7 — Retornables
-description: "Las 9 tasks de M7, con la ley de conservación primero: sin ID individual, esa igualdad es lo único que avisa que un botellón se perdió."
+description: "Las 10 tasks de M7, con la ley de conservación primero: sin ID individual, esa igualdad es lo único que avisa que un botellón se perdió."
 ---
 
 **Objetivo:** implementar M7 según la
@@ -11,7 +11,7 @@ la ficha.
 
 **Dominio:** [Botellones y bases](/dominio/botellones-y-bases/) — 19 reglas.
 
-**Estado:** 📝 Planificado — por implementar.
+**Estado:** ✅ **Terminado** (27-ago-2026) — las 10 tasks cerradas.
 
 ---
 
@@ -106,15 +106,43 @@ un daño como si fuera producto.
 
 ## Task 7 — Endpoints · Task 8 — Pantalla · Task 9 — La ficha completa
 
+15 endpoints, la pantalla de retornables con el estado del parque arriba de
+todo, y las cuatro cuentas de la ficha del cliente con números reales.
+
+La pantalla pone la ley de conservación en el lugar más visible **a propósito**.
+Un botellón perdido no deja fila huérfana ni ID faltante: lo único que cambia en
+todo el sistema es que la suma deja de cerrar. Un test lo detecta una vez al día
+en CI; la pantalla lo detecta cuando alguien la abre.
+
 ## Task 10 — Bruno, documentación y cierre
+
+`10-Retornables`: 42 requests, 107 asserts. `Sesion` pasó a `11-`, aplicando la
+regla de M6 —`bru` ordena alfabéticamente, así que los números van con cero
+adelante—.
+
+Los dos traps de la base de prueba que costaron dos corridas en falso quedaron
+en [Explorar la API](/backend/exploracion-api/): el ledger de migraciones vive
+en el esquema `drizzle` y **sobrevive** a un `DROP SCHEMA public`, y los GRANTS
+del rol de la aplicación viven en las migraciones —restaurarlos «a ojo» aplana
+la garantía append-only—.
 
 ---
 
 ## Definition of Done de M7
 
 La [de la spec](/superpowers/specs/2026-08-26-m7-retornables-design/#definition-of-done),
-más:
+más los tres puntos de abajo. Los tres **verificados por ablación**: se borra el
+mecanismo y se confirma que algo se pone rojo. Un test que pasa igual sin el
+código que dice probar no prueba nada.
 
-1. Los tests de M1–M6 siguen en verde sin haberlos tocado.
-2. Romper la ley de conservación a mano pone un test en rojo.
-3. Quitar el filtro de tipo en `deudaDe` también.
+1. **Los tests de M1–M6 siguen en verde sin haberlos tocado.** 929 en verde,
+   exit 0.
+2. **Romper la ley de conservación a mano pone un test en rojo.** Sacando
+   `'ajuste'` del filtro de `registrados`, la colección cae a 403/405: el
+   request 14 falla con `expected 97 to equal 99`. El 13 sigue verde —a esa
+   altura todavía no hay ajustes—, que es la señal de que los tests son
+   específicos y no ruido.
+3. **Quitar el filtro de tipo en `deudaDe` también.** Sin
+   `and ventas.tipo = 'producto'` caen exactamente 2 de 929, y son los dos que
+   guardan la regla: *«NO suma a la deuda, y SÍ a los cargos pendientes»* y
+   *«no aparece en la deuda del cliente»*.

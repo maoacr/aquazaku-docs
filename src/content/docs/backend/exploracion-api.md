@@ -31,7 +31,8 @@ cambia una ruta y no toca la colección, se ve en el diff.
 | `07-Produccion` | El cierre del día con sus cuatro escritos, la reposición **sin cantidad**, la reconciliación que no escribe, y **un `pos` que puede anotar pero no ajustar** |
 | `08-Clientes` | El dígito de verificación calculado, el cruce CC/NIT que **advierte sin bloquear**, el crédito rechazado sin verificación, y **un `contador` recibiendo 403** |
 | `09-Ventas` | El precio congelado, el piso que no se perfora, la anulación que devuelve al mismo lote, el cobro que no puede pasarse de la deuda, y **un `contador` recibiendo 403** |
-| `10-Sesion` | Cierre de sesión y que la credencial deje de servir |
+| `10-Retornables` | La **ley de conservación** del parque, la entrega que escribe dos filas con signo opuesto, la base que se presta a una **dirección**, el daño que genera recargo, y **un `seller` que mira y no opera** |
+| `11-Sesion` | Cierre de sesión y que la credencial deje de servir |
 
 Las carpetas llevan número porque el orden importa: el login deja la cookie que
 usan los requests siguientes.
@@ -42,7 +43,8 @@ cookie** y falla entera con 401.
 
 Cuando se agregue una carpeta nueva, va **antes** de esa. Por eso `Sesion` ya se
 movió seis veces: de `04` a `05` con el catálogo, a `06` con el stock, a `07`
-con los insumos, a `08` con producción, a `09` con clientes y a `10` con ventas.
+con los insumos, a `08` con producción, a `09` con clientes, a `10` con ventas y a `11` con
+retornables.
 
 :::danger[Los números llevan cero adelante, y no es estética]
 `bru` ordena las carpetas **alfabéticamente**, así que `"10" < "2"`. La primera
@@ -53,8 +55,8 @@ Lo peor es dónde apuntaba el error. Los tests rojos eran los de `2-Usuarios`,
 `3-Auditoria`, `4-Productos` — módulos que no se habían tocado. Nada señalaba a
 la carpeta que se acababa de renombrar.
 
-Con `01`, `02`, … `10` el orden alfabético y el numérico coinciden, y la
-convención sobrevive pasado el noveno módulo. Quedan siete lugares antes de que
+Con `01`, `02`, … `11` el orden alfabético y el numérico coinciden, y la
+convención sobrevive pasado el noveno módulo. Quedan seis lugares antes de que
 haga falta pensarlo de nuevo.
 :::
 
@@ -145,6 +147,53 @@ Y ojo con el limitador de login: son 5 intentos por IP+email cada 15 minutos.
 Un login exitoso limpia el contador, pero una tanda de fallidos deja la
 colección en 429 — que se confunde con un test roto. Vive en memoria, así que
 reiniciar el proceso lo borra.
+:::
+
+:::danger[Resetear la base de tests: `DROP SCHEMA public` no alcanza, y miente]
+Para correr la colección contra una base limpia es tentador hacer
+`DROP SCHEMA public CASCADE; CREATE SCHEMA public;`. Hace dos daños, y los dos
+se reportan como éxito.
+
+**1. El registro de migraciones sobrevive.** Drizzle lo guarda en el esquema
+`drizzle`, no en `public`. Después del drop, `pnpm db:migrate:test` imprime
+`✓ migraciones aplicadas` **sin crear una sola tabla**: ve todas las
+migraciones registradas y no aplica ninguna. El síntoma aparece recién en el
+login, como un 500 que dice `relation "users" does not exist`.
+
+**2. Se lleva los GRANTS.** Y esos grants no son burocracia: son la mitad de la
+garantía append-only. `0001_audit_append_only.sql` le da a `aquazaku_app` solo
+`SELECT, INSERT` sobre `audit_log`, y `0003_stock.sql` le **revoca**
+`UPDATE, DELETE` sobre `movimientos_stock`. Restaurarlos «a ojo» con un
+`GRANT ... ON ALL TABLES` los aplana todos y deja la base con permisos de más:
+17 tests de inmutabilidad se ponen rojos porque la operación que debía fallar
+**termina bien**.
+
+Los grants viven en las migraciones a propósito, junto a la tabla que protegen.
+No hay un archivo de setup aparte que haya que acordarse de correr — y por eso
+tampoco hay que escribirlos a mano nunca.
+
+```bash
+# Reset total: los DOS esquemas, y que las migraciones pongan los permisos.
+DROP SCHEMA IF EXISTS public CASCADE;
+DROP SCHEMA IF EXISTS drizzle CASCADE;
+CREATE SCHEMA public;
+```
+
+Para un reset **entre corridas** —mucho más barato— alcanza con `TRUNCATE` de
+todas las tablas de `public`: deja esquema, permisos y migraciones intactos.
+`audit_log` queda afuera porque su trigger rechaza el `TRUNCATE`, y está bien
+que lo haga.
+:::
+
+:::caution[El seed se ejecuta por el nombre del archivo]
+`drizzle/seed.ts` arranca con `if (process.argv[1]?.endsWith('seed.ts'))`.
+Importarlo desde un wrapper con otro nombre —para apuntarlo a otra base, por
+ejemplo— **no siembra nada y sale con código 0**. Un éxito falso.
+
+Si hace falta envolverlo, hay que pisar `process.argv[1]` antes del import. Y
+verificar que el admin existe **antes** de correr la colección: un seed vacío se
+manifiesta como 175 requests fallando con 401, que manda a buscar el problema a
+la autenticación.
 :::
 
 El entorno `local` deja `adminPassword` como variable **secreta**: no está en el
