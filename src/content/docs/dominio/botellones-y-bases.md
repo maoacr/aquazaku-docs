@@ -528,6 +528,24 @@ que el número no puede significar nada más que «la siguiente» — copiar el
 patrón de productos habría generado el mismo string para las cuarenta.
 :::
 
+#### Comprar bases
+
+Cuando entran varias de una vez, se registran con una **cantidad** y el sistema
+las numera en orden — igual que la compra de botellones. Llegan sin rotular, y
+los stickers se imprimen después con los números que el sistema asignó.
+
+O entran todas o no entra ninguna. Una compra a medio registrar deja al operario
+sin saber cuántas cargó ni desde qué número seguir, y con los stickers ya
+impresos el hueco quedaría en la caja y no en la pantalla.
+
+:::note[El consecutivo NO gobierna la entrega]
+Solo gobierna el **alta**. Al prestar, el operario elige cualquier base que esté
+en la bodega y sana — la que tenga en la mano. El sistema nunca exige orden al
+entregar, y no tendría por qué: todas las bases son idénticas
+([RN-BAS-09](#rn-bas-09--una-sola-clase-de-base-sin-sku)), así que cuál sale
+primero no cambia nada.
+:::
+
 ### Quién es dueño del número
 
 **El sistema propone, el sticker manda.** Los dos caminos existen porque los dos
