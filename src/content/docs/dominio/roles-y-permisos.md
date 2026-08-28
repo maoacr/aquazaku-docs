@@ -302,6 +302,7 @@ en la sesión del 18-ago-2026 y ya no hace falta tratarlo como abierto.
 | --- | :-: | :-: | :-: | :-: |
 | `proveedores:ver` | ✅ | ❌ | 🟡 `todo` | 🟡 `todo` |
 | `proveedores:crear` | ✅ | ❌ | ❌ | ❌ |
+| `proveedores:editar` | ✅ | ❌ | ❌ | ❌ |
 | `compras:crear` | ✅ | ❌ | ✅ | ❌ |
 | `compras:recibir` | ✅ `todo` | ❌ | ✅ solo si compra=pendiente y proveedor=activo | ❌ |
 
