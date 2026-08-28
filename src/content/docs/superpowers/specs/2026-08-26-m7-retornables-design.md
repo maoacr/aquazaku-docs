@@ -36,7 +36,7 @@ responder ninguna pregunta nueva — para reclamar ocho botellones no hace falta
 saber cuáles ocho.
 
 **Por qué la base sí**: hay que ir a buscarla a un lugar concreto. Sin saber en
-cuál de los tres locales está la base `A-0913`, el préstamo deja de ser
+cuál de los tres locales está la base `0913`, el préstamo deja de ser
 reclamable.
 
 :::caution[La tentación es unificarlos]

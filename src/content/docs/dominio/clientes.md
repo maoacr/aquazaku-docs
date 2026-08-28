@@ -442,12 +442,12 @@ dirección concreta, no al cliente.
 ```
 Cliente
 ├── Dirección A  → base #A-0412
-├── Dirección B  → base #A-0913
+├── Dirección B  → base #0913
 └── Dirección C  → base #B-0027
 ```
 
 **Por qué:** si la dirección fuera un campo de texto en la ficha del cliente, no
-podrías responder "¿a cuál de sus tres locales voy a buscar la base #A-0913?".
+podrías responder "¿a cuál de sus tres locales voy a buscar la base #0913?".
 El préstamo deja de ser reclamable.
 
 :::danger[Impacto en el modelo]

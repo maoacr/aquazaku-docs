@@ -261,7 +261,7 @@ asignación apunta a la dirección, no al cliente.
 ```
 Cliente "Panadería del Centro"
 ├── Dirección: Sucursal Norte   → base #A-0412
-├── Dirección: Sucursal Sur     → base #A-0913
+├── Dirección: Sucursal Sur     → base #0913
 └── Dirección: Depósito         → base #B-0027
 ```
 
@@ -446,14 +446,60 @@ distintos. Esto simplifica:
 **Estado:** ✅ Confirmada — cerrá la pregunta #24 de
 [Qué falta preguntar](/empezar/pendientes/).
 
-Las bases se identifican con un **sticker pegado** que tiene un ID
-textual/numérico. La asignación base ↔ cliente + dirección se hace
-**manualmente** en el sistema cuando el `pos` entrega o retira.
+Las bases se identifican con un **sticker pegado**. La asignación base ↔
+cliente + dirección se hace **manualmente** en el sistema cuando el `pos`
+entrega o retira.
 
 ```
 base.id_interno = uuid          // clave primaria del sistema
-base.id_sticker = string        // el ID que está impreso en el sticker físico
+base.id_sticker = char(4)       // cuatro dígitos: 0001 a 9999
 ```
+
+**El formato son cuatro dígitos con los ceros adelante** — `0001`, `0040`,
+`0913`. Aceptar `913` junto a `0913` crearía dos códigos para la misma base
+física, y la unicidad —que es lo único que garantiza saber cuál está dónde—
+dejaría de proteger nada.
+
+:::note[Por qué no se parece al código de producto]
+`P20U_600ML` codifica **en qué se diferencia** ese producto: presentación,
+unidades y contenido. Se lee sin conocer la convención.
+
+Con las bases eso es imposible, y no por una limitación técnica:
+[RN-BAS-09](#rn-bas-09--una-sola-clase-de-base-sin-sku) dice que hay una sola
+clase de base. **Todas son idénticas.** No existe atributo que codificar, así
+que el número no puede significar nada más que «la siguiente» — copiar el
+patrón de productos habría generado el mismo string para las cuarenta.
+:::
+
+### Quién es dueño del número
+
+**El sistema propone, el sticker manda.** Los dos caminos existen porque los dos
+casos son reales:
+
+| Caso | Quién decide |
+| --- | --- |
+| Las 40 bases que Aquazaku ya tiene, con el rótulo pegado | El **sticker**: el operario tipea lo que tiene en la mano |
+| Una base nueva sin rotular | El **sistema**: propone el próximo consecutivo |
+| Un sticker ilegible que hay que reemplazar | El **operario**: pisa la propuesta con el número nuevo |
+
+El tercer caso es el que justifica que la propuesta sea pisable y no impuesta.
+Está advertido más abajo en esta misma regla, y sin ese camino necesitaría un
+parche especial.
+
+:::caution[El próximo sale del MÁXIMO, no del conteo]
+Y **un número no se recicla nunca**, ni siquiera el de una base descartada. Es
+el mismo criterio que [RN-CAT-11](/dominio/productos/) para productos
+desactivados, y acá pesa más: una base descartada puede tener un recargo por
+daño ([RN-BAS-08](#rn-bas-08--daño-a-la-base--recargo-automático-al-cliente-en-cualquier-momento-del-ciclo))
+apuntándole, y darle su número a una base nueva volvería ambiguo ese cobro.
+
+Las dos cosas —pisar la propuesta y no reciclar— dejan huecos. Con `conteo + 1`
+la propuesta chocaría contra un número ya tomado, y el alta fallaría con un
+duplicado que el operario nunca pidió.
+
+Con cuatro dígitos hay 9.999 códigos y hoy se usan 40: no reciclar nunca no
+aprieta en ningún horizonte razonable.
+:::
 
 **Flujo del `pos`** al entregar una base:
 
