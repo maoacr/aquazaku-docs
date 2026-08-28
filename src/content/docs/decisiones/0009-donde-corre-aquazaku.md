@@ -1,9 +1,9 @@
 ---
-title: ADR-0009 — Postgres gestionado, aplicación en una máquina
+title: ADR-0009 — Cada pieza en su plataforma, con deploy en cada push
 description: Dónde corre Aquazaku en producción, y por qué el hosting no es una decisión libre.
 ---
 
-**Estado:** Aceptado
+**Estado:** Aceptado — **revisado el mismo día**
 **Fecha:** 2026-08-28
 **Deciden:** Mao
 
@@ -68,13 +68,48 @@ conexiones persistentes.
 
 ## Decisión
 
-**Opción C.** Postgres en Supabase; `api` y `web` juntos en una máquina con
-Docker Compose.
+**Cada pieza en su plataforma, y cada una se despliega sola con un push:**
 
-Lo que inclinó la balanza fueron **los respaldos**. Un dump que se queda en el
-mismo disco no es un respaldo: es una copia que se pierde con el disco. Esa era
-la debilidad concreta de la opción A, y es exactamente lo que un Postgres
-gestionado resuelve.
+| Pieza | Dónde | Disparador |
+| --- | --- | --- |
+| `web` | Vercel | push a `main` |
+| `api` | Railway o Fly, construyendo su Dockerfile | push a `main` |
+| Postgres | Supabase | — |
+
+### Se decidió la opción C, y se revisó el mismo día
+
+La primera versión de este ADR eligió la opción C —aplicación en una máquina— y
+la razón fue buena: los respaldos gestionados.
+
+Lo que estaba mal era el **peso** que se le dio a un costo: administrar un
+servidor no se termina nunca. Actualizaciones del sistema, renovación de
+certificados, y ser la persona que lo arregla a las dos de la mañana. Para un
+negocio de ocho personas sin nadie de sistemas, eso no es un detalle — es el
+trabajo que va a quedar sin hacer.
+
+Mao lo puso en una frase: **solo quiere empujar código al repo y que eso
+actualice producción.** Con las tres plataformas, eso sale de fábrica.
+
+### El BFF sobrevive, y eso hay que decirlo con precisión
+
+En «Alternativas» se anotó en contra que repartirlo hace que el BFF «deje de ser
+interno». Es cierto a medias, y la mitad que importa se mantiene.
+
+Lo que [ADR-0002](/decisiones/0002-bff-pattern/) protege es que **el browser
+nunca hable con `api`**. Eso sigue igual: el navegador le habla a Vercel, y el
+servidor de Vercel le habla a `api`.
+
+Lo que sí cambia es que `api` queda alcanzable desde internet, en vez de vivir
+en una red privada. Sigue protegida por la sesión, la matriz de permisos y la
+validación de `Origin` que Better-Auth exige en toda petición que cambie estado.
+Es una capa menos, no la capa.
+
+### El pool tampoco es un problema
+
+Se anotó que un pool de diez conexiones «asume un proceso vivo». Es cierto, y
+por eso `api` va a una plataforma de **contenedores de larga vida** —Railway o
+Fly— y no a funciones. El proceso queda arriba, con su pool, igual que en una
+máquina propia.
 
 ## Lo que se verificó antes de decidir, y no se supuso
 
@@ -112,17 +147,45 @@ Es la cadena que el panel ofrece primero. Van las del pooler.
 
 ### La versión de Postgres deja de coincidir
 
-Supabase corre **17.6**; el CI y el entorno local corren **16**. Las migraciones
-pasaron contra 17, pero eso es una brecha de paridad: un bug que solo aparezca
-en 17 no se vería hasta producción.
+Supabase corre **17.6** y el CI corría **16**. Las migraciones pasaron contra
+17, pero eso era una brecha de paridad: un bug propio de 17 no se vería hasta
+producción.
 
-**Se sube el CI y el compose local a 17** para cerrarla.
+**El CI ya está en 17.** El entorno local puede quedar en 16 sin problema — la
+compuerta que decide si algo se mergea es el CI, y esa tiene que parecerse a
+producción, no a la máquina de quien escribe. Al revés no.
+
+### Hace falta un dominio propio, y no es opcional
+
+`forwardSetCookies` reenvía la cookie de sesión tal cual viene de `api`,
+**incluido su atributo `domain`**. Un navegador rechaza una cookie cuyo `domain`
+no sea el del sitio que la sirvió.
+
+Con subdominios gratis —`algo.vercel.app` y `algo.railway.app`— son dominios
+raíz distintos y la cookie no cruza: no hay sesión. Con dominio propio:
+
+```
+aquazaku.com       → web
+api.aquazaku.com   → api
+COOKIE_DOMAIN=.aquazaku.com
+```
 
 ### La aplicación sigue siendo portable
 
 `api` y `web` corren en contenedores contra cualquier Postgres que cumpla las
-dos condiciones de arriba. Si Supabase deja de convenir, cambia una variable de
-entorno — no la arquitectura.
+dos condiciones de arriba. Si una plataforma deja de convenir, cambia dónde se
+construye el mismo Dockerfile — no la arquitectura.
 
 Es lo mismo que permitió probar todo el despliegue contra un Postgres local en
-Docker antes de tocar una nube.
+Docker antes de tocar una nube, y **encontrar ahí seis bugs de empaquetado** que
+ninguna lectura del archivo habría mostrado. Ese trabajo no se pierde: Railway y
+Fly construyen exactamente esos Dockerfiles.
+
+### La región de Supabase importa más de lo que parece
+
+Una sola pantalla hace muchas consultas, así que la latencia entre `api` y la
+base se multiplica por consulta. Pesa más que la distancia entre el usuario y
+`api`.
+
+Conviene que las dos queden cerca, y elegir la región **antes** de cargar datos:
+después es una migración.
