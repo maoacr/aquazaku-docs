@@ -227,6 +227,63 @@ motivo, responsable y fecha. Queda registrado como pérdida.
 
 ---
 
+### RN-ENV-09 — Ningún botellón sale del parque sin un responsable
+
+**Estado:** ✅ Confirmada (27-ago-2026).
+
+Un botellón es de la empresa y vuelve. Si sale sin quedar anotado a nombre de
+alguien, no hay a quién reclamárselo.
+
+**La venta escribe el movimiento**, en la misma transacción. Antes eran dos
+actos separados —vender la recarga, y después acordarse de registrar la entrega
+en otra pantalla— y ese olvido no dejaba ningún rastro.
+
+:::danger[La ley de conservación NO detecta este fallo]
+Es lo contraintuitivo, y la razón por la que esta regla hizo falta.
+
+Si el movimiento no se escribe, no se escribe **nada**: `registrados` no cambia,
+`enPoderDeAlguien` no cambia, y [RN-ENV-02](#rn-env-02--la-cantidad-de-botellones-se-conserva)
+sigue diciendo `cuadra: true` mientras el envase está en la casa del cliente y
+el sistema lo cree en la bodega.
+
+La ley detecta filas que faltan **respecto de sí misma**. No detecta que la
+realidad se fue por otro lado — eso solo aparece cuando alguien cuenta
+físicamente, meses después, sin saber a quién reclamarle.
+
+Por eso el invariante vive **en la base** (ADR-0006) y no solo en el servicio:
+la fila del cliente no puede existir sin cliente.
+:::
+
+#### Qué se pregunta en el mostrador
+
+**Cuántos se lleva sin devolver el vacío** — un número, no un sí/no. La
+conversación real es *«vendí tres recargas, trajo dos vacíos»*, y eso es **un**
+envase que sale.
+
+El default es cero porque la recarga normal es un intercambio
+([RN-ENV-03](#rn-env-03--una-recarga-intercambia-un-botellón-no-lo-vende)): el
+caso común no cuesta ningún clic y no mueve el parque.
+
+No se le cobra nada por llevárselo. El envase queda registrado en su poder, no
+facturado.
+
+#### El alcance exacto
+
+| Caso | ¿Exige cliente? |
+| --- | --- |
+| Paca de bolsas al mostrador | **No** — no se lleva ningún retornable |
+| Recarga con vacío de vuelta | **No** — el saldo no cambia, no sale nada |
+| Recarga sin vacío de vuelta | **Sí** |
+
+La regla es «ningún **botellón** sale sin responsable», **no** «toda venta
+necesita cliente». Exigir documento en cada venta llevaría a inventar clientes
+o —lo que pasa de verdad— a reusar el del anterior, que le cuelga el historial
+a alguien que no compró nada.
+
+Tampoco se pueden despachar más envases que recargas vendidas. Si hacen falta
+envases sueltos, eso es una entrega y va por su propio camino, donde queda con
+su motivo en vez de escondida en una venta.
+
 ## Bases
 
 Identificadas una por una. Se entregan en préstamo a una dirección.
