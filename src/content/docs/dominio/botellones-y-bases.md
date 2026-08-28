@@ -655,6 +655,59 @@ combinación es válida después.
 
 ---
 
+### RN-BAS-13 — Aviso de compra antes de quedarse sin bases
+
+**Estado:** ✅ Confirmada (27-ago-2026). Demora del proveedor: **7 días**.
+
+Avisa cuando las bases **libres y sanas** son menos que las que se prestaron en
+los últimos 7 días.
+
+:::danger[Cero es tarde]
+El aviso de stock del agua dispara en cero, y está bien: la planta produce
+mañana. Las bases hay que **comprarlas y esperarlas**. Para cuando el aviso diga
+cero, ya se le dijo que no a un cliente y todavía falta una semana.
+
+El umbral tiene que cubrir la demora, o el aviso llega tarde por diseño.
+:::
+
+#### El umbral se calcula, no se configura
+
+La pregunta correcta no es *«¿cuál es el mínimo?»* sino **«¿cuántas se prestan
+mientras llega el pedido?»**. Y esa el sistema la sabe: cada préstamo queda con
+su fecha en el libro de movimientos.
+
+Un umbral fijo habría que inventarlo hoy —sin operación todavía— y quedaría
+viejo el día que el negocio cambie de tamaño. Este se recalibra solo.
+
+Es la misma disciplina que el valor de reposición de
+[RN-BAS-08](#rn-bas-08--daño-a-la-base--recargo-automático-al-cliente-en-cualquier-momento-del-ciclo),
+que **no se inventó**: si el número no está, se pide o se deriva, no se elige.
+
+#### Los detalles que lo hacen correcto
+
+- **Libres y sanas**, no el total del parque. Una base dañada en bodega ocupa
+  lugar y no se puede prestar; contarla haría que el aviso calle justo cuando
+  hace falta.
+- **Préstamos brutos**, no el neto contra retornos. Una base prestada se queda
+  en el local del cliente y los retornos son raros. El neto daría casi cero en
+  operación normal, y el aviso volvería a sonar recién en cero. El bruto
+  sobreestima, y ese es el error correcto: avisar de más cuesta una compra
+  anticipada; avisar de menos cuesta un cliente durante una semana.
+- **Sin operación no avisa.** Al arrancar el ritmo es cero y no hay nada que
+  decir. Un aviso que suena el primer día se aprende a ignorar.
+- **Cero libres avisa siempre**, sin importar el ritmo: no se puede prestar lo
+  que no hay, y ahí el aviso no depende de ninguna estimación.
+
+#### Qué muestra
+
+Los **dos números**, no el veredicto. *«Quedan 3 bases. En los últimos 7 días se
+prestaron 8.»* Quien lo lee tiene que decidir **cuántas pedir**, y sin esos dos
+datos tendría que ir a buscarlos a otra pantalla antes de poder hacerlo.
+
+Si alcanzan, no hay cartel. El sistema no felicita.
+
+---
+
 ## Preguntas abiertas
 
 (Las preguntas 🟡 de Retornables #23, #24, #25, #26, #27 quedaron todas
