@@ -179,10 +179,10 @@ porque todo lo demás lo necesita, no porque sea el más visible.
 | M7 | **Retornables (botellones y bases)** | Entrega con flujo híbrido, devoluciones, daño con tarifa fija, traza por `id_sticker` | `admin`, `pos`, `contador` | M0, M5 | ✅ terminado |
 | M8 | **Rutas y seller mobile** | App nativa del seller, offline-first, cierre de ruta | `seller`, `admin`, `contador` | M0, M5, M6, M7 | ⏸ POST-MVP |
 | M9 | **Proveedores y compras** | Mixto contado/transferencia/crédito, sin módulo de CxP completo | `admin`, `pos`, `contador` | M0, M3 | ✅ terminado |
-| M10 | **Precios y promociones** | Listas residencial/comercial con piso, códigos de descuento con piso absoluto | `admin`, `pos`, `seller`, `contador` | M0, M1 | 🔲 pendiente |
+| M10 | **Precios y promociones** | Listas residencial/comercial con piso, códigos de descuento con piso absoluto | `admin`, `pos`, `seller`, `contador` | M0, M1 | ✅ entregado en M1+M6 |
 | M11 | **Contador** | Panel solo lectura: cartera por edad, facturas sin emitir, descarga CSV/PDF | `contador`, `admin` | M0, M5, M6, M7, M9, M10 | 🔲 pendiente |
 | M12 | **Alertas** | Alimenta al panel de planta y al panel admin; umbrales configurables — incluye el aviso de vencimiento próximo ([RN-STK-11](/dominio/stock/)), hoy fijo en 7 días | `admin`, `pos` | M0, M2, M3, M4 | 🔲 pendiente |
-| M13 | **Auditoría** | Quién hizo qué cuándo; transversal — todo módulo registra | `admin` (consulta) | M0 + transversal | 🔲 pendiente |
+| M13 | **Auditoría** | Quién hizo qué cuándo; transversal — todo módulo registra | `admin` (consulta) | M0 + transversal | ✅ entregado en M0 |
 
 ### Reglas del orden
 
