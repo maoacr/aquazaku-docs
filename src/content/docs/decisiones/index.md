@@ -56,8 +56,13 @@ Usá la [plantilla de ADR](/decisiones/plantilla/) para arrancar.
 | [0006](/decisiones/0006-invariantes-en-la-base/) | Los invariantes viven en la base; el servicio explica el error | Implementación de M1 |
 | [0007](/decisiones/0007-auditoria-bloqueante/) | Una acción sensible sin bitácora no se ejecuta | Implementación de M1 |
 | [0008](/decisiones/0008-saldo-derivado-o-materializado/) | Un saldo se materializa **solo** si hay que descontarlo atómicamente | Implementación de M2 a M7 |
+| [0009](/decisiones/0009-donde-corre-aquazaku/) | Postgres gestionado; `api` y `web` juntos en una máquina | Puesta en producción, después de M9 |
 
-Los tres últimos salieron de **construir**, no de planear. Es el patrón
+El `0009` es el primero que sale de **desplegar**, y llegó tarde a propósito:
+recién cuando había algo que poner en producción existieron los hechos para
+decidir. Antes habría sido elegir un proveedor por gusto.
+
+Los tres anteriores salieron de **construir**, no de planear. Es el patrón
 esperable: un ADR de diseño elige entre alternativas conocidas; uno de
 implementación aparece cuando la realidad muestra una que nadie había visto.
 

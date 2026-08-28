@@ -22,12 +22,23 @@ falla en el primer paso.
 
 :::note[Por qué Postgres nativo y no Docker]
 Postgres corre nativo vía Homebrew como servicio de login. Es más rápido para
-el ciclo de dev y evita el overhead del contenedor en cada arranque. La
-**paridad con CI** no se pierde: el workflow de GitHub Actions usa la imagen
-`postgres:16`, la misma línea de versión que fija Homebrew con `postgresql@16`.
+el ciclo de dev y evita el overhead del contenedor en cada arranque.
 
-Si preferís contenedor, corré `postgres:16` mapeado a `5432` y pará el servicio
-de brew — el resto de la documentación aplica igual.
+Si preferís contenedor, corré la misma imagen que usa el CI mapeada a `5432` y
+pará el servicio de brew — el resto de la documentación aplica igual.
+:::
+
+:::caution[Local puede quedar una versión atrás, y está previsto]
+Producción corre **Postgres 17** en Supabase ([ADR-0009](/decisiones/0009-donde-corre-aquazaku/)),
+y el CI usa 17 para parecerse a producción — no a tu máquina.
+
+Si tenés `postgresql@16` local, no hace falta migrar hoy: la compuerta que
+decide si algo se mergea es el CI, y esa sí corre contra la versión real. Lo que
+**no** puede pasar es lo contrario —CI en 16 y producción en 17— porque un bug
+propio de 17 no se vería hasta estar desplegado.
+
+Para alinearte del todo: `brew install postgresql@17` y apuntá las cadenas de
+conexión a su puerto.
 :::
 
 ## Instalación (macOS)
