@@ -32,7 +32,8 @@ cambia una ruta y no toca la colección, se ve en el diff.
 | `08-Clientes` | El dígito de verificación calculado, el cruce CC/NIT que **advierte sin bloquear**, el crédito rechazado sin verificación, y **un `contador` recibiendo 403** |
 | `09-Ventas` | El precio congelado, el piso que no se perfora, la anulación que devuelve al mismo lote, el cobro que no puede pasarse de la deuda, y **un `contador` recibiendo 403** |
 | `10-Retornables` | La **ley de conservación** del parque, la entrega que escribe dos filas con signo opuesto, la base que se presta a una **dirección**, el daño que genera recargo, **la venta que despacha un envase y lo deja a nombre del cliente**, y **un `seller` que mira y no opera** |
-| `11-Sesion` | Cierre de sesión y que la credencial deje de servir |
+| `11-Proveedores` | La compra que escribe el documento **y** el inventario juntos, el crédito modelado sin ejercerse, el aviso de vencidas que se apaga al pagar, y **un `pos` que compra pero no da de alta proveedores** |
+| `12-Sesion` | Cierre de sesión y que la credencial deje de servir |
 
 Las carpetas llevan número porque el orden importa: el login deja la cookie que
 usan los requests siguientes.
@@ -43,8 +44,8 @@ cookie** y falla entera con 401.
 
 Cuando se agregue una carpeta nueva, va **antes** de esa. Por eso `Sesion` ya se
 movió seis veces: de `04` a `05` con el catálogo, a `06` con el stock, a `07`
-con los insumos, a `08` con producción, a `09` con clientes, a `10` con ventas y a `11` con
-retornables.
+con los insumos, a `08` con producción, a `09` con clientes, a `10` con ventas, a `11` con
+retornables y a `12` con proveedores.
 
 :::danger[Los números llevan cero adelante, y no es estética]
 `bru` ordena las carpetas **alfabéticamente**, así que `"10" < "2"`. La primera
@@ -56,7 +57,7 @@ Lo peor es dónde apuntaba el error. Los tests rojos eran los de `2-Usuarios`,
 la carpeta que se acababa de renombrar.
 
 Con `01`, `02`, … `11` el orden alfabético y el numérico coinciden, y la
-convención sobrevive pasado el noveno módulo. Quedan seis lugares antes de que
+convención sobrevive pasado el noveno módulo. Quedan cinco lugares antes de que
 haga falta pensarlo de nuevo.
 :::
 

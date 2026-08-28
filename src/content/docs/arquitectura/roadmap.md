@@ -178,7 +178,7 @@ porque todo lo demás lo necesita, no porque sea el más visible.
 | M6 | **Ventas** | Venta inmutable con precio congelado, anulación que revierte al mismo lote, cobros como documento aparte, devoluciones, descuentos con piso sostenido por la base, factura electrónica como intención | `admin`, `pos`, `seller`, `contador` | M0, M1, M2, M5 | ✅ terminado |
 | M7 | **Retornables (botellones y bases)** | Entrega con flujo híbrido, devoluciones, daño con tarifa fija, traza por `id_sticker` | `admin`, `pos`, `contador` | M0, M5 | ✅ terminado |
 | M8 | **Rutas y seller mobile** | App nativa del seller, offline-first, cierre de ruta | `seller`, `admin`, `contador` | M0, M5, M6, M7 | ⏸ POST-MVP |
-| M9 | **Proveedores y compras** | Mixto contado/transferencia/crédito, sin módulo de CxP completo | `admin`, `pos`, `contador` | M0, M3 | 🔲 pendiente |
+| M9 | **Proveedores y compras** | Mixto contado/transferencia/crédito, sin módulo de CxP completo | `admin`, `pos`, `contador` | M0, M3 | ✅ terminado |
 | M10 | **Precios y promociones** | Listas residencial/comercial con piso, códigos de descuento con piso absoluto | `admin`, `pos`, `seller`, `contador` | M0, M1 | 🔲 pendiente |
 | M11 | **Contador** | Panel solo lectura: cartera por edad, facturas sin emitir, descarga CSV/PDF | `contador`, `admin` | M0, M5, M6, M7, M9, M10 | 🔲 pendiente |
 | M12 | **Alertas** | Alimenta al panel de planta y al panel admin; umbrales configurables — incluye el aviso de vencimiento próximo ([RN-STK-11](/dominio/stock/)), hoy fijo en 7 días | `admin`, `pos` | M0, M2, M3, M4 | 🔲 pendiente |
@@ -260,20 +260,31 @@ puede arrancar en `design` mientras el anterior está en `apply`, pero no antes.
 
 ## Estado actual
 
-**Hoy, 27-ago-2026:**
+**Hoy, 28-ago-2026:**
 
 | Fase | Módulo |
 | --- | --- |
-| ✅ **Terminado** | **M0 — Auth + RBAC** · **M1 — Productos** · **M2 — Stock** · **Fase de diseño** (marca, vidrio, agua, estados, vacíos, voz de usted, accesibilidad) · **M3 — Insumos** · **M4 — Producción** · **M5 — Clientes** · **M6 — Ventas** · **M7 — Retornables** |
+| ✅ **Terminado** | **M0 — Auth + RBAC** · **M1 — Productos** · **M2 — Stock** · **Fase de diseño** (marca, vidrio, agua, estados, vacíos, voz de usted, accesibilidad) · **M3 — Insumos** · **M4 — Producción** · **M5 — Clientes** · **M6 — Ventas** · **M7 — Retornables** · **M9 — Proveedores** |
 | Design en curso | — |
 | Apply en curso | — |
 
-| Pendiente | M9–M13 |
+| Pendiente | M11–M13 |
 | Diferido (post-MVP) | M8 — Rutas y seller mobile |
 
-Los siete módulos operacionales del MVP están cerrados. Lo que queda —M9 a
-M13— son módulos de soporte: proveedores, precios, el panel del contador,
-alertas y configuración.
+Los siete operacionales están cerrados, y M9 (Proveedores) también. Quedan
+tres, todos de soporte:
+
+- **M11 — Contador**: panel de solo lectura, cartera por edad, descarga CSV/PDF.
+- **M12 — Alertas**: umbrales configurables. Ya empezó sin quererlo — el aviso
+  de bases ([RN-BAS-13](/dominio/botellones-y-bases/)) y el de compras vencidas
+  ([RN-PRO-07](/dominio/proveedores/)) son alertas funcionando, solo que con el
+  umbral calculado en vez de configurado.
+- **M13 — Auditoría**: ya entregado dentro de M0 y transversal a todos los
+  módulos.
+
+**M10 (Precios) también está entregado**, absorbido por M1 y M6: listas
+residencial/comercial con piso, códigos de descuento y el piso sostenido por la
+base.
 
 :::tip[M0 cerrado el 20-ago-2026]
 Las 15 tasks del plan implementadas y verificadas de punta a punta en un browser
