@@ -217,7 +217,7 @@ linkea.
 | M5 | [Clientes](/dominio/clientes/) | RN-CLI-08 (documento único), RN-CLI-12 (crédito), RN-CLI-15 (verificación) |
 | M6 | [Ventas](/dominio/ventas/) | RN-VEN-01 a 13 (inmutabilidad, anulación, precios, descuentos, factura) |
 | M7 | [Botellones y bases](/dominio/botellones-y-bases/) | RN-ENV-01+ y RN-BAS-01+ (entrega híbrida, daño con tarifa, id_sticker) |
-| M9 | [Proveedores](/dominio/proveedores/) | pendiente (mixto contado/transferencia/crédito) |
+| M9 | [Proveedores](/dominio/proveedores/) | RN-PRO-01 a 07 (la compra le pone nombre al inventario que ya entra, crédito modelado sin ejercerse, aviso de vencidas) |
 | M0 | [Roles y permisos](/dominio/roles-y-permisos/) | RN-ACC-01 a 05 (multi-rol, UI oculta, alcance, auditoría, desactivación) |
 
 ---
