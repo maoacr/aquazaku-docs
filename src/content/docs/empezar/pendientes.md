@@ -79,6 +79,27 @@ Se pueden dejar para después sin frenar el diseño.
 
 ---
 
+## 🔵 Para el contador — M11
+
+No las puede contestar el sistema ni quien lo construye. Van a la persona que
+lleva la contabilidad. Contexto en [Contador](/dominio/contador/).
+
+| # | Pregunta | Para qué |
+| :-: | --- | --- |
+| 40 | ¿Qué software contable usa? | Define el formato de salida |
+| 41 | ¿CSV para importar, o PDF para revisar e imprimir? | Son dos productos distintos; construir el equivocado deja el módulo sin usar |
+| 42 | ¿Qué columnas necesita por cada movimiento? | El diseño del extracto |
+| 43 | ¿Con qué periodicidad trabaja — mensual, quincenal? | Los rangos por defecto de los filtros |
+| 44 | ¿Qué tramos de cartera usa? ¿0–30, 31–60, 61–90, +90? | [RN-CON-05](/dominio/contador/) está como supuesto hasta que responda |
+| 45 | **¿Qué le pide hoy a Mao a mano?** | Lo que hoy pide por WhatsApp es exactamente lo que el módulo tiene que resolver — y ya existe en el sistema |
+
+:::tip[La 45 define; las otras refinan]
+Se puede construir el extracto sin las primeras cinco. Sin la 45 se puede
+construir algo que nadie use.
+:::
+
+---
+
 ## Módulo pendiente: Mi perfil
 
 No es una pregunta suelta, así que va aparte.
