@@ -100,6 +100,21 @@ construir algo que nadie use.
 
 ---
 
+### 46. ¿En qué abre los archivos?
+
+El CSV sale con BOM, separador `;` y coma decimal — lo que espera un **Excel en
+español**. Si usa otra cosa, los tres cambian.
+
+### 47. ¿Qué cuenta como gasto, y entra la nómina?
+
+🔴 **La más importante de las nuevas.** Hoy el sistema registra compras a
+proveedores y nada más. El agua, el cloro, la nómina de las 8 personas y el
+combustible no están en ninguna tabla — ver
+[RN-CON-09](/dominio/contador/#rn-con-09--lo-que-sale-de-caja-no-son-todos-los-gastos).
+
+Un reporte de «gastos» hecho con lo que hay hoy sería **falso**, no incompleto.
+Cerrar esto es una decisión de negocio antes que una tabla.
+
 ## Módulo pendiente: Mi perfil
 
 No es una pregunta suelta, así que va aparte.

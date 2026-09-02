@@ -180,7 +180,7 @@ porque todo lo demás lo necesita, no porque sea el más visible.
 | M8 | **Rutas y seller mobile** | App nativa del seller, offline-first, cierre de ruta | `seller`, `admin`, `contador` | M0, M5, M6, M7 | ⏸ POST-MVP |
 | M9 | **Proveedores y compras** | Mixto contado/transferencia/crédito, sin módulo de CxP completo | `admin`, `pos`, `contador` | M0, M3 | ✅ terminado |
 | M10 | **Precios y promociones** | Listas residencial/comercial con piso, códigos de descuento con piso absoluto | `admin`, `pos`, `seller`, `contador` | M0, M1 | ✅ entregado en M1+M6 |
-| M11 | **Contador** | Panel solo lectura: cartera por edad, facturas sin emitir, descarga CSV/PDF | `contador`, `admin` | M0, M5, M6, M7, M9, M10 | 🔲 pendiente |
+| M11 | **Contador** | Panel solo lectura: extracto de los cinco movimientos de plata, cartera por edad, resumen mensual, CSV con columnas a elección, PDF por impresión del navegador | `contador`, `admin` | M0, M5, M6, M7, M9, M10 | ✅ terminado |
 | M12 | **Alertas** | Alimenta al panel de planta y al panel admin; umbrales configurables — incluye el aviso de vencimiento próximo ([RN-STK-11](/dominio/stock/)), hoy fijo en 7 días | `admin`, `pos` | M0, M2, M3, M4 | 🔲 pendiente |
 | M13 | **Auditoría** | Quién hizo qué cuándo; transversal — todo módulo registra | `admin` (consulta) | M0 + transversal | ✅ entregado en M0 |
 
@@ -218,7 +218,7 @@ linkea.
 | M6 | [Ventas](/dominio/ventas/) | RN-VEN-01 a 13 (inmutabilidad, anulación, precios, descuentos, factura) |
 | M7 | [Botellones y bases](/dominio/botellones-y-bases/) | RN-ENV-01+ y RN-BAS-01+ (entrega híbrida, daño con tarifa, id_sticker) |
 | M9 | [Proveedores](/dominio/proveedores/) | RN-PRO-01 a 07 (la compra le pone nombre al inventario que ya entra, crédito modelado sin ejercerse, aviso de vencidas) |
-| M11 | [Contador](/dominio/contador/) | RN-CON-01 a 07 (lee y no escribe, reportes reproducibles, el extracto cuadra o lo dice, cartera por edad) |
+| M11 | [Contador](/dominio/contador/) | RN-CON-01 a 09 (lee y no escribe, reportes reproducibles, el extracto cuadra o lo dice, cartera por edad, resumen mensual por meses enteros, columnas a elección salvo el monto, y el hueco de los gastos declarado) |
 | M0 | [Roles y permisos](/dominio/roles-y-permisos/) | RN-ACC-01 a 05 (multi-rol, UI oculta, alcance, auditoría, desactivación) |
 
 ---
@@ -265,17 +265,16 @@ puede arrancar en `design` mientras el anterior está en `apply`, pero no antes.
 
 | Fase | Módulo |
 | --- | --- |
-| ✅ **Terminado** | **M0 — Auth + RBAC** · **M1 — Productos** · **M2 — Stock** · **Fase de diseño** (marca, vidrio, agua, estados, vacíos, voz de usted, accesibilidad) · **M3 — Insumos** · **M4 — Producción** · **M5 — Clientes** · **M6 — Ventas** · **M7 — Retornables** · **M9 — Proveedores** |
+| ✅ **Terminado** | **M0 — Auth + RBAC** · **M1 — Productos** · **M2 — Stock** · **Fase de diseño** (marca, vidrio, agua, estados, vacíos, voz de usted, accesibilidad) · **M3 — Insumos** · **M4 — Producción** · **M5 — Clientes** · **M6 — Ventas** · **M7 — Retornables** · **M9 — Proveedores** · **M11 — Contador** |
 | Design en curso | — |
 | Apply en curso | — |
 
-| Pendiente | M11–M13 |
+| Pendiente | M12–M13 |
 | Diferido (post-MVP) | M8 — Rutas y seller mobile |
 
-Los siete operacionales están cerrados, y M9 (Proveedores) también. Quedan
-tres, todos de soporte:
+Los siete operacionales están cerrados, y M9 (Proveedores) y M11 (Contador)
+también. Quedan dos, ambos de soporte:
 
-- **M11 — Contador**: panel de solo lectura, cartera por edad, descarga CSV/PDF.
 - **M12 — Alertas**: umbrales configurables. Ya empezó sin quererlo — el aviso
   de bases ([RN-BAS-13](/dominio/botellones-y-bases/)) y el de compras vencidas
   ([RN-PRO-07](/dominio/proveedores/)) son alertas funcionando, solo que con el

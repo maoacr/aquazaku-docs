@@ -142,21 +142,139 @@ No es adorno: cuando un número no cuadra, la pregunta siguiente es siempre
 
 ---
 
-## RN-CON-07 — CSV con columnas estables
+## RN-CON-07 — El resumen mensual va por meses enteros
 
-**Estado:** 🟡 Supuesto — el formato espera confirmación del contador.
+**Estado:** ✅ Confirmada
 
-Un PDF se lee; un CSV **se usa**. Si el contador va a digitar en su software,
-un PDF bonito lo obliga a copiar a mano, que es el trabajo que este módulo
-viene a eliminar.
+Una fila por mes, con lo vendido, cobrado, comprado, devuelto y recargado, más
+el neto. Cada mes enlaza a su propio extracto.
 
-Las columnas se fijan y **no cambian de orden entre versiones**: alguien va a
-construir una plantilla encima, y una columna que se mueve rompe su trabajo sin
-avisar.
+El extracto contesta «qué pasó en agosto». Este contesta **«cómo viene el año»**,
+y esa pregunta hoy se responde pidiendo doce extractos y sumando a mano.
 
-El PDF llega después, para revisar e imprimir — pero el CSV primero.
+### Entra en meses y sale en meses
+
+El endpoint acepta `2026-08`, no `2026-08-15`. Un rango de fechas sueltas
+—del 15 de enero al 20 de marzo— devolvería tres filas mensuales de las cuales
+dos son **pedazos de mes con pinta de meses completos**.
+
+Nadie compara «enero» contra «medio enero» a sabiendas. Se compara sin mirar, y
+ahí nace la conclusión falsa.
+
+### El mes vacío aparece, en cero
+
+Un mes ausente se lee como «no lo consulté». Uno en cero dice «no pasó nada» — y
+en una planta que factura todos los días, eso no es un mes tranquilo: es un mes
+que nadie cargó.
+
+Por eso el neto en cero se marca en rojo, no se muestra como `0.00`.
+
+:::caution[El año en curso se corta en el mes actual]
+Diciembre en cero, mirado en septiembre, no dice «no pasó nada»: dice «no pasó
+**todavía**». Pedir el año entero llenaría el reporte de alarmas falsas, que es
+la forma más rápida de que se dejen de mirar todas.
+:::
+
+### Sale del mismo cálculo que el extracto
+
+Se pide el rango una vez y se agrupa por mes, reusando la misma función que
+totaliza el extracto. SQL propio que agregara por mes sería más rápido y
+peligroso: el día que cambie qué cuenta como plata, una consulta se actualiza y
+la otra no.
+
+**Dos reportes del mismo negocio que no coinciden es peor que no tener el
+segundo** — obligan a desconfiar de los dos, y nadie sabe de cuál más.
 
 ---
+
+## RN-CON-08 — El contador elige las columnas, menos una
+
+**Estado:** ✅ Confirmada (1-sep-2026)
+
+Las columnas del extracto se eligen desde la pantalla y viajan en la URL junto
+con el rango. Lo que se ve es lo que se baja.
+
+| Columna | Por defecto |
+| --- | :-: |
+| Fecha | ✅ |
+| Movimiento | ✅ |
+| Con quién | ✅ |
+| Medio de pago | ✅ |
+| Detalle | — |
+| **Monto** | ✅ **fija** |
+| Documento | — |
+
+`Detalle` y `Documento` quedan afuera por defecto: sirven cuando un número no
+cuadra y hay que rastrearlo, no para leer el mes. Están a un clic.
+
+### El monto no se puede quitar
+
+Un extracto sin montos no es un extracto más corto: es **una lista de fechas con
+aspecto de reporte financiero**. La regla vive en el código que decide las
+columnas, no en el botón — así el CSV tampoco puede salir sin ella.
+
+### El CSV, con tres detalles que deciden si sirve
+
+| Detalle | Sin él |
+| --- | --- |
+| BOM (`EF BB BF`) | Excel abre «Panadería» como «PanaderÃ­a» |
+| Separador `;` | Las cinco columnas entran en una sola |
+| Coma decimal | `80000.00` entra como texto: la columna no se puede sumar |
+
+Los tres suponen un **Excel en español**, que es lo que corre una oficina
+colombiana. Si el contador usa otra cosa, se ajusta — pregunta 46.
+
+El signo va **pegado al monto**, no en columna aparte: separarlos deja que una
+hoja de cálculo sume una columna de números todos positivos, y el total daría la
+plata movida en vez de la ganada.
+
+### El PDF lo hace el navegador
+
+«Imprimir → Guardar como PDF» sobre los estilos de impresión de la pantalla.
+
+Una librería de PDF en el servidor sería una dependencia pesada para redibujar a
+mano una tabla que ya existe, y ese dibujo empezaría a separarse de la pantalla
+desde el primer cambio. Así el PDF es, literalmente, lo que el contador está
+viendo.
+
+:::danger[Lo que rompe una impresión sin que nadie lo note]
+El armazón de la aplicación usa `h-dvh` con un `<main>` que tiene scroll propio.
+**Un contenedor con `overflow` imprime solo lo que se ve.**
+
+El resto no sale cortado con una advertencia: sale **ausente**, en una hoja con
+pinta de estar completa. Por eso la hoja de impresión desarma el armazón antes
+que ninguna otra cosa.
+:::
+
+---
+
+## RN-CON-09 — Lo que sale de caja NO son todos los gastos
+
+**Estado:** 🔴 Hueco conocido — **no es una limitación del reporte, es del dato**
+
+Aquazaku registra **compras a proveedores**. No registra gastos. Y la propia
+documentación ya nombra dos que existen y no están en ninguna tabla:
+
+| Gasto | Dónde está dicho | Dónde está registrado |
+| --- | --- | --- |
+| Tarifa de agua | [RN-PRD-10](/dominio/produccion/) | En ningún lado |
+| Cloro y filtros | [RN-INS-04](/dominio/insumos/) | En ningún lado |
+| Nómina de 8 personas | — | En ningún lado |
+| Energía, combustible | — | En ningún lado |
+
+:::danger[Por qué esto no se resuelve renombrando la columna]
+Un reporte de «gastos» construido con lo que hay hoy diría que en agosto la
+planta gastó lo que le pagó a los proveedores.
+
+Eso **no es incompleto: es falso**. Y la diferencia importa porque el número va
+a manos de un contador, que lo va a usar sin poder saber qué le falta.
+
+Por eso el extracto habla de **compras**, nunca de gastos, y el resumen mensual
+tampoco tiene una columna que se llame así.
+:::
+
+Cerrarlo pide una decisión de negocio, no una tabla: qué se considera gasto, qué
+categorías, y si la nómina entra. Va como pregunta 47.
 
 ## Preguntas abiertas
 
@@ -165,11 +283,13 @@ Estas no las puede contestar el sistema ni quien lo construye. Van al contador:
 | # | Pregunta | Bloquea |
 | :-: | --- | --- |
 | 40 | ¿Qué software contable usa? | El formato de salida |
-| 41 | ¿CSV para importar, o PDF para revisar? | [RN-CON-07](#rn-con-07--csv-con-columnas-estables) |
-| 42 | ¿Qué columnas necesita por movimiento? | El diseño del extracto |
+| ~~41~~ | ~~¿CSV o PDF?~~ ✅ **Se hacen las dos** (1-sep-2026) | — |
+| ~~42~~ | ~~¿Qué columnas necesita?~~ ✅ **Las elige él** — [RN-CON-08](#rn-con-08--el-contador-elige-las-columnas-menos-una) | — |
 | 43 | ¿Con qué periodicidad — mensual, quincenal? | Los rangos por defecto |
 | 44 | ¿Qué tramos de cartera usa? | [RN-CON-05](#rn-con-05--cartera-por-edad) |
 | 45 | **¿Qué le pide hoy a Mao a mano?** | Todo el módulo |
+| 46 | ¿En qué abre los archivos — Excel en español, otro? | El formato del CSV ([RN-CON-08](#rn-con-08--el-contador-elige-las-columnas-menos-una)) |
+| 47 | **¿Qué cuenta como gasto, y entra la nómina?** | [RN-CON-09](#rn-con-09--lo-que-sale-de-caja-no-son-todos-los-gastos) |
 
 :::tip[La 45 es la que más vale]
 Lo que hoy pide por WhatsApp es exactamente lo que el módulo tiene que resolver.
