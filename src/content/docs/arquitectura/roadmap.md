@@ -269,18 +269,20 @@ puede arrancar en `design` mientras el anterior está en `apply`, pero no antes.
 | Design en curso | — |
 | Apply en curso | — |
 
-| Pendiente | M12–M13 |
+| Pendiente | M12 |
 | Diferido (post-MVP) | M8 — Rutas y seller mobile |
 
-Los siete operacionales están cerrados, y M9 (Proveedores) y M11 (Contador)
-también. Quedan dos, ambos de soporte:
+Los siete operacionales están cerrados, y M9 (Proveedores), M11 (Contador) y
+M13 (Auditoría) también. **Queda uno:**
 
 - **M12 — Alertas**: umbrales configurables. Ya empezó sin quererlo — el aviso
   de bases ([RN-BAS-13](/dominio/botellones-y-bases/)) y el de compras vencidas
   ([RN-PRO-07](/dominio/proveedores/)) son alertas funcionando, solo que con el
   umbral calculado en vez de configurado.
-- **M13 — Auditoría**: ya entregado dentro de M0 y transversal a todos los
-  módulos.
+
+M13 no está en esta lista porque **ya está entregado**: la bitácora nace con M0,
+es transversal a todos los módulos, y su pantalla vive en `/modulos/auditoria`.
+El resumen lo listaba como pendiente contradiciendo a la tabla de arriba.
 
 **M10 (Precios) también está entregado**, absorbido por M1 y M6: listas
 residencial/comercial con piso, códigos de descuento y el piso sostenido por la
