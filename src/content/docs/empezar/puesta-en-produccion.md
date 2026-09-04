@@ -123,7 +123,20 @@ no entregue el otro.
 
 ### 4.2 — Las dos cadenas
 
-Del panel de Supabase, **las del pooler**:
+Del panel de Supabase, **las del pooler**. El panel ofrece las dos con el usuario
+`postgres`: **la de la aplicación hay que cambiarla a mano.**
+
+:::danger[El pooler pide el rol con el ref del proyecto pegado]
+Un rol propio se conecta como `<rol>.<ref-del-proyecto>`, no como `<rol>` a
+secas. Para `DATABASE_URL`, el usuario va así:
+
+```
+postgres.abcdefghijk      ← lo que da el panel   ✗ es el DUEÑO
+aquazaku_app.abcdefghijk  ← lo que va            ✓
+```
+
+Y la contraseña es la que le pusiste al rol, no la del proyecto.
+:::
 
 | Variable | Modo | Puerto | Rol | Por qué ese |
 | --- | --- | :-: | --- | --- |
@@ -146,16 +159,40 @@ pnpm db:migrate
 
 ### 4.4 — La verificación que cierra el paso
 
-Que las migraciones corran **no prueba que el candado exista**. Conectate con el
-rol de la aplicación y probá romperlo:
+Que las migraciones corran **no prueba que el candado exista**. Conectate con la
+cadena de `DATABASE_URL` —la de `aquazaku_app`— y hacé estas tres:
 
 ```sql
--- Tiene que responder «permission denied».
-UPDATE audit_log SET accion = 'otra cosa' WHERE id = (SELECT id FROM audit_log LIMIT 1);
+-- 1. ¿Con qué rol estoy conectado?  Tiene que decir aquazaku_app.
+SELECT current_user;
+
+-- 2. Un libro de movimientos: tiene que responder «permission denied».
+UPDATE movimientos_stock SET cantidad = 0 WHERE id IS NOT NULL;
+
+-- 3. La bitácora: tiene que responder «bitácora de auditoría es de solo inserción».
+UPDATE audit_log SET accion = 'otra cosa' WHERE id IS NOT NULL;
 ```
 
-Si eso **no** falla, el rol quedó mal y la bitácora es editable. Todo lo demás
-puede esperar; esto no.
+:::danger[La 1 y la 2 son las que importan, y la 3 sola engaña]
+La 3 falla **igual con cualquier rol**, porque la frena un trigger. Si se usa
+sola como verificación, una base conectada con el rol `postgres` la pasa —y todo
+lo demás queda desprotegido—.
+
+Lo que distingue los roles es la 2: los 20 `REVOKE` **no aplican al dueño de las
+tablas**. Con `postgres`, los diez libros de movimientos vuelven a ser
+editables.
+:::
+
+### Cómo se protege cada cosa, que no es igual
+
+| Qué | Cómo | ¿Frena a `postgres`? |
+| --- | --- | :-: |
+| `audit_log` | nunca recibe `UPDATE`/`DELETE`, y tres triggers | El trigger sí; pero el dueño puede **desactivarlo** |
+| 10 libros de movimientos | 20 `REVOKE` en 9 migraciones | **No.** El `REVOKE` no aplica al dueño |
+
+Por eso las dos capas se sostienen entre sí: los triggers frenan la mutación, y
+los permisos impiden quitar los triggers. Conectar la aplicación como `postgres`
+elimina la segunda, y con ella la primera queda a un `ALTER TABLE` de distancia.
 
 ### 4.5 — Sembrar lo mínimo
 
