@@ -84,6 +84,7 @@ export default defineConfig({
 						{ label: 'Glosario del negocio', slug: 'empezar/glosario' },
 						{ label: 'Qué falta preguntar', slug: 'empezar/pendientes' },
 						{ label: 'Entorno local', slug: 'empezar/entorno-local' },
+						{ label: 'Puesta en producción', slug: 'empezar/puesta-en-produccion' },
 					],
 				},
 				{
