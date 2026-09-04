@@ -99,109 +99,206 @@ redirecciones que se lee como un problema de la aplicación y no lo es.
 
 ---
 
-## 4. Supabase: el rol de la aplicación
+## 4. Supabase, en orden
 
-La mitad dura de la inmutabilidad del `audit_log`
-([ADR-0004](/decisiones/0004-audit-log-inmutable/)) son permisos, no triggers.
-Hacen falta **dos roles**:
+### 4.1 — El rol de la aplicación va ANTES de migrar
 
-| Rol | Para qué | Puede |
-| --- | --- | --- |
-| `aquazaku` | migraciones | DDL, `CREATE ROLE`, `REVOKE` |
-| `aquazaku_app` | la aplicación | leer y escribir; **no** `UPDATE` ni `DELETE` sobre `audit_log` |
+En Supabase el rol dueño ya existe y se llama `postgres`. El que falta es el de
+la aplicación.
 
-Y **dos cadenas distintas**, que Supabase ofrece en el mismo panel:
+:::danger[El orden no es negociable]
+La migración `0001` hace `GRANT ... TO aquazaku_app`, y **ninguna migración crea
+ese rol**. Si no existe antes, la primera migración falla — y falla a la mitad,
+con la base ya tocada.
+:::
 
-| Variable | Modo del pooler | Puerto | Por qué ese |
-| --- | --- | :-: | --- |
-| `DATABASE_URL` | transacción | 6543 | `pg_advisory_xact_lock` se libera al cerrar la transacción, así que este modo le sirve |
-| `DATABASE_MIGRATION_URL` | sesión | 5432 | Las migraciones necesitan DDL, `CREATE ROLE` y `REVOKE`, que el modo transacción no sostiene |
+En el SQL Editor de Supabase:
+
+```sql
+CREATE ROLE aquazaku_app LOGIN PASSWORD 'una-contraseña-fuerte-y-distinta';
+```
+
+Distinta de la de `postgres`. Son dos roles justamente para que comprometer uno
+no entregue el otro.
+
+### 4.2 — Las dos cadenas
+
+Del panel de Supabase, **las del pooler**:
+
+| Variable | Modo | Puerto | Rol | Por qué ese |
+| --- | --- | :-: | --- | --- |
+| `DATABASE_URL` | transacción | 6543 | `aquazaku_app` | `pg_advisory_xact_lock` se libera al cerrar la transacción |
+| `DATABASE_MIGRATION_URL` | sesión | 5432 | `postgres` | DDL y `REVOKE`, que el modo transacción no sostiene |
 
 :::danger[La conexión directa no sirve]
 `db.<ref>.supabase.co` **solo tiene registro AAAA**: es IPv6. Falla con un
 `ENOTFOUND` que nunca menciona IPv6, y se persigue como si fuera un problema de
-credenciales. Van las cadenas del **pooler**, no la que el panel ofrece primero.
+credenciales. Van las del **pooler**, no la que el panel ofrece primero.
 :::
 
-### La verificación que cierra el paso
+### 4.3 — Migrar
 
-No alcanza con que las migraciones corran. Hay que probar que el candado existe:
+Desde tu máquina, con `DATABASE_MIGRATION_URL` apuntando a Supabase:
+
+```bash
+pnpm db:migrate
+```
+
+### 4.4 — La verificación que cierra el paso
+
+Que las migraciones corran **no prueba que el candado exista**. Conectate con el
+rol de la aplicación y probá romperlo:
 
 ```sql
--- Con el rol de la aplicación. Tiene que responder «permission denied».
+-- Tiene que responder «permission denied».
 UPDATE audit_log SET accion = 'otra cosa' WHERE id = (SELECT id FROM audit_log LIMIT 1);
 ```
 
 Si eso **no** falla, el rol quedó mal y la bitácora es editable. Todo lo demás
 puede esperar; esto no.
 
+### 4.5 — Sembrar lo mínimo
+
+Crea el catálogo de roles, un administrador y los tres productos reales. **No
+carga clientes ni ventas de prueba**: un cliente inventado en producción
+sobrevive años y aparece en un reporte.
+
+```bash
+SEED_CONFIRM=yes \
+SEED_ADMIN_EMAIL=vos@tudominio.com \
+SEED_ADMIN_PASSWORD='una-contraseña-larga' \
+pnpm db:seed
+```
+
+`SEED_CONFIRM=yes` es obligatorio en producción a propósito. Es idempotente: si
+ya hay un admin activo, no hace nada.
+
+Los productos quedan **desactivados y sin precio**. No se pueden vender hasta que
+un admin les cargue el precio real — sembrar un precio inventado sería peor.
+
 ---
 
-## 5. Las variables, por plataforma
+## 5. Probá el respaldo antes de tener qué perder
 
-### `api` — Railway o Fly
+:::caution[Supabase Free no tiene respaldos]
+El plan gratuito dice `Backup retention: None`. No son respaldos limitados: **no
+hay**. Mientras el plan sea ese, `pnpm db:respaldo` **es** el respaldo.
+:::
+
+```bash
+# pg_dump tiene que ser 17: Supabase corre 17.6 y pg_dump se niega a volcar
+# un servidor más nuevo que él. Homebrew no lo enlaza solo.
+export PATH="$(brew --prefix postgresql@17)/bin:$PATH"
+
+pnpm db:respaldo
+```
+
+Conviene correrlo **ahora**, con la base recién sembrada. Un respaldo roto
+descubierto hoy cuesta cero; descubierto en marzo cuesta el año.
+
+El script verifica el volcado antes de comprimirlo: el marcador de cierre de
+`pg_dump`, las tablas que declara el esquema, y que haya `REVOKE`. Ese último
+existe porque `--no-privileges` produce un archivo que restaura una base
+funcional **con la bitácora editable**.
+
+Agregá el `export PATH` a tu perfil de shell, o el comando falla en cada terminal
+nueva.
+
+---
+
+## 6. Desplegar `api`
+
+`api` **no tiene plan gratuito viable**: necesita un proceso vivo, y eso cuesta
+entre 3 y 6 dólares al mes. Es la única pieza que no puede arrancar gratis.
+
+Con [Railway](https://railway.com):
+
+1. Nuevo proyecto → conectar el repo `aquazaku-api`
+2. Detecta el `Dockerfile` solo
+3. Cargar las variables
+4. Generar el dominio, o dejarlo interno si `web` también vive ahí
 
 | Variable | Valor |
 | --- | --- |
-| `DATABASE_URL` | pooler en modo transacción, rol `aquazaku_app` |
-| `DATABASE_MIGRATION_URL` | pooler en modo sesión, rol `aquazaku` |
-| `BETTER_AUTH_SECRET` | 32 caracteres o más, generado al azar |
+| `NODE_ENV` | `production` |
+| `DATABASE_URL` | pooler transacción, rol `aquazaku_app` |
+| `DATABASE_MIGRATION_URL` | pooler sesión, rol `postgres` |
+| `BETTER_AUTH_SECRET` | 32 caracteres o más, al azar |
 | `BETTER_AUTH_URL` | `https://api.<dominio>` |
 | `COOKIE_DOMAIN` | `.<dominio>` |
 | `WEB_PUBLIC_URL` | `https://app.<dominio>` |
 | `MAIL_TRANSPORT` | `resend` |
 | `RESEND_API_KEY` | del panel de Resend |
 | `EMAIL_FROM` | `noreply@<dominio>` |
-| `NODE_ENV` | `production` |
 
 El esquema **valida al importarse**: si falta una, el proceso no arranca y dice
-cuál. Eso es a propósito — un servidor a medio configurar que igual levanta es
-peor que uno que no levanta.
+cuál. Es a propósito — un servidor a medio configurar que igual levanta es peor
+que uno que no levanta.
 
-### `web` — Vercel
+---
+
+## 7. Desplegar `web`
+
+En [Vercel](https://vercel.com): importar el repo `aquazaku-web`. Dos variables,
+ninguna `NEXT_PUBLIC_`:
 
 | Variable | Valor |
 | --- | --- |
 | `API_INTERNAL_URL` | `https://api.<dominio>` |
 | `WEB_PUBLIC_URL` | `https://app.<dominio>` |
 
-Son solo dos, y ninguna es `NEXT_PUBLIC_`. Eso no es casualidad: el navegador
-nunca le habla a `api` ([ADR-0002](/decisiones/0002-bff-pattern/)), así que no
-hay nada que exponer al cliente.
+Que ninguna sea pública no es casualidad: el navegador nunca le habla a `api`
+([ADR-0002](/decisiones/0002-bff-pattern/)), así que no hay nada que exponer al
+cliente.
 
 ---
 
-## 6. Resend
+## 8. DNS en Cloudflare
 
-El transporte ya está implementado y con tests
-([ADR-0001](/decisiones/0001-stack-m0/)): en desarrollo apunta a
-Mailpit y no sale nada a internet, en producción va por Resend. **Es el mismo
-código.**
+| Registro | Apunta a |
+| --- | --- |
+| `app` | Vercel |
+| `api` | Railway |
+| SPF, DKIM y verificación | lo que indique Resend |
 
-Falta solo lo de afuera:
+Los dos subdominios **tienen que compartir el padre**. La sesión vive en una
+cookie que emite `api` con atributo `domain`, y `web` la reenvía tal cual. Con
+dominios distintos el navegador la descarta y **el login parece funcionar sin
+que nadie quede logueado**.
 
-1. Verificar el dominio en Resend
-2. Cargar en Cloudflare los registros que Resend indique — SPF, DKIM y el de
-   verificación
-3. Poner `EMAIL_FROM` con ese dominio
+:::note[Cloudflare delante de Vercel]
+Si dejás el registro *proxied* (nube naranja), poné el modo SSL/TLS de
+Cloudflare en **Full (strict)**. Con «Flexible» se arma un bucle de
+redirecciones que se lee como un problema de la aplicación y no lo es.
+:::
 
-Sin los registros DNS el correo sale, pero cae en spam. Y un correo de
+Sin los registros de Resend el correo sale, pero cae en spam. Y un correo de
 recuperación de contraseña en spam es una cuenta perdida.
 
 ---
 
-## 7. La primera vuelta completa
+## 9. La primera vuelta completa
 
-El sistema arranca **vacío a propósito**. Nada de datos de prueba: un cliente
-inventado en producción sobrevive años y aparece en un reporte.
-
-1. Crear el usuario `admin`
-2. Entrar y **cambiar la contraseña** — el sistema lo exige antes de dejar pasar
-   a ningún lado
-3. Cargar los productos reales
-4. Cargar las 40 bases con su consecutivo, que ya tienen sticker desde `0001`
-5. Registrar el primer cliente de verdad
-6. Hacer una venta y verificar que aparece en el extracto del contador
+1. Entrar con el admin sembrado y **cambiar la contraseña** — el sistema lo exige
+   antes de dejar pasar a ningún lado
+2. Cargar el precio de los tres productos y activarlos
+3. Cargar las 40 bases con su consecutivo, que ya tienen sticker desde `0001`
+4. Registrar el primer cliente de verdad
+5. Hacer una venta
+6. Verificar que aparece en el extracto del contador
 
 El paso 6 es el que prueba que el sistema entero está conectado: toca ventas,
 stock, retornables y reportes en una sola operación.
+
+---
+
+## Lo que queda sin cubrir en la capa gratuita
+
+| Riesgo | Estado |
+| --- | --- |
+| Supabase Free no tiene respaldos | Cubierto a mano con `pnpm db:respaldo` — **manual, depende de acordarse** |
+| Supabase Free se pausa a la semana sin uso | Con uso diario no aparece; en vacaciones sí |
+| Vercel Hobby prohíbe el uso comercial | Sin cubrir. El seguro es que `web/Dockerfile` funciona: mudar a Railway son horas |
+
+Ninguno bloquea arrancar. Los tres se resuelven con dinero el día que el sistema
+haya demostrado que vale la pena gastarlo.
