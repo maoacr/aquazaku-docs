@@ -3,7 +3,7 @@ title: ADR-0009 — Cada pieza en su plataforma, con deploy en cada push
 description: Dónde corre Aquazaku en producción, y por qué el hosting no es una decisión libre.
 ---
 
-**Estado:** Aceptado — **revisado el mismo día**
+**Estado:** Aceptado — revisado el mismo día, y **ejecutado el 5-sep-2026**
 **Fecha:** 2026-08-28
 **Deciden:** Mao
 
@@ -73,7 +73,7 @@ conexiones persistentes.
 | Pieza | Dónde | Disparador |
 | --- | --- | --- |
 | `web` | Vercel | push a `main` |
-| `api` | Railway o Fly, construyendo su Dockerfile | push a `main` |
+| `api` | **Railway**, construyendo su Dockerfile | push a `main` |
 | Postgres | Supabase | — |
 
 ### Se decidió la opción C, y se revisó el mismo día
@@ -159,16 +159,30 @@ producción, no a la máquina de quien escribe. Al revés no.
 
 `forwardSetCookies` reenvía la cookie de sesión tal cual viene de `api`,
 **incluido su atributo `domain`**. Un navegador rechaza una cookie cuyo `domain`
-no sea el del sitio que la sirvió.
+no sea el del sitio que la sirvió, ni un ancestro suyo.
 
-Con subdominios gratis —`algo.vercel.app` y `algo.railway.app`— son dominios
-raíz distintos y la cookie no cruza: no hay sesión. Con dominio propio:
+Con subdominios gratis —`algo.vercel.app` y `algo.railway.app`— son dominios raíz
+distintos: la cookie no sobrevive y no hay sesión.
+
+Con dominio propio, y **la cookie en el subdominio de la app, no en el padre**:
 
 ```
-aquazaku.com       → web
+aquazaku.com       → el sitio oficial, público
+app.aquazaku.com   → web
 api.aquazaku.com   → api
-COOKIE_DOMAIN=.aquazaku.com
+COOKIE_DOMAIN=app.aquazaku.com
 ```
+
+:::note[Por qué el subdominio y no `.aquazaku.com`]
+El reflejo es poner el padre para que `api` también reciba la cookie. **No hace
+falta**, y acá es donde [ADR-0002](/decisiones/0002-bff-pattern/) se paga solo:
+`web` reenvía la cookie a `api` como un header servidor-a-servidor, donde las
+reglas de dominio del navegador no aplican.
+
+Con el padre, la sesión de la planta viajaría en cada petición al sitio público
+de la raíz. Es `httpOnly` —ningún JavaScript la lee— pero el servidor de ese
+sitio la recibiría entera.
+:::
 
 ### La aplicación sigue siendo portable
 
@@ -189,3 +203,74 @@ base se multiplica por consulta. Pesa más que la distancia entre el usuario y
 
 Conviene que las dos queden cerca, y elegir la región **antes** de cargar datos:
 después es una migración.
+
+---
+
+## Lo que quedó en pie — 5 de septiembre de 2026
+
+El ADR dejó de ser un plan. Esto es lo que corre, verificado desde afuera:
+
+| Pieza | Dónde | Plan |
+| --- | --- | --- |
+| `app.aquazaku.com` | Vercel | Hobby |
+| `api.aquazaku.com` | Railway | Hobby |
+| Postgres | Supabase `us-east-1` | Free |
+| Correo | Resend | Free |
+| DNS | Cloudflare, dominio en Namecheap | Free |
+
+Los dos registros van en **DNS only**, nube gris. La raíz queda reservada para
+el sitio oficial.
+
+### Las pruebas, no las impresiones
+
+| Prueba | Resultado |
+| --- | --- |
+| `api /health` | `200` `{"status":"ok"}` |
+| Login con credenciales falsas | `401 INVALID_EMAIL_OR_PASSWORD` |
+| `/reportes/cartera`, `/clientes`, `/ventas` sin sesión | `401 UNAUTHENTICATED` |
+| `web /` y `/modulos/*` sin sesión | `307 → /login` |
+| `web /login` | `200`, con su formulario |
+
+**El `307` es el que prueba la arquitectura entera.** Para redirigir,
+`getServerUser()` corrió en Vercel, le habló a Railway servidor-a-servidor,
+recibió un `401` y decidió. Es [ADR-0002](/decisiones/0002-bff-pattern/)
+funcionando entre dos proveedores distintos.
+
+Y el `401` del login es el que prueba que la base responde: `/health` **no
+consulta nada**, así que un `200` ahí no dice nada de Supabase.
+
+### Los dos bugs, y qué los resolvió
+
+| Síntoma | Lo que dijo el log |
+| --- | --- |
+| `api` en `500` | `password authentication failed for user "aquazaku_app"` |
+| `web` en `500` | `API_INTERNAL_URL no está definida` |
+
+Ninguno se resolvió leyendo código. Los dos, leyendo un log.
+
+El segundo se cerró en un vistazo porque el mensaje decía exactamente qué
+faltaba y por qué. Es el argumento entero a favor de escribir errores que
+expliquen, en vez de dejar que el framework tire un stack trace genérico.
+
+Del primero quedó una regla: **la contraseña de un rol de base de datos va en
+ASCII puro.** Entre el panel del proveedor, la URL de conexión y el driver hay
+tres capas donde un carácter acentuado se puede mal codificar, y el síntoma
+—`password authentication failed`— no menciona la codificación por ningún lado.
+
+### Lo que la capa gratuita no cubre
+
+| Riesgo | Estado |
+| --- | --- |
+| Supabase Free no tiene respaldos | Cubierto con `pnpm db:respaldo`, **manual** |
+| Supabase Free se pausa a la semana sin uso | Con uso diario no aparece |
+| Vercel Hobby prohíbe el uso comercial | Sin cubrir. El seguro es que `web/Dockerfile` funciona |
+
+### Deuda anotada, no escondida
+
+1. **`/health` no consulta la base.** Railway estuvo en verde toda la puesta en
+   marcha con Supabase inalcanzable. Un `SELECT 1` lo arregla.
+2. **Better-Auth no ve la IP del cliente** detrás del proxy de Railway, así que
+   el rate limit del login usa un balde compartido: un atacante bloquearía a las
+   ocho personas de la planta junto con él.
+3. **Los errores de `web` hablan solo de desarrollo local** («copiá
+   `.env.example` a `.env.local`»), consejo inútil en Vercel.

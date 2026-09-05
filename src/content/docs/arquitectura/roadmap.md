@@ -92,8 +92,8 @@ a medias. Ver [Pipeline SDD](#pipeline-sdd-por-módulo) abajo.
 ```
 /Users/mao/code/aquazaku/          ← repo "paraguas" (no versiona código)
 ├── docs/                          ← Astro Starlight — este sitio (✅ activo)
-├── api/                           ← Backend y API HTTP/JSON  (🔲 pendiente)
-├── web/                           ← Admin + POS responsivo   (🔲 pendiente)
+├── api/                           ← Backend y API HTTP/JSON  (✅ en producción)
+├── web/                           ← Admin + POS responsivo   (✅ en producción)
 ├── mobile/                        ← App del seller           (🔲 POST-MVP)
 ├── claude-design/                 ← Mockups visuales         (referencia, no docs)
 └── README.md / .gitignore
@@ -114,8 +114,8 @@ Referencia: memoria `aquazaku/arquitectura/estrategia-repos`.
 | Proyecto | Rol | Contrato hacia afuera | Estado |
 | --- | --- | --- | --- |
 | `docs/` | Documentación técnica | Sirve páginas estáticas (Astro Starlight). | ✅ activo |
-| `api/` | Backend | Expone **HTTP/JSON**. Autentica, valida reglas, registra auditoría. | 🔲 pendiente |
-| `web/` | Admin + POS | SPA o server-rendered web responsiva. Consume `api/`. | 🔲 pendiente |
+| `api/` | Backend | Expone **HTTP/JSON**. Autentica, valida reglas, registra auditoría. | ✅ `api.aquazaku.com` · 1091 tests |
+| `web/` | Admin + POS | Server-rendered responsiva. Consume `api/` **solo desde el servidor**. | ✅ `app.aquazaku.com` · 521 tests |
 | `mobile/` | App seller | React Native o equivalente. Consume `api/`. | 🔲 POST-MVP |
 
 **Reglas de dependencia:**
