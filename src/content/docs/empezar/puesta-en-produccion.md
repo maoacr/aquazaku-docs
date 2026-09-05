@@ -252,8 +252,29 @@ Con [Railway](https://railway.com):
 
 1. Nuevo proyecto → conectar el repo `aquazaku-api`
 2. Detecta el `Dockerfile` solo
-3. Cargar las variables
-4. Generar el dominio, o dejarlo interno si `web` también vive ahí
+3. Cargar las variables (abajo)
+4. Healthcheck: **`/health`** — devuelve `{ status: 'ok' }`
+5. Generar el dominio público, o dejarlo interno si `web` también vive ahí
+
+El contenedor ya está listo para una plataforma así, y eso se verificó:
+
+| Qué | Estado |
+| --- | :-: |
+| Lee el `PORT` que inyecta la plataforma | ✅ |
+| Escucha en `0.0.0.0`, no en `localhost` | ✅ |
+| Corre como usuario `node`, no como root | ✅ |
+| `tini` como init, para que las señales lleguen | ✅ |
+
+El `0.0.0.0` es el que más despliegues rompe: atado a `localhost`, el contenedor
+arranca sano y **nadie lo alcanza desde afuera**.
+
+:::caution[Las migraciones NO corren solas al arrancar]
+El `CMD` levanta el servidor y nada más. Es deliberado: dos instancias migrando
+a la vez se pisan, y una migración a medias es peor que un deploy demorado.
+
+Después de cada deploy que traiga migraciones nuevas, se corren a mano con
+`DATABASE_MIGRATION_URL` apuntando a producción — el mismo comando del paso 4.3.
+:::
 
 | Variable | Valor |
 | --- | --- |
