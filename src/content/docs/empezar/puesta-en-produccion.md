@@ -76,25 +76,47 @@ es secreta**. Se rota en el panel de Supabase antes de cargar nada.
 
 ---
 
-## 3. El reparto de dominios, y por qué no es cosmético
+## 3. El reparto de dominios, y dónde vive la cookie
 
-| Subdominio | Apunta a |
+| Nombre | Apunta a | Qué es |
+| --- | --- | --- |
+| `aquazaku.com` | — | el sitio oficial, público |
+| `app.aquazaku.com` | Vercel | **la aplicación** |
+| `api.aquazaku.com` | Railway | el servidor, que nadie visita |
+
+### `COOKIE_DOMAIN` va al subdominio de la app, NO al padre
+
+Es la parte que más fácil se hace mal, y una versión anterior de esta página la
+recomendaba mal.
+
+| Valor | Quién recibe la sesión |
 | --- | --- |
-| `app.<dominio>` | Vercel (`web`) |
-| `api.<dominio>` | Railway o Fly (`api`) |
+| `app.aquazaku.com` | ✅ **solo la aplicación** |
+| `.aquazaku.com` | ⚠️ la app, el sitio oficial, y todo subdominio futuro |
+| `api.aquazaku.com` | ❌ el navegador la descarta |
 
-Los dos **tienen que compartir el dominio padre**. La sesión vive en una cookie
-que emite `api` con el atributo `domain`, y `web` la reenvía tal cual al
-navegador ([`api-server.ts`](https://github.com/maoacr/aquazaku-web)). Con
-dominios distintos, el navegador la descarta y **el login parece funcionar pero
-nadie queda logueado**.
+El reflejo es poner el padre para que `api` también la reciba. **No hace falta**,
+y es donde [ADR-0002](/decisiones/0002-bff-pattern/) se paga solo:
 
-Por eso `COOKIE_DOMAIN` va con el padre: `.<dominio>`.
+```ts
+// web/src/lib/api-server.ts
+outgoingHeaders.set('Cookie', cookieStore.toString())
+```
 
-:::note[Cloudflare delante de Vercel]
-Si dejás el registro *proxied* (nube naranja), revisá que el modo SSL/TLS de
-Cloudflare esté en **Full (strict)**. Con «Flexible» se arma un bucle de
-redirecciones que se lee como un problema de la aplicación y no lo es.
+`web` lee la cookie que el navegador le mandó **a él** y se la reenvía a `api`
+como un header común. Ese salto es servidor a servidor: las reglas de dominio
+del navegador no aplican ahí. La cookie **nunca necesita ser válida para
+`api.aquazaku.com`**, porque el navegador jamás le habla a `api`.
+
+Con el padre, en cambio, la sesión viaja en cada petición al sitio oficial —y a
+cualquier cosa que se cuelgue de un subdominio en el futuro—. Es `httpOnly`, así
+que ningún JavaScript la lee; pero el servidor de ese otro sitio **la recibe
+entera**.
+
+:::caution[El valor que el navegador rechaza en silencio]
+`COOKIE_DOMAIN` no puede ser `api.aquazaku.com`: un sitio no puede escribir una
+cookie para un subdominio hermano. El navegador la descarta sin avisar, y **el
+login parece funcionar sin que nadie quede logueado**.
 :::
 
 ---
@@ -283,7 +305,7 @@ Después de cada deploy que traiga migraciones nuevas, se corren a mano con
 | `DATABASE_MIGRATION_URL` | pooler sesión, rol `postgres` |
 | `BETTER_AUTH_SECRET` | 32 caracteres o más, al azar |
 | `BETTER_AUTH_URL` | `https://api.<dominio>` |
-| `COOKIE_DOMAIN` | `.<dominio>` |
+| `COOKIE_DOMAIN` | `app.<dominio>` — el subdominio, no el padre |
 | `WEB_PUBLIC_URL` | `https://app.<dominio>` |
 | `MAIL_TRANSPORT` | `resend` |
 | `RESEND_API_KEY` | del panel de Resend |
