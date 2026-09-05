@@ -341,17 +341,41 @@ cliente.
 | `api` | Railway |
 | SPF, DKIM y verificación | lo que indique Resend |
 
-Los dos subdominios **tienen que compartir el padre**. La sesión vive en una
-cookie que emite `api` con atributo `domain`, y `web` la reenvía tal cual. Con
-dominios distintos el navegador la descarta y **el login parece funcionar sin
-que nadie quede logueado**.
+Los dos registros van en **DNS only — nube gris**. No es preferencia:
 
-:::note[Cloudflare delante de Vercel]
-Si dejás el registro *proxied* (nube naranja), poné el modo SSL/TLS de
-Cloudflare en **Full (strict)**. Con «Flexible» se arma un bucle de
-redirecciones que se lee como un problema de la aplicación y no lo es.
+| Con la nube naranja | Qué pasa |
+| --- | --- |
+| Vercel marca el dominio «Invalid Configuration» | no valida ni emite el certificado |
+| `ERR_TOO_MANY_REDIRECTS` | dos capas negociando HTTPS |
+| Vercel pierde visibilidad del tráfico | sus protecciones dejan de ver quién entra |
+| Doble caché | Cloudflare y Vercel cacheando lo mismo |
+
+[Vercel lo desaconseja explícitamente](https://vercel.com/kb/guide/cloudflare-with-vercel):
+recomienda no poner un proxy inverso delante.
+
+Y para `api` la nube naranja no compra nada aunque funcionara: **el navegador
+nunca le habla a `api`**. El único cliente es el servidor de Vercel. Un CDN
+delante de un servidor que nadie visita es una capa más que puede fallar, a
+cambio de nada.
+
+:::danger[El dominio de Railway que NO va en Cloudflare]
+Railway muestra dos hostnames y son cosas distintas:
+
+| Hostname | Qué es |
+| --- | --- |
+| `<servicio>.railway.internal` | **privado.** Solo existe dentro de la red de Railway |
+| `<algo>.up.railway.app` | público |
+
+El primero es para que dos servicios de Railway se hablen sin salir a internet.
+Con `web` en Vercel —afuera de esa red— **nunca va a resolver**: ni para el
+navegador ni para Vercel.
+
+Un CNAME apuntado ahí resuelve a nada, y el síntoma es un dominio que
+simplemente no existe.
 :::
 
+El sitio oficial en la raíz es otra historia: ahí la nube naranja **sí** sirve,
+porque es contenido público, cacheable, y sin un proveedor detrás que se queje.
 Sin los registros de Resend el correo sale, pero cae en spam. Y un correo de
 recuperación de contraseña en spam es una cuenta perdida.
 
