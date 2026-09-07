@@ -401,7 +401,7 @@ stock, retornables y reportes en una sola operación.
 | Riesgo | Estado |
 | --- | --- |
 | Supabase Free no tiene respaldos | Cubierto a mano con `pnpm db:respaldo` — **manual, depende de acordarse** |
-| Supabase Free se pausa a la semana sin uso | Con uso diario no aparece; en vacaciones sí |
+| Supabase Free se pausa a la semana sin uso | **Cubierto**: `api` late contra la base cada 6 h |
 | Vercel Hobby prohíbe el uso comercial | Sin cubrir. El seguro es que `web/Dockerfile` funciona: mudar a Railway son horas |
 
 Ninguno bloquea arrancar. Los tres se resuelven con dinero el día que el sistema

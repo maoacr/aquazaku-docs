@@ -262,15 +262,37 @@ tres capas donde un carácter acentuado se puede mal codificar, y el síntoma
 | Riesgo | Estado |
 | --- | --- |
 | Supabase Free no tiene respaldos | Cubierto con `pnpm db:respaldo`, **manual** |
-| Supabase Free se pausa a la semana sin uso | Con uso diario no aparece |
+| Supabase Free se pausa a la semana sin uso | **Cubierto**: `api` late contra la base cada 6 h |
 | Vercel Hobby prohíbe el uso comercial | Sin cubrir. El seguro es que `web/Dockerfile` funciona |
+
+### El latido, y por qué no hizo falta otra plataforma
+
+El plan gratuito de Supabase pausa el proyecto tras una semana **sin actividad
+de base de datos**. Cualquier consulta reinicia ese reloj.
+
+`api` ya es un proceso de larga vida —por eso corre en contenedores y no en
+funciones—, así que late solo: consulta `SELECT now()` al arrancar y cada seis
+horas. Un servicio de cron aparte habría sido una cuarta cuenta con su propia
+forma de fallar en silencio.
+
+**Late al arrancar, no solo en el intervalo.** Es el detalle que decide si
+funciona: si solo latiera cada seis horas, un contenedor que se reinicia
+seguido —cada deploy lo reinicia— podría no latir nunca, porque el temporizador
+vuelve a cero antes de cumplirse. El sistema quedaría sin latido justamente
+mientras más se trabaja en él.
+
+Y el mismo hecho arregló el healthcheck: consultar para mantener la base
+despierta y consultar para saber si contesta **son la misma consulta**. `/health`
+ahora reporta lo que el latido descubrió en vez de un `ok` fijo.
+
+Sigue devolviendo `200` aunque la base falle, a propósito: un `503` haría que
+Railway reinicie el contenedor en bucle, y reiniciar `api` no levanta Supabase.
+Lo que cambia es que el cuerpo lo dice y el log lo grita.
 
 ### Deuda anotada, no escondida
 
-1. **`/health` no consulta la base.** Railway estuvo en verde toda la puesta en
-   marcha con Supabase inalcanzable. Un `SELECT 1` lo arregla.
-2. **Better-Auth no ve la IP del cliente** detrás del proxy de Railway, así que
+1. **Better-Auth no ve la IP del cliente** detrás del proxy de Railway, así que
    el rate limit del login usa un balde compartido: un atacante bloquearía a las
    ocho personas de la planta junto con él.
-3. **Los errores de `web` hablan solo de desarrollo local** («copiá
+2. **Los errores de `web` hablan solo de desarrollo local** («copiá
    `.env.example` a `.env.local`»), consejo inútil en Vercel.
