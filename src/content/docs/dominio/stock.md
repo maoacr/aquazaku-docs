@@ -217,8 +217,15 @@ todavía no se midió. Un umbral que avisa tarde no sirve; uno que avisa demasia
 pronto entrena a ignorar el aviso, que es peor. Cuando haya datos de venta se va
 a querer moverlo, y eso no puede exigir un despliegue.
 
-**Hoy** vive en `DIAS_DE_AVISO_DE_VENCIMIENTO`, en `web/src/components/ui/estado.tsx`.
-Al implementarse M12 pasa a parámetro y esa constante se va.
+**Entregado en M12** (7-sep-2026). Vive en la tabla `parametros`, clave
+`dias_aviso_vencimiento`, y se mueve desde **Alertas** en la administración. La
+constante `DIAS_DE_AVISO_DE_VENCIMIENTO` **se borró** — no quedó como default,
+porque un default en el código más una fila en la base son dos lugares donde
+configurar lo mismo.
+
+El umbral **viaja con los lotes** (`/stock/:id/lotes` devuelve
+`diasDeAvisoDeVencimiento`): configurarlo es de `admin`, pero mirarlo es de
+quien ve stock, y el `pos` no tiene `configuracion:ver`.
 
 
 **Estado:** ✅ Confirmada — cerrá la pregunta 🟢

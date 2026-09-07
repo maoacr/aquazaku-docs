@@ -181,7 +181,7 @@ porque todo lo demás lo necesita, no porque sea el más visible.
 | M9 | **Proveedores y compras** | Mixto contado/transferencia/crédito, sin módulo de CxP completo | `admin`, `pos`, `contador` | M0, M3 | ✅ terminado |
 | M10 | **Precios y promociones** | Listas residencial/comercial con piso, códigos de descuento con piso absoluto | `admin`, `pos`, `seller`, `contador` | M0, M1 | ✅ entregado en M1+M6 |
 | M11 | **Contador** | Panel solo lectura: extracto de los cinco movimientos de plata, cartera por edad, resumen mensual, CSV con columnas a elección, PDF por impresión del navegador | `contador`, `admin` | M0, M5, M6, M7, M9, M10 | ✅ terminado |
-| M12 | **Alertas** | Alimenta al panel de planta y al panel admin; umbrales configurables — incluye el aviso de vencimiento próximo ([RN-STK-11](/dominio/stock/)), hoy fijo en 7 días | `admin`, `pos` | M0, M2, M3, M4 | 🔲 pendiente |
+| M12 | **Alertas** | Umbrales configurables en `parametros`, con sus límites en la base y cada cambio auditado con el valor anterior | `admin` (configura), `pos` (ve los avisos) | M0, M2, M3, M4 | ✅ terminado |
 | M13 | **Auditoría** | Quién hizo qué cuándo; transversal — todo módulo registra | `admin` (consulta) | M0 + transversal | ✅ entregado en M0 |
 
 ### Reglas del orden
@@ -265,24 +265,37 @@ puede arrancar en `design` mientras el anterior está en `apply`, pero no antes.
 
 | Fase | Módulo |
 | --- | --- |
-| ✅ **Terminado** | **M0 — Auth + RBAC** · **M1 — Productos** · **M2 — Stock** · **Fase de diseño** (marca, vidrio, agua, estados, vacíos, voz de usted, accesibilidad) · **M3 — Insumos** · **M4 — Producción** · **M5 — Clientes** · **M6 — Ventas** · **M7 — Retornables** · **M9 — Proveedores** · **M11 — Contador** |
+| ✅ **Terminado** | **M0 — Auth + RBAC** · **M1 — Productos** · **M2 — Stock** · **Fase de diseño** (marca, vidrio, agua, estados, vacíos, voz de usted, accesibilidad) · **M3 — Insumos** · **M4 — Producción** · **M5 — Clientes** · **M6 — Ventas** · **M7 — Retornables** · **M9 — Proveedores** · **M11 — Contador** · **M12 — Alertas** |
 | Design en curso | — |
 | Apply en curso | — |
 
-| Pendiente | M12 |
+| Pendiente | — |
 | Diferido (post-MVP) | M8 — Rutas y seller mobile |
 
-Los siete operacionales están cerrados, y M9 (Proveedores), M11 (Contador) y
-M13 (Auditoría) también. **Queda uno:**
+**Los trece hitos del MVP están cerrados.**
 
-- **M12 — Alertas**: umbrales configurables. Ya empezó sin quererlo — el aviso
-  de bases ([RN-BAS-13](/dominio/botellones-y-bases/)) y el de compras vencidas
-  ([RN-PRO-07](/dominio/proveedores/)) son alertas funcionando, solo que con el
-  umbral calculado en vez de configurado.
+M12 fue el último. Los avisos ya funcionaban —el de bases
+([RN-BAS-13](/dominio/botellones-y-bases/)), el de compras vencidas
+([RN-PRO-07](/dominio/proveedores/)), el de vencimiento próximo
+([RN-STK-11](/dominio/stock/))—, pero con el umbral escrito en el código. Lo que
+cerró M12 es que ese número se mueve desde la administración.
 
-M13 no está en esta lista porque **ya está entregado**: la bitácora nace con M0,
-es transversal a todos los módulos, y su pantalla vive en `/modulos/auditoria`.
-El resumen lo listaba como pendiente contradiciendo a la tabla de arriba.
+**Y las constantes se borraron, no quedaron como default.** Un default en el
+código más una fila en la base son dos lugares donde configurar lo mismo, y el
+día que discrepen nadie sabría cuál manda.
+
+Los límites de cada umbral viven en la base con un `CHECK`
+([ADR-0006](/decisiones/0006-invariantes-en-la-base/)): un umbral en cero apaga
+la alerta sin decirlo, y uno enorme la deja siempre encendida — las dos formas
+de romperla se ven igual desde afuera, porque en las dos nadie reacciona.
+
+Cada cambio queda en la bitácora **con el valor anterior**. Un aviso que dejó de
+sonar tiene dos explicaciones —el problema desapareció, o alguien movió el
+número— y meses después no hay forma de distinguirlas sin eso.
+
+Lo que sigue no es un hito: es
+[M8 y la facturación electrónica](#lo-diferido), diferidos a propósito, y las
+[preguntas abiertas](/empezar/pendientes/) con el contador.
 
 **M10 (Precios) también está entregado**, absorbido por M1 y M6: listas
 residencial/comercial con piso, códigos de descuento y el piso sostenido por la
