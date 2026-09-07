@@ -293,8 +293,8 @@ Cada cambio queda en la bitácora **con el valor anterior**. Un aviso que dejó 
 sonar tiene dos explicaciones —el problema desapareció, o alguien movió el
 número— y meses después no hay forma de distinguirlas sin eso.
 
-Lo que sigue no es un hito: es
-[M8 y la facturación electrónica](#lo-diferido), diferidos a propósito, y las
+Lo que sigue no es un hito: son M8 y la facturación electrónica, diferidos a
+propósito —están en la tabla de arriba—, y las
 [preguntas abiertas](/empezar/pendientes/) con el contador.
 
 **M10 (Precios) también está entregado**, absorbido por M1 y M6: listas
