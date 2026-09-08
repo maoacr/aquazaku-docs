@@ -39,6 +39,7 @@ T1 env vars + pool search_path ── T2 migrate con schema ──┬── T3 a
 - **Operacional**: el release command de Railway staging tiene que ser `pnpm db:migrate && pnpm start`. El de producción también, y al final dispara `pnpm db:sync-preview`.
 - **Migraciones en el script, no en cada deploy**: el `migrate.ts` reescribe con `sed` solo cuando `--schema=preview`. Cuando corre contra `public`, aplica las migraciones tal cual.
 - **El journal de Drizzle**: vive en `drizzle.__drizzle_migrations` (fijo de Drizzle). Si se reescriben las migraciones con sed para `preview`, Drizzle va a creer que las migraciones ya están aplicadas. **Decisión**: pasar `migrationsTable: '__drizzle_migrations_preview'` cuando el target schema es `preview`, para que cada ambiente tenga su propio journal en el schema `drizzle`.
+- **Permisos de schema para `aquazaku_app`** (CRÍTICO, agregado tras T2 round 1): el runner de migración, después del `CREATE SCHEMA` y antes del `migrate()`, debe correr `GRANT USAGE ON SCHEMA <schema> TO aquazaku_app` y `ALTER DEFAULT PRIVILEGES IN SCHEMA <schema> GRANT SELECT, INSERT, UPDATE, DELETE ON TABLES TO aquazaku_app` (más `USAGE, SELECT ON SEQUENCES`). Sin esto, el rol de aplicación no puede leer ni escribir tablas del schema nuevo.
 
 ---
 
@@ -53,7 +54,7 @@ Las variables de entorno del runtime y el pool de Postgres. Fundamento del resto
 
 **Interfaces:**
 - Consumes: nada — primera task.
-- Produces: `env.AQUAZAKU_ENV: 'production' | 'preview' | 'development'` (default `'production'`); `db` se conecta con `options: '-c search_path=...'`.
+- Produces: `env.AQUAZAKU_ENV: 'production' | 'preview' | 'development'` (default `'production'`); `db` se conecta con `connection: { search_path }` (no `options` — esa es libpq, no la API de `postgres.js`)..
 
 - [ ] **Step 1: Escribir el test que falla en `env.test.ts`**
 

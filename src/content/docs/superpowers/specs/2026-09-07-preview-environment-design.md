@@ -104,6 +104,7 @@ pnpm db:migrate --schema=preview
 1. Ser **idempotentes** — `CREATE TABLE IF NOT EXISTS`, no `DROP` ciego. Hoy hay que auditar las migraciones existentes; agregar `IF NOT EXISTS` donde falte.
 2. Los `GRANT`/`REVOKE` finales de cada migración se reescriben también para el schema `preview`.
 3. La **creación del schema** vive en el runner (`db:migrate`), no en una migración.
+4. **Permisos de schema para `aquazaku_app`**: además del `GRANT USAGE, CREATE` al dueño, el runner tiene que dar `USAGE ON SCHEMA <schema> TO aquazaku_app` y `ALTER DEFAULT PRIVILEGES IN SCHEMA <schema> GRANT SELECT, INSERT, UPDATE, DELETE ON TABLES TO aquazaku_app` (más `USAGE, SELECT ON SEQUENCES`). Sin esto, el rol de aplicación no puede ni mirar los objetos del schema nuevo.
 
 ---
 
