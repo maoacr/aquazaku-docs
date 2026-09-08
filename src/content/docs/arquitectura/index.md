@@ -18,6 +18,7 @@ acá; esta sección describe dónde estamos parados.
 | --- | --- |
 | [Roadmap de desarrollo](/arquitectura/roadmap/) | Orden y criterios para construir el sistema, módulo por módulo. Incluye principios rectores, dependencias, estado actual y decisiones abiertas. |
 | [Catálogo de módulos](/arquitectura/modulos/) | Índice rápido de cada módulo con propósito, roles, dependencias y link al doc de dominio. Útil para no scrollear el roadmap entero. |
+| [Entornos](/arquitectura/entornos/) | Cómo coexisten los tres ambientes — local, preview y producción— sobre una sola base Supabase con dos schemas. Variables, deploy, rollback, qué pasa cuando algo falla. |
 
 ## Qué NO va acá
 
