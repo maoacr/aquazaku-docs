@@ -115,13 +115,9 @@ pnpm db:migrate --schema=preview
 **Cómo se garantiza**:
 
 1. Las migraciones terminan con `GRANT`/`REVOKE` para el rol `aquazaku_app`. El `sed` los duplica a `preview`.
-2. Un script `auditar-permisos-preview.ts` corre después de cada migración contra preview:
-   ```sql
-   -- Conectado como aquazaku_app con search_path=preview
-   UPDATE audit_log SET action = 'prueba';
-   -- Tiene que responder: permission denied for table audit_log
-   ```
+2. Un script `auditar-permisos-preview.ts` corre después de cada migración contra preview. Como el trigger `reject_audit_mutation` aborta antes del chequeo de permisos, el script no puede usar `UPDATE ... WHERE FALSE` para revelar los GRANTs — usa `has_table_privilege('aquazaku_app', 'audit_log', 'UPDATE')` que consulta el catálogo directamente sin pasar por el trigger.
 3. Si la auditoría falla, el deploy aborta. Esto es **deseado** — significa que un GRANT mal escrito bloquea hasta arreglarse.
+4. **Gap detectado (7-sep-2026)**: `0001_audit_append_only.sql` no incluye `REVOKE UPDATE, DELETE ON audit_log FROM aquazaku_app`. La inmutabilidad depende solo del trigger, no de los GRANTs. Esto es un agujero pre-existente — la única tabla append-only del sistema sin REVOKE. **Fix**: nueva migración `0015_audit_revoke.sql` con la línea faltante. Sin tocar 0001 para no romper el hash del journal existente.
 
 ---
 
