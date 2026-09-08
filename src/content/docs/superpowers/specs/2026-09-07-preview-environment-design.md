@@ -61,13 +61,15 @@ Variable nueva: `AQUAZAKU_ENV` ∈ `{production, preview, development}`.
 
 **Default**: si no se setea, vale `production`. Esto evita romper deploys que no setean la variable.
 
-El pool de Postgres se crea con `options: '-c search_path=<derivado>'`. La derivación:
+El pool de Postgres se crea con `connection: { search_path: <derivado> }`. La derivación:
 
 ```
 AQUAZAKU_ENV=production  → search_path=public
 AQUAZAKU_ENV=preview     → search_path=preview
 AQUAZAKU_ENV=development → search_path=public
 ```
+
+> **Nota de implementación (7-sep-2026):** `postgres.js` v3.4.9 — el driver instalado — no acepta un campo top-level `options` (esa sintaxis es de `node-postgres`/`pg-promise`, libpq). Los parámetros de arranque, incluido `search_path`, van bajo `connection` como key/value. Ver `postgres/src/connection.js:996`.
 
 `api/src/lib/env.ts` valida `AQUAZAKU_ENV` con Zod. Si está mal o falta en producción, el proceso muere con mensaje claro (igual que el resto del entorno).
 

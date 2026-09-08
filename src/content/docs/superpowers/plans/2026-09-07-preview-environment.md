@@ -122,7 +122,9 @@ const searchPath =
 const queryClient = postgres(env.DATABASE_URL, {
   max: env.NODE_ENV === 'test' ? 1 : 10,
   onnotice: env.NODE_ENV === 'test' ? () => {} : undefined,
-  options: `-c search_path=${searchPath}`,
+  // `postgres.js` no acepta `options: '-c ...'` (es libpq-style de
+  // node-postgres). Los parámetros de arranque van bajo `connection`.
+  connection: { search_path: searchPath },
 })
 ```
 
