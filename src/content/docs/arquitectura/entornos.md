@@ -102,13 +102,15 @@ Cada push a una PR dispara dos cosas:
 1. **Vercel** redesplega la URL del preview (`xxx-git-feature-usuario.vercel.app`).
 2. **Railway (`staging`)** redesplega, y su release command corre:
    ```bash
-   pnpm db:migrate && pnpm start
+   pnpm db:migrate && pnpm db:seed && pnpm start
    ```
    `db:migrate` aplica las migraciones al schema `preview` y dispara la
-   auditoría de permisos. Si la auditoría falla, el deploy aborta.
-
-Después del primer deploy de preview, el seed corre contra `preview`. Cada
-push nuevo trunca y reemplaza los datos.
+   auditoría de permisos. Si la auditoría falla, el deploy aborta. Después,
+   `db:seed` re-puebla el schema `preview` con datos de prueba — corre en
+   **cada** deploy, no solo después del primero, y por eso cada push trunca
+   y reemplaza los datos. El guard de T5 rechaza `db:seed` si
+   `AQUAZAKU_ENV=production`, así que es seguro incluirlo en el release
+   command de staging.
 
 :::caution[Las migraciones tienen que ser idempotentes]
 `db:migrate` corre **dos veces** durante un deploy normal —una contra `public`

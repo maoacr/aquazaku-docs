@@ -36,7 +36,7 @@ T1 env vars + pool search_path ── T2 migrate con schema ──┬── T3 a
 - **Migraciones con `IF NOT EXISTS`**: agregar `IF NOT EXISTS` en TODA migración que cree objetos. Hoy algunas ya lo tienen; verificar el resto antes de la Etapa 1.
 - **Mejor Auth respeta `search_path` automáticamente**: no tocar `auth/better-auth.ts` para esto. Sí tocarlo para `trustedOrigins` (T6).
 - **El rol `aquazaku_app` tiene `REVOKE UPDATE, DELETE ON audit_log`**: la auditoría (T3) garantiza que ese REVOKE se replica en `preview`. Si la auditoría falla, el deploy aborta.
-- **Operacional**: el release command de Railway staging tiene que ser `pnpm db:migrate && pnpm start`. El de producción también, y al final dispara `pnpm db:sync-preview`.
+- **Operacional**: el release command de Railway staging tiene que ser `pnpm db:migrate && pnpm db:seed && pnpm start`. El de producción también, y al final dispara `pnpm db:sync-preview`. El `db:seed` en staging re-puebla el schema `preview` con datos de prueba en cada push — el guard de T5 impide que corra en producción.
 - **Migraciones en el script, no en cada deploy**: el `migrate.ts` reescribe con `sed` solo cuando `--schema=preview`. Cuando corre contra `public`, aplica las migraciones tal cual.
 - **El journal de Drizzle**: vive en `drizzle.__drizzle_migrations` (fijo de Drizzle). Si se reescriben las migraciones con sed para `preview`, Drizzle va a creer que las migraciones ya están aplicadas. **Decisión**: pasar `migrationsTable: '__drizzle_migrations_preview'` cuando el target schema es `preview`, para que cada ambiente tenga su propio journal en el schema `drizzle`.
 - **Permisos de schema para `aquazaku_app`** (CRÍTICO, agregado tras T2 round 1): el runner de migración, después del `CREATE SCHEMA` y antes del `migrate()`, debe correr `GRANT USAGE ON SCHEMA <schema> TO aquazaku_app` y `ALTER DEFAULT PRIVILEGES IN SCHEMA <schema> GRANT SELECT, INSERT, UPDATE, DELETE ON TABLES TO aquazaku_app` (más `USAGE, SELECT ON SEQUENCES`). Sin esto, el rol de aplicación no puede leer ni escribir tablas del schema nuevo.
@@ -536,7 +536,7 @@ Cerrar el ciclo: una PR real ejercita todo el flujo.
 
 1. Crear environment `staging` (Duplicate desde production).
 2. Cambiar `AQUAZAKU_ENV=preview`. Las demás variables quedan iguales.
-3. Cambiar release command a `pnpm db:migrate && pnpm start`.
+3. Cambiar release command de staging: `pnpm db:migrate && pnpm db:seed && pnpm start` (hoy es solo `pnpm start`). El `db:seed` repuebla el schema `preview` con datos de prueba — el guard de T5 impide que corra en producción.
 
 - [ ] **Step 2: Verificar que Vercel tiene las 6 entries correctas**
 
