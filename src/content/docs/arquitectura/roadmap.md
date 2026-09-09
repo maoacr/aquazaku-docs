@@ -272,7 +272,50 @@ puede arrancar en `design` mientras el anterior está en `apply`, pero no antes.
 | Pendiente | — |
 | Diferido (post-MVP) | M8 — Rutas y seller mobile |
 
-**Los trece hitos del MVP están cerrados.**
+**Los trece hitos del MVP están cerrados**, y M14 —lo que pidió la primera demo
+con el cliente— también.
+
+## M14 — Clientes ubicables
+
+No estaba en el roadmap: salió de ver el sistema en manos de quien lo va a usar.
+Dos huecos que ninguna revisión de código había mostrado.
+
+**La dirección era un campo de texto.** Ahora se descompone en la nomenclatura
+colombiana —`CL 45 A # 12 B - 34`— con municipio, departamento y un pin
+opcional en el mapa.
+
+Ningún campo de ubicación es obligatorio, y es una decisión: Aquazaku reparte en
+pueblos donde una dirección puede ser «Vereda La Peña, casa de tabla azul».
+Exigir la estructura haría que el operador invente `CL 1 # 1-1` para poder
+guardar — perdiendo el dato y ensuciando la base.
+
+Lo que sí exige la base es que el conjunto **ubique**: `direcciones_ubicable`
+pide al menos una de estructura, línea libre, indicaciones o coordenadas.
+
+**No había ningún dato de contacto.** Se había construido la cartera por edad
+para saber a quién llamar primero, y no había a qué número llamar.
+
+### Lo que sostiene la ortografía
+
+Municipio y departamento salen del catálogo oficial del DANE: 33 departamentos,
+1122 municipios, con coordenadas. Se guardan en minúscula y se muestran con la
+ortografía correcta.
+
+Hace falta un catálogo y no una transformación: «Campo de la Cruz» **no se
+reconstruye** desde `campo de la cruz` —un título automático daría «Campo De La
+Cruz»— porque las preposiciones en minúscula dependen de cuál palabra es.
+
+Y sigue aceptando lo que el DANE no lista: las veredas.
+
+### El pin se arrastra, no se busca
+
+Ningún servicio geocodifica `CL 5 # 3-24, Campo de la Cruz` con precisión. El
+mapa se centra en el municipio y **la persona pone el pin**: las coordenadas
+salen de alguien que sabe dónde está la casa. Una ruta calculada sobre una
+posición inventada es peor que ninguna — y esas coordenadas son la base de M8.
+
+---
+
 
 M12 fue el último. Los avisos ya funcionaban —el de bases
 ([RN-BAS-13](/dominio/botellones-y-bases/)), el de compras vencidas
