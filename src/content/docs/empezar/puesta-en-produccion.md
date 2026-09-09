@@ -414,8 +414,49 @@ simplemente no existe.
 
 El sitio oficial en la raíz es otra historia: ahí la nube naranja **sí** sirve,
 porque es contenido público, cacheable, y sin un proveedor detrás que se queje.
-Sin los registros de Resend el correo sale, pero cae en spam. Y un correo de
-recuperación de contraseña en spam es una cuenta perdida.
+### Los cuatro registros del correo
+
+| Registro | Nombre | Para qué |
+| --- | --- | --- |
+| `TXT` | `resend._domainkey` | DKIM: firma cada correo. Lo da Resend |
+| `TXT` | `send` | SPF del subdominio de envío — Resend manda por Amazon SES |
+| `TXT` | `_dmarc` | `v=DMARC1; p=none; rua=mailto:dmarc@<dominio>` |
+| `MX` | `@` | **el correo entrante, que NO es de Resend** |
+
+:::caution[Los MX no se tocan]
+Resend solo **envía**. Moverle los MX haría que el dominio deje de **recibir**
+correo — incluidos los reportes de DMARC que uno acaba de pedir.
+:::
+
+**`p=none` a propósito.** No rechaza nada: pide reportes. Aquazaku tiene dos
+remitentes legítimos —Resend para los correos del sistema y el reenvío del
+registrador, que ya está en el SPF de la raíz—, y con `p=reject` de entrada, uno
+mal alineado dejaría de entregar correo **sin que nadie se entere**.
+
+Se endurece a `p=quarantine` y después a `p=reject` cuando los reportes muestren
+que todo lo legítimo pasa.
+
+:::note[El buzón de los reportes tiene que existir]
+`dmarc@<dominio>` necesita ser un alias real. Sin él, los reportes se pierden y
+el registro queda de adorno: se ve configurado y no informa nada.
+:::
+
+### La verificación no es el panel
+
+El panel de Resend dice si los registros están. **No dice si el correo llega.**
+
+Se manda uno real —«olvidé mi contraseña» desde el login— y se miran los
+encabezados de autenticación en el cliente de correo (en Gmail: los tres puntos
+→ «Mostrar original»):
+
+```
+SPF:   PASS
+DKIM:  PASS
+DMARC: PASS
+```
+
+Los tres en PASS es lo que evita que el correo de recuperación caiga en spam. Y
+un correo de recuperación en spam **es una cuenta perdida**.
 
 ---
 
