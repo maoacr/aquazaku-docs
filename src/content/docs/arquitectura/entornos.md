@@ -100,43 +100,60 @@ la variable `AQUAZAKU_ENV=development` en `.env`.
 Cada push a una PR dispara dos cosas:
 
 1. **Vercel** redesplega la URL del preview (`xxx-git-feature-usuario.vercel.app`).
-2. **Railway (`staging`)** redesplega, y su release command corre:
+2. **Railway (`staging`)** redesplega, y su `startCommand` corre:
    ```bash
-   pnpm db:migrate && pnpm db:seed && pnpm start
+   pnpm db:sync-preview && pnpm db:seed && pnpm start
    ```
-   `db:migrate` aplica las migraciones al schema `preview` y dispara la
-   auditoría de permisos. Si la auditoría falla, el deploy aborta. Después,
-   `db:seed` re-puebla el schema `preview` con datos de prueba — corre en
-   **cada** deploy, no solo después del primero, y por eso cada push trunca
-   y reemplaza los datos. El guard de T5 rechaza `db:seed` si
-   `AQUAZAKU_ENV=production`, así que es seguro incluirlo en el release
-   command de staging.
-
-:::caution[Las migraciones tienen que ser idempotentes]
-`db:migrate` corre **dos veces** durante un deploy normal —una contra `public`
-y otra contra `preview`—. Si una migración tiene `DROP` ciego o crea un
-objeto sin `IF NOT EXISTS`, la segunda pasada rompe. El plan auditó las
-migraciones existentes antes de tocar `migrate.ts`; cualquier migración nueva
-tiene que cumplir la misma regla.
-:::
+   `db:sync-preview` aplica las migraciones al schema `preview` (el
+   migrador lee `AQUAZAKU_ENV` del entorno, así que sabe que va contra
+   `preview` y no contra `public`) y corre la auditoría de permisos. Si
+   la auditoría falla, el deploy de staging aborta —y queremos que
+   aborte, porque un preview con el schema roto no debería pasar—. Después,
+   `db:seed` re-puebla el schema `preview` con datos de prueba. Corre en
+   **cada** deploy, no solo después del primero: cada push trunca y
+   reemplaza los datos. El guard de T5 rechaza `db:seed` si
+   `AQUAZAKU_ENV=production`, así que es seguro incluirlo en el `startCommand`
+   de staging.
 
 ### Producción
 
-Cada merge a `main` dispara el deploy de producción. El release command de
-Railway (`production`) es:
+El `startCommand` de Railway para producción es **vacío**: el container
+arranca con el `CMD ["pnpm", "start"]` del Dockerfile. Las migraciones a
+producción son un paso deliberado y separado.
 
-```bash
-pnpm db:migrate && pnpm db:sync-preview && pnpm start
-```
+El flujo de un deploy de producción es:
 
-- `db:migrate` aplica las migraciones a `public`.
-- `db:sync-preview` re-aplica las mismas migraciones a `preview`, para que
-  el playground quede sincronizado con lo que acaba de entrar en prod.
-  Incluye la auditoría de permisos.
-- `pnpm start` levanta el servidor.
+1. Merge a `main`. Vercel redesplega `app.aquazaku.com`; Railway redesplega
+   `api.aquazaku.com`.
+2. Railway arranca el server con el último build mergeado. El server
+   responde 200 en `/health` apenas el pool conecta.
+3. **Después** del deploy, alguien corre las migraciones a mano:
+   ```bash
+   DATABASE_MIGRATION_URL=... pnpm db:migrate:prod
+   ```
+   El script anuncia a qué base y a qué schema va a apuntar antes de
+   tocarlos. Si hay algo mal, el rollback es `git revert` del commit —las
+   migraciones son idempotentes, así que re-aplicar no rompe nada.
 
-Si **cualquiera** falla, el deploy aborta. Es deliberado: nada falla para
-pasar a producción.
+:::caution[Por qué las migraciones NO son automáticas]
+[ADR-0009](/decisiones/0009-donde-corre-aquazaku/) asume que dos instancias
+no migran a la vez: una migración a medias es peor que un deploy demorado.
+Con `startCommand` migrando, un auto-deploy de Vercel que dispare un
+redeploy de Railway podría migrar mientras la app corre y romper el pool.
+
+El flujo de merge a `main` ya es deliberado (PR + review + merge).
+Agregar `pnpm db:migrate:prod` después del merge no introduce una
+nueva categoría de "olvidos".
+:::
+
+:::danger[El `startCommand` viejo tumbó producción durante un día]
+La versión anterior de esta página recomendaba
+`pnpm db:migrate && pnpm db:sync-preview && pnpm start`. Once deploys
+fallaron en silencio. La cadena ataba el arranque del server a la
+sincronización de preview: si `db:sync-preview` fallaba, `pnpm start` no
+corría y el healthcheck moría. La fix se documenta en
+[ADR-0011](/decisiones/0011-separacion-de-arranques/).
+:::
 
 ---
 
@@ -144,11 +161,11 @@ pasar a producción.
 
 | Falla | Comportamiento | Qué hacer |
 | --- | --- | --- |
-| Migración falla en deploy de preview | El deploy de Railway `staging` aborta. La URL del preview queda con la versión anterior. | Corregir la migración, pushear, esperar el redespliegue. |
-| Migración falla en deploy de prod | El deploy aborta. **Producción queda con el schema anterior**. | Revisar el log de Railway (`production`). Si la migración nueva tiene un bug, revertir el commit. |
-| Auditoría de permisos falla | El deploy aborta, en preview o en prod. | El log dice qué `GRANT`/`REVOKE` falta replicar. La causa típica es una migración nueva que olvidó su `REVOKE`. Se arregla en una migración siguiente. |
-| `db:sync-preview` falla después de un deploy de prod exitoso | El deploy aborta. **Producción ya quedó migrada**; el playground `preview` queda desincronizado. | Re-correr `pnpm db:sync-preview` a mano desde Railway. El próximo push a cualquier PR va a arreglar la desincronización, igual. |
-| Seed falla | El deploy de preview aborta. | El seed no toca prod — el problema es del script, no del schema. Corregir y pushear. |
+| Migración falla en deploy de staging | El deploy de Railway `staging` aborta. La URL del preview queda con la versión anterior. | Corregir la migración, pushear, esperar el redespliegue. |
+| Migración falla en deploy de prod (`pnpm db:migrate:prod`) | El comando aborta. **Producción queda con el schema anterior**; el server sigue corriendo con el código mergeado. | Revisar el log del comando. Si la migración nueva tiene un bug, revertir el commit. La app puede quedar sirviendo errores 500 hasta que se corrija. |
+| Auditoría de permisos falla en staging | El deploy de staging aborta. | El log dice qué `GRANT`/`REVOKE` falta replicar. La causa típica es una migración nueva que olvidó su `REVOKE`. Se arregla en una migración siguiente. |
+| `db:sync-preview` falla en staging | El deploy de staging aborta. **Producción no se ve afectada** —sus migraciones son separadas—. | Corregir y pushear. La próxima corrida del sync reintenta. |
+| Seed falla en staging | El deploy de staging aborta. | El seed no toca prod — el problema es del script, no del schema. Corregir y pushear. |
 | Vercel preview levanta pero el login devuelve `403` | Better Auth rechaza el `Origin` del preview. | Confirmar que `*.vercel.app` está en `trustedOrigins` (ver T6 del plan). |
 | Pool de Postgres setea `search_path` incorrecto | Los queries del preview leen datos de `public`. | Verificar que la variable `AQUAZAKU_ENV` está bien seteada en Railway. Si está bien, revisar que el código del pool use `connection: { search_path }` — no `options: '-c ...'`, que es libpq-style y **falla silenciosamente** con `postgres.js`. |
 
@@ -158,8 +175,14 @@ pasar a producción.
 
 ### Código
 
-Revert del commit. Las migraciones son idempotentes, así que re-aplicar el
-commit no rompe nada. Railway y Vercel detectan el push y redespliegan.
+Revert del commit. Railway y Vercel detectan el push y redesplegan. Las
+migraciones son idempotentes, así que re-aplicar el commit no rompe nada.
+
+Si la migración nueva que vino en el commit revertido ya se corrió a
+producción, **revertir el código no la deshace**. La app va a fallar al
+acceder a la columna o tabla que la migración nueva creó. En ese caso, se
+escribe una migración explícita que deshaga el cambio (`ALTER TABLE ...
+DROP COLUMN ...`) y se corre con `pnpm db:migrate:prod`.
 
 ### Schema
 
@@ -167,7 +190,7 @@ commit no rompe nada. Railway y Vercel detectan el push y redespliegan.
 que sigue funcionando:
 
 - `public` queda intacto.
-- El próximo deploy de preview lo recrea con `CREATE SCHEMA IF NOT EXISTS`
+- El próximo deploy de staging lo recrea con `CREATE SCHEMA IF NOT EXISTS`
   y vuelve a correr las migraciones desde cero.
 
 Lo que se pierde: los datos de prueba del último seed. Eso es **lo que
@@ -176,8 +199,8 @@ queremos**: un preview roto se arregla tirándolo a la basura.
 ### Permisos
 
 Si una migración nueva rompe los `REVOKE` del schema `preview`, la auditoría
-lo detecta y el deploy aborta. La fix es una migración nueva con los
-`GRANT`/`REVOKE` que faltan — siguiendo el patrón de `0015_audit_revoke`,
+lo detecta y el deploy de staging aborta. La fix es una migración nueva con
+los `GRANT`/`REVOKE` que faltan — siguiendo el patrón de `0015_audit_revoke`,
 que arregló un agujero pre-existente de `0001`.
 
 ---
@@ -190,19 +213,23 @@ prueba ejercita todo:
 1. Abrir una PR con un cambio trivial contra `main`.
 2. Esperar a que Vercel levante el preview y Railway termine el deploy de
    `staging`.
-3. Abrir la URL del preview. El log de Railway tiene que mostrar la
-   auditoría de permisos pasando (`✓ audit_log en "preview" es append-only
-   para aquazaku_app.`).
+3. Abrir la URL del preview. El log de Railway (`staging`) tiene que
+   mostrar la auditoría de permisos pasando (`✓ audit_log en "preview" es
+   append-only para aquazaku_app.`).
 4. Login con el admin del seed (`SEED_ADMIN_EMAIL`).
 5. Navegar un módulo. Si Better Auth rechaza con `403`, falta el wildcard
    en `trustedOrigins`.
-6. Mergear la PR. Vercel redesplega producción; Railway corre
-   `db:migrate && db:sync-preview && start`.
-7. Desde Railway `staging`, correr
+6. Mergear la PR. Vercel redesplega producción; Railway redesplega
+   `api.aquazaku.com` con el `startCommand` vacío — solo arranca el server.
+7. Correr las migraciones a mano:
+   ```bash
+   DATABASE_MIGRATION_URL=... pnpm db:migrate:prod
+   ```
+8. Desde Railway `staging`, correr
    `pnpm tsx scripts/auditar-permisos-preview.ts --schema=preview`. Tiene
    que pasar.
 
-Si los siete pasos pasan, el ambiente entero está sano.
+Si los ocho pasos pasan, el ambiente entero está sano.
 
 ---
 
