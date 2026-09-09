@@ -289,6 +289,33 @@ Sigue devolviendo `200` aunque la base falle, a propósito: un `503` haría que
 Railway reinicie el contenedor en bucle, y reiniciar `api` no levanta Supabase.
 Lo que cambia es que el cuerpo lo dice y el log lo grita.
 
+#### El ritmo del latido — fix del 9 de septiembre de 2026
+
+La primera versión del latido avisaba cuando el último `SELECT now()` tenía más
+de **30 minutos**. El intervalo entre latidos es de 6 horas. La diferencia es
+cinco veces el umbral, así que en teoría solo se alertaba en una de cada doce
+corridas — en la práctica, avisaba **el 92% del tiempo**.
+
+La causa: las dos puntas de la comparación no medían lo mismo. El umbral decía
+"30 minutos sin actividad de base", pero el intervalo decía "6 horas entre
+consultas". Con cualquier jitter de red, cualquier GC largo, cualquier
+redeploy intermedio, el timestamp del último latido se acercaba al umbral, y
+el monitor gritaba. **El umbral y el intervalo tenían que ser del mismo
+orden de magnitud**, o el sistema vivía gritando.
+
+El fix: subir el umbral a **45 minutos** y agregar un segundo criterio — la
+distancia al próximo latido esperado tiene que ser menor a 30 minutos. Si el
+intervalo se cumpliera exactamente, el último latido tendría 6 h 15 min al
+siguiente tick: está dentro de los 45 min, no avisa. Si el intervalo se
+estira a 8 horas por un delay, el último tendría 8 h 15 min: fuera de los
+45 min, sí avisa — pero el siguiente tick lo arregla. La alerta pasa de
+92% de las corridas a algo que solo se dispara cuando hay un problema real.
+
+La doc operativa del latido y los tests que lo fijan viven en
+`api/src/lib/latido.ts` y `api/src/lib/__tests__/latido.test.ts`. El
+umbral es un número en el código: si cambia la frecuencia del intervalo
+hay que cambiarlo también, o se vuelve a desbalancear.
+
 ### Deuda anotada, no escondida
 
 1. **Better-Auth no ve la IP del cliente** detrás del proxy de Railway, así que
