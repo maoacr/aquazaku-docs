@@ -284,6 +284,34 @@ Tampoco se pueden despachar más envases que recargas vendidas. Si hacen falta
 envases sueltos, eso es una entrega y va por su propio camino, donde queda con
 su motivo en vez de escondida en una venta.
 
+#### Registrarlo sin abandonar la venta
+
+La regla exige un cliente, y exigirlo a mitad de un cobro tiene un costo que no
+se ve en el enunciado: había que salir a la pantalla de clientes, llenar el
+formulario completo y volver **con el carrito vacío**, porque el mostrador vive
+en memoria. En la práctica eso empuja a no registrar a nadie.
+
+Por eso el alta se hace **desde el mismo mostrador**, en un diálogo, con lo
+mínimo para poder reclamar el envase: nombre, documento y un teléfono. La
+dirección no se pide ahí —esa persona está en el mostrador, no pidió domicilio—
+y se completa después desde su ficha.
+
+:::note[El teléfono viaja dentro del alta, y no es un detalle de comodidad]
+`POST /clientes/:id/telefonos` exige `clientes:editar`, y el rol `pos` **no lo
+tiene**: puede crear clientes, no modificarlos.
+
+Pero el `pos` es justo quien está en el mostrador cuando esta regla se dispara.
+Partir el registro en dos llamadas le daba 403 en la segunda: cliente creado, y
+sin número al cual llamar — el registro existía y no servía para lo único que se
+hizo.
+
+La salida fue que `POST /clientes` acepte un teléfono opcional, cubierto por
+`clientes:crear`. Las dos filas entran en la misma transacción: o queda el
+cliente con su número, o no queda ninguno. Cambiar o quitar teléfonos de un
+cliente que ya existía sigue exigiendo `editar`, así que el `pos` no ganó
+ningún poder nuevo sobre los registros ajenos.
+:::
+
 ## Bases
 
 Identificadas una por una. Se entregan en préstamo a una dirección.

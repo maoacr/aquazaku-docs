@@ -129,6 +129,12 @@ export default defineConfig({
 					collapsed: true,
 					items: [{ autogenerate: { directory: 'superpowers' } }],
 				},
+				{
+					// Mapas visuales del sistema, generados con archify. Cada
+					// diagrama es un HTML autocontenido en static/diagramas/.
+					label: 'Diagramas',
+					items: [{ autogenerate: { directory: 'diagramas' } }],
+				},
 			],
 		}),
 	],
