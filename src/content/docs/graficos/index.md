@@ -37,7 +37,7 @@ diagrama completo, con theme switch, pan/zoom y search integrados.
 # Ejemplo: deploy de producción
 node /Users/mao/.agents/skills/archify/bin/archify.mjs deliver \
   workflow /tmp/aquazaku-deploy-prod.json \
-  static/diagramas/aquazaku-deploy-prod.html \
+  public/diagrams/aquazaku-deploy-prod.html \
   --quality showcase
 ```
 

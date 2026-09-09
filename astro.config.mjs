@@ -133,7 +133,7 @@ export default defineConfig({
 					// Mapas visuales del sistema, generados con archify. Cada
 					// diagrama es un HTML autocontenido en static/diagramas/.
 					label: 'Diagramas',
-					items: [{ autogenerate: { directory: 'diagramas' } }],
+					items: [{ autogenerate: { directory: 'graficos' } }],
 				},
 			],
 		}),
