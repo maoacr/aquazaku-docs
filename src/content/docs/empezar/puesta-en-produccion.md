@@ -315,6 +315,44 @@ El esquema **valida al importarse**: si falta una, el proceso no arranca y dice
 cuál. Es a propósito — un servidor a medio configurar que igual levanta es peor
 que uno que no levanta.
 
+### El comando de arranque
+
+| Servicio | `startCommand` en Railway |
+| --- | --- |
+| **Producción** | *(vacío — usa el `CMD` del Dockerfile: `pnpm start`)* |
+| **Staging / preview** | `pnpm db:sync-preview && pnpm db:seed && pnpm start` |
+
+:::danger[Producción NO migra al arrancar]
+Durante un día el `startCommand` de producción fue
+`pnpm db:migrate && pnpm db:sync-preview && pnpm start`, y **todos los deploys
+fallaron**. El log lo mostraba exacto: `✓ migraciones aplicadas` y después nada
+— `pnpm start` nunca corrió, once healthchecks fallidos.
+
+Preview existe para no tocar producción, y quedó siendo su punto de falla.
+
+Además, migrar en el arranque contradice
+[ADR-0009](/decisiones/0009-donde-corre-aquazaku/): dos instancias migrando a la
+vez se pisan, y una migración a medias es peor que un deploy demorado.
+
+Producción se migra a mano, con `pnpm db:migrate:prod`, que anuncia a qué base
+va antes de tocarla.
+:::
+
+Staging sí migra al arrancar, y está bien: es descartable, y **si su schema
+quedó mal, no debería levantar**. `db:sync-preview` además verifica que la
+inmutabilidad del `audit_log` aterrizó en el schema `preview` — confiar en que
+un `sed` sobre las migraciones dejó los permisos correctos no es verificarlo.
+
+:::caution[El `CMD` del Dockerfile es la red]
+El contenedor sabe qué correr por sí solo. Si el `startCommand` de un servicio
+queda vacío, levanta el servidor y ya.
+
+Sacarlo del Dockerfile —como se hizo el 8 de septiembre— mueve el comportamiento
+del contenedor a una casilla de un panel: no se revisa en un diff, no se prueba
+en una máquina, y nadie la ve salvo quien la abra. Un cambio ahí rompió todos
+los deploys durante un día sin que nada avisara.
+:::
+
 ---
 
 ## 7. Desplegar `web`
