@@ -131,9 +131,20 @@ export default defineConfig({
 				},
 				{
 					// Mapas visuales del sistema, generados con archify. Cada
-					// diagrama es un HTML autocontenido en static/diagramas/.
+					// diagrama es un HTML autocontenido servido desde public/.
+					// Links directos al HTML puro: sin página .md intermedia,
+					// para que se vea con el diseño y los features de Archify.
 					label: 'Diagramas',
-					items: [{ autogenerate: { directory: 'graficos' } }],
+					collapsed: true,
+					items: [
+						{ label: 'Deploy de producción', link: '/diagrams/aquazaku-deploy-prod.html' },
+						{ label: 'Deploy de preview', link: '/diagrams/aquazaku-deploy-preview.html' },
+						{ label: 'Flujos por rol', link: '/diagrams/aquazaku-roles.html' },
+						{ label: 'Permisos por módulo', link: '/diagrams/aquazaku-permisos.html' },
+						{ label: 'Ciclo de vida de una venta', link: '/diagrams/aquazaku-venta-lifecycle.html' },
+						{ label: 'Ciclo de vida de un botellón', link: '/diagrams/aquazaku-botellon-lifecycle.html' },
+						{ label: 'Flujo de una venta', link: '/diagrams/aquazaku-venta-flujo.html' },
+					],
 				},
 			],
 		}),
