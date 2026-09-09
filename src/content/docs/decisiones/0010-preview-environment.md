@@ -210,12 +210,19 @@ Este ADR dejó de ser un plan el mismo día que se aceptó. Lo que se ejecutó:
 | `search_path` seteado en el pool con `connection` (no `options`) | ✅ |
 | `db:migrate --schema=preview` con `sed` y journal separado | ✅ |
 | `auditar-permisos-preview.ts` (REVOKE en `audit_log` del schema preview) | ✅ |
-| `sincronizar-preview` (post-deploy de prod) | ✅ |
+| `sincronizar-preview` (post-deploy de staging) | ✅ |
 | Guard `AQUAZAKU_ENV≠production` en el seed | ✅ |
 | `*.vercel.app` en `trustedOrigins` de Better Auth | ✅ |
 | `AQUAZAKU_ENV=development` en `docker-compose` | ✅ |
 | `0015_audit_revoke.sql` (gap pre-existente en `0001`) | ✅ |
-| PR de prueba end-to-end | 🔲 operativo |
+| PR de prueba end-to-end (T9 del SDD) | ✅ cerrado 9-sep-2026 |
+
+> **El cierre de T9 reveló dos bugs de fondo** que motivaron
+> [ADR-0011](/decisiones/0011-separacion-de-arranques/): el migrador
+> tenía `'public'` hardcoded (staging migraba producción en silencio) y el
+> `startCommand` de producción ataba su arranque al sync de preview. La
+> separación de concerns de ADR-0011 reemplaza al `startCommand` viejo que
+> esta página describía.
 
 Los tres hallazgos que no estaban en el plan original, y vale la pena
 recordar:
