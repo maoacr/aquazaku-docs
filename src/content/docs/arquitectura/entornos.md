@@ -109,11 +109,64 @@ Cada push a una PR dispara dos cosas:
    `preview` y no contra `public`) y corre la auditoría de permisos. Si
    la auditoría falla, el deploy de staging aborta —y queremos que
    aborte, porque un preview con el schema roto no debería pasar—. Después,
-   `db:seed` re-puebla el schema `preview` con datos de prueba. Corre en
-   **cada** deploy, no solo después del primero: cada push trunca y
-   reemplaza los datos. El guard de T5 rechaza `db:seed` si
-   `AQUAZAKU_ENV=production`, así que es seguro incluirlo en el `startCommand`
-   de staging.
+   `db:seed` siembra el catálogo y el administrador inicial. El guard de T5
+   rechaza `db:seed` si `AQUAZAKU_ENV=production`, así que es seguro incluirlo
+   en el `startCommand` de staging.
+
+:::caution[El preview NO se vacía en cada push: acumula]
+Es fácil suponer lo contrario, y esta página lo decía mal.
+
+Ni `db:sync-preview` ni `db:seed` truncan nada. El seed son **inserciones
+idempotentes**: el catálogo entra con `onConflictDoNothing`, y si ya hay un
+administrador activo responde *«Ya hay un administrador activo: no se creó
+ninguno»* y no toca nada.
+
+O sea que los clientes, ventas y movimientos que alguien cree probando **quedan
+ahí**, deploy tras deploy, hasta que alguien los saque a mano.
+
+Consecuencias prácticas:
+
+- Un preview con datos raros no se arregla volviendo a pushear.
+- Los tests manuales arrancan sobre lo que dejó la prueba anterior.
+- La contraseña del admin del preview **no se resetea**: si alguien entró una
+  vez y la cambió, vale la que puso, no la de `SEED_ADMIN_PASSWORD`.
+
+Para empezar de cero, el schema se tira entero:
+
+```sql
+DROP SCHEMA preview CASCADE;
+```
+
+El próximo deploy de staging lo recrea con `CREATE SCHEMA IF NOT EXISTS`,
+vuelve a correr las migraciones desde cero y siembra de nuevo. `public` queda
+intacto — son dos schemas separados en la misma base.
+:::
+
+#### Cómo se entra al preview
+
+Dos portones, uno detrás del otro, y el primero no es de Aquazaku.
+
+**1 · Vercel.** Los deployments de preview están protegidos: la URL redirige a
+`vercel.com/sso-api` antes de servir nada. No importa qué usuario de Aquazaku se
+intente — no se llega ni a la pantalla de login.
+
+Se pasa entrando a [vercel.com](https://vercel.com) con la cuenta del proyecto,
+**en el mismo navegador**, y volviendo a abrir el enlace. La protección se puede
+apagar en *Project Settings → Deployment Protection*, pero conviene dejarla: un
+preview con datos de prueba abierto a internet es superficie que no hace falta.
+
+**2 · Aquazaku.** Recién ahí aparece el login de la app, y la contraseña de
+producción **no sirve**: el preview vive en el schema `preview`, que tiene su
+propia tabla `users`.
+
+| | |
+| --- | --- |
+| Usuario | `SEED_ADMIN_EMAIL` del environment **staging** de Railway |
+| Contraseña | `SEED_ADMIN_PASSWORD` del **mismo** environment |
+| Primer ingreso | pide cambiarla: el seed deja `mustChangePassword` en `true` |
+
+Y como el preview acumula, si alguien ya entró y la cambió, **vale la que puso**:
+nada la resetea salvo tirar el schema.
 
 ### Producción
 
@@ -229,8 +282,9 @@ que sigue funcionando:
 - El próximo deploy de staging lo recrea con `CREATE SCHEMA IF NOT EXISTS`
   y vuelve a correr las migraciones desde cero.
 
-Lo que se pierde: los datos de prueba del último seed. Eso es **lo que
-queremos**: un preview roto se arregla tirándolo a la basura.
+Lo que se pierde: **todo lo acumulado**, no solo lo del último seed — el
+preview no se vacía en cada push. Eso es justamente lo que queremos: un
+preview roto se arregla tirándolo a la basura.
 
 ### Permisos
 
