@@ -135,6 +135,42 @@ El flujo de un deploy de producción es:
    tocarlos. Si hay algo mal, el rollback es `git revert` del commit —las
    migraciones son idempotentes, así que re-aplicar no rompe nada.
 
+:::danger[Una migración que RENOMBRA invierte este orden]
+El flujo de arriba —desplegar y después migrar— vale para migraciones
+**aditivas**: agregar una columna nullable, una tabla, un índice. Ahí el código
+viejo sigue funcionando contra el schema nuevo, y el código nuevo aguanta hasta
+que la migración corra.
+
+Una migración que **renombra o convierte** una columna no tiene esa propiedad, y
+el orden documentado rompe la planta. Medido contra la base con `0016`, que
+renombró `nombre` a `nombre_libre` y lo reemplazó por una columna generada:
+
+| Orden | Leer clientes | Registrar cliente |
+| --- | :-: | --- |
+| **Migrar primero**, desplegar después | ✅ | ❌ solo el alta, durante el deploy |
+| Desplegar primero, migrar después | ❌ | ❌ |
+
+Con el código nuevo contra el schema viejo, el `SELECT` pide columnas que no
+existen: **se cae todo lo de clientes**, y con eso ventas, retornables y
+cartera.
+
+Migrando primero el sistema sigue funcionando —se vende, se consulta, se
+cobra— y lo único que falla es dar de alta un cliente nuevo, durante los dos
+minutos del deploy.
+
+**Cómo se hace**: con la rama en local, antes de mergear.
+
+```bash
+DATABASE_MIGRATION_URL=... pnpm db:migrate:prod
+```
+
+La alternativa sin ventana es expandir y contraer —agregar las columnas
+nuevas, desplegar código que escriba las dos formas, y recién después
+convertir la vieja—. Son tres despliegues coordinados para ahorrar dos
+minutos en un negocio que trabaja de día: no vale la pena acá, pero sí el
+día que la planta opere de noche.
+:::
+
 :::caution[Por qué las migraciones NO son automáticas]
 [ADR-0009](/decisiones/0009-donde-corre-aquazaku/) asume que dos instancias
 no migran a la vez: una migración a medias es peor que un deploy demorado.
