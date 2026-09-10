@@ -353,6 +353,53 @@ Cliente "Panadería del Centro"
 **Por qué:** si la base se asignara al cliente, no sabrías a cuál de sus tres
 locales ir a buscarla. La dirección es lo que hace reclamable el préstamo.
 
+#### La base puede salir CON la venta
+
+Entregar una base era un segundo acto en otra pantalla: cobrar, y después
+acordarse de ir a Retornables a registrar el préstamo. El segundo acto es el que
+se olvida — con la base ya en el auto del cliente, nadie vuelve. Es exactamente
+el mismo problema que resolvió
+[RN-ENV-09](#rn-env-09--ningún-botellón-sale-del-parque-sin-un-responsable) con
+los botellones.
+
+Así que el mostrador ofrece llevarse una base, y el préstamo entra **en la misma
+transacción que la venta**.
+
+:::caution[Si la base no se puede prestar, no hay venta]
+Si el préstamo falla —la base figura en otra dirección, el cliente no está
+verificado— la venta entera se cae.
+
+Y está bien: quien atiende todavía no cobró, corrige el número y vuelve a
+intentar. Al revés quedaría lo peor de los dos mundos: una venta registrada y
+una base saliendo por la puerta sin ninguna fila que la reclame.
+:::
+
+Se identifica por el **sticker**, no por el id interno: en el mostrador nadie
+conoce el UUID de una base, conoce el `0042` pegado encima. Y la dirección se
+elige entre las **de ese cliente**, que se piden recién cuando ya se sabe de
+quién — con una sola, viene elegida.
+
+:::danger[Llevar una base exige `bases:prestar`, aunque sea dentro de una venta]
+El rol `seller` tiene `ventas:crear` y **no** tiene `bases:prestar`. Sin un
+chequeo propio, este campo nuevo sería una puerta de atrás a la matriz: prestar
+bases mandando un dato más en el cuerpo de una venta.
+
+Es [RN-ACC-02](/dominio/roles-y-permisos/) en su forma menos obvia. La regla no es «cada
+ruta valida su permiso» — es «cada **acción** valida el suyo», y esta ruta hace
+dos.
+:::
+
+#### Dónde está cada base lo resuelve un JOIN
+
+La pantalla de Retornables pedía las direcciones de **todos** los clientes para
+poder cruzar cuál corresponde a cada base: una petición por cliente. Con los
+cuarenta de hoy pasa desapercibido; con mil son **mil una** peticiones cada vez
+que alguien abre la pantalla, para mostrar como mucho cuarenta direcciones.
+
+`GET /bases` ahora devuelve la ubicación pegada a cada base. Medido contra la
+base de desarrollo: **una consulta, 0,8 ms** para las 38 bases. Y la carga de la
+pantalla pasó a hacer **cero** peticiones a `/clientes`.
+
 :::danger[Consecuencia sobre el modelo]
 Esto convierte a la **dirección** en una entidad de primer orden, no en un campo
 de texto de la ficha del cliente.
