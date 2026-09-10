@@ -11,6 +11,11 @@ en qué orden, desde qué carpeta y en qué plataforma.
 [Puesta en producción](/empezar/puesta-en-produccion/) explica cómo se armó la
 infraestructura una vez. Esta explica cómo se despliega **cada cambio**.
 
+Y [Checklist de despliegue](/empezar/checklist-de-despliegue/) es la que se
+recorre cada vez: qué verificar en cada ambiente, el respaldo antes de migrar, y
+las cinco cosas que nunca se hacen contra producción ahora que hay clientes
+reales cargados.
+
 ## Primero: el mapa
 
 Tres repositorios separados, tres plataformas, una sola base de datos.
