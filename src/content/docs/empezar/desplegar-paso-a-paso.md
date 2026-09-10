@@ -228,6 +228,28 @@ Mientras aparezca `faltan`, el código desplegado está pidiéndole a la base al
 que no tiene. `status` sigue diciendo `ok` porque el **servidor** está sano —
 lo que está mal es el schema, y por eso se reporta aparte.
 
+:::caution[`faltan` se calcula UNA VEZ, al arrancar el proceso]
+Y por eso **sigue apareciendo después de migrar**, aunque la migración haya
+entrado bien. El proceso vio el schema viejo al nacer y repite eso hasta que
+alguien lo reinicie:
+
+> «Se revisa una vez al arrancar: el esquema no cambia mientras el proceso vive.»
+> — `src/lib/latido.ts`
+
+Es cierto para el caso normal —las migraciones no se aplican solas— pero
+justamente falso durante un despliegue, que es cuando uno mira este campo.
+
+Para saber si entró **sin esperar**, preguntale a la base:
+
+```sql
+select column_name from information_schema.columns
+where table_schema = 'public' and table_name = '<la tabla que cambió>';
+```
+
+Y para que `/health` deje de mentir, reiniciar el servicio en Railway. Es
+cosmético: la app ya está funcionando contra el schema nuevo.
+:::
+
 Y la comprobación que ninguna consola reemplaza: entrá a
 [app.aquazaku.com](https://app.aquazaku.com) y registrá **un** cliente de
 verdad.
