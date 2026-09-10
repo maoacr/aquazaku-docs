@@ -606,6 +606,105 @@ el piso que cualquier código de descuento puede alcanzar — ver
 
 ---
 
+### RN-CLI-17 — El nombre del cliente se guarda partido, y el que se muestra lo genera la base
+
+**Estado:** ✅ Confirmada (9-sep-2026, salió de la primera demo).
+
+El registro pedía **un** campo «nombre», y ahí entraba todo: `Rosa Elena Padilla
+Gómez`, `rosa padilla`, `Doña Rosa`, `Rosa (la de la esquina)`. Cuatro formas de
+escribir a la misma persona, ninguna ordenable por apellido y ninguna buscable
+por él.
+
+#### Las partes
+
+| Campo | ¿Obligatorio? | Para qué |
+| --- | :-: | --- |
+| `primer_nombre` | sí, si es persona | |
+| `segundo_nombre` | no | Falta seguido, y no pasa nada |
+| `apellidos` | sí, si es persona | Los dos juntos: partirlos en paterno y materno obliga a decidir un orden que no siempre se sabe |
+| `apodo` | no | **Cómo se la conoce**, que no es cómo se llama |
+| `nombre_libre` | sí, si es negocio | La razón social |
+
+:::tip[El apodo no es folklore]
+En Campo de la Cruz a la gente se la ubica por el apodo. Quien atiende el
+mostrador escucha *«vengo de parte de la Cuca»* mucho antes que un apellido.
+
+Sin un campo propio ese dato se metía **dentro** del nombre —«Rosa (la de la
+esquina)»— y ensuciaba el nombre que va en una factura. Por eso el apodo se
+guarda aparte y **no entra** en `nombre`.
+:::
+
+#### Dos caminos, uno por cliente
+
+«Panadería del Centro» no tiene nombre de pila. Pedirle apellidos a un negocio
+sería inventar un dato — y lo que pasa de verdad es que alguien escribe
+«Panadería» en primer nombre y «del Centro» en apellidos.
+
+Así que una **persona** se nombra por partes y un **negocio** por su nombre
+libre. El formulario hace una sola pregunta —¿persona o negocio?— y de ahí sale
+qué campos muestra.
+
+Un CHECK prohíbe tener las dos formas a la vez. Sin él, partirle el nombre a un
+negocio dejaba la razón social vieja colgando: invisible, y aparentemente
+vigente para el próximo que lea la tabla.
+
+#### `nombre` es una columna GENERADA
+
+No la escribe la aplicación. La compone Postgres:
+
+```sql
+nombre text GENERATED ALWAYS AS (
+  COALESCE(
+    NULLIF(btrim(regexp_replace(
+      COALESCE(primer_nombre,'') || ' ' || COALESCE(segundo_nombre,'') || ' ' ||
+      COALESCE(apellidos,''), '\s+', ' ', 'g')), ''),
+    nombre_libre
+  )
+) STORED NOT NULL
+```
+
+**Por qué**: el invariante es que el nombre que se muestra **siempre concuerde
+con sus partes**. Si lo compusiera el servicio, un `UPDATE` a mano —una
+corrección, un script de migración— podría dejar `nombre` diciendo «Rosa
+Padilla» mientras `apellidos` dice «Gómez». Y eso no falla ruidosamente: se ve
+bien en un lado y mal en el otro, y nadie sabe cuál creer.
+
+Es [ADR-0006](/decisiones/0006-invariantes-en-la-base/) aplicado: el invariante
+vive en la base, el servicio explica.
+
+:::caution[`concat_ws` no sirve en una columna generada]
+Postgres la considera **no inmutable** y rechaza la columna con *«generation
+expression is not immutable»*. Se comprobó. Por eso la expresión usa operadores
+de texto y un `regexp_replace`, que sí lo son — y ese `regexp_replace` es además
+lo que colapsa el hueco que deja un segundo nombre ausente.
+:::
+
+#### Lo que la base garantiza
+
+| Restricción | Qué impide |
+| --- | --- |
+| `NOT NULL` sobre `nombre` | Un cliente sin ninguna forma de nombre |
+| `clientes_nombre_partido_completo` | Un apellido suelto, o un nombre de pila sin apellidos |
+| `clientes_segundo_nombre_necesita_primero` | Un segundo nombre huérfano |
+| `clientes_una_sola_forma_de_nombre` | Las dos formas conviviendo |
+| `clientes_partes_sin_vacios` | Cadenas vacías disfrazadas de dato |
+
+El servicio valida lo mismo **antes**, y no para reemplazar a la base sino para
+dar un mensaje que sirva: el error crudo de un CHECK no le dice nada a quien
+está llenando un formulario. Hay un test que los cruza — cada nombre imposible
+se prueba contra el servicio *y* contra la base, porque si divergen el usuario
+recibe un 500 en vez de una explicación.
+
+#### Editar reemplaza el nombre entero
+
+Un cambio parcial no se puede interpretar: si llega solo `apellidos`, ¿el primer
+nombre se conserva, o la persona pasó a llamarse solo por apellido? Así que
+mencionar cualquier campo del nombre reemplaza los cinco. Como los ausentes
+viajan en `NULL`, borrar un segundo nombre o un apodo se hace omitiéndolo, sin
+un verbo aparte para «borrar».
+
+---
+
 ## Preguntas abiertas
 
 - ¿Se cobra depósito o garantía por la base prestada? *(Cerrada — no se cobra;
