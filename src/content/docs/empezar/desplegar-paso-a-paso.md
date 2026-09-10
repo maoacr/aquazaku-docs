@@ -97,8 +97,24 @@ cartera.
 
 ```bash
 cd ~/code/aquazaku/api
-pnpm db:respaldo
+DATABASE_MIGRATION_URL='<cadena de Supabase>' pnpm db:respaldo
 ```
+
+:::danger[Sin la cadena, respalda TU MÁQUINA]
+`db:respaldo` lee `DATABASE_MIGRATION_URL` — la misma variable que el migrador —
+y el script corre con `--env-file-if-exists=.env`, que apunta a `localhost`. Sin
+pasarla explícitamente, el respaldo sale de `aquazaku_dev` y **termina con un
+`✓` que parece éxito**.
+
+Como el migrador, anuncia el destino antes de empezar:
+
+```
+→ respaldando postgres.taytdxptguvrszjtsroz@aws-0-us-east-1.pooler.supabase.com/postgres
+```
+
+Si dice `aquazaku@localhost/aquazaku_dev`, ese respaldo no sirve para lo que lo
+pediste.
+:::
 
 ### C.2 — Migrar producción, ANTES de mergear
 
