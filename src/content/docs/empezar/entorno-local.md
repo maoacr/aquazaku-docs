@@ -9,6 +9,11 @@ Todo lo que necesitás instalado antes de escribir la primera línea de `api/` o
 `web/`. Si el entorno no está, la [Task 1 del plan de M0](/arquitectura/roadmap/)
 falla en el primer paso.
 
+:::note[Esta página se lee UNA vez]
+Es la instalación. Lo de todos los días —qué levantar, en qué orden y cómo saber
+que quedó bien— está en [Arrancar a trabajar](/empezar/arrancar-a-trabajar/).
+:::
+
 ## Requisitos
 
 | Herramienta | Versión | Para qué |
@@ -152,6 +157,9 @@ node -v && pnpm -v
 
 Esperado: `accepting connections`, la lista de extensiones con `citext` y
 `pgcrypto`, `200`, `4.x`, `v22.x`, `11.x`.
+
+Con eso la máquina está lista. De acá en adelante, cada vez que te sientes a
+trabajar: [Arrancar a trabajar](/empezar/arrancar-a-trabajar/).
 
 ## Gestionar los servicios
 
