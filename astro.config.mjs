@@ -79,12 +79,20 @@ export default defineConfig({
 			sidebar: [
 				{
 					label: 'Empezar acá',
+					// Esta lista es EXPLÍCITA: no autogenera. Una página nueva en
+					// `empezar/` no aparece sola por tener `sidebar: order:` en su
+					// frontmatter — ese campo solo ordena grupos autogenerados.
+					// Agregar el .md y no tocar esto publica una página invisible,
+					// que es lo que pasó con «Arrancar a trabajar» y «Desplegar».
 					items: [
 						{ label: 'Visión general', slug: 'empezar/vision-general' },
 						{ label: 'Glosario del negocio', slug: 'empezar/glosario' },
 						{ label: 'Qué falta preguntar', slug: 'empezar/pendientes' },
 						{ label: 'Entorno local', slug: 'empezar/entorno-local' },
+						{ label: 'Arrancar a trabajar', slug: 'empezar/arrancar-a-trabajar' },
 						{ label: 'Puesta en producción', slug: 'empezar/puesta-en-produccion' },
+						{ label: 'Desplegar, paso a paso', slug: 'empezar/desplegar-paso-a-paso' },
+						{ label: 'Checklist de despliegue', slug: 'empezar/checklist-de-despliegue' },
 					],
 				},
 				{
