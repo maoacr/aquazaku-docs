@@ -64,12 +64,30 @@ gh pr merge --merge
 
 Railway y Vercel detectan el push a `main` y redespliegan. Listo.
 
-## Caso B — Con migración ADITIVA
+## Caso B — Con migración ADITIVA que el código nuevo NO usa todavía
 
 Aditiva quiere decir que solo **agrega**: una columna nullable, una tabla, un
-índice. El código viejo no se entera de que existe.
+índice. Y la condición que importa es la segunda mitad: que **el código que se
+está desplegando no la lea**.
 
 Ahí el orden documentado funciona: mergear primero, migrar después.
+
+:::danger[Si el código nuevo la NECESITA, esto no aplica]
+«Aditiva» describe qué le hace al schema, no si se puede mergear primero. Una
+migración que solo INSERTA dos filas es aditiva de manual — y si el código que
+va a desplegarse las lee al arrancar, mergear antes lo deja pidiendo algo que no
+existe.
+
+Pasó con M15: tres `INSERT` en `parametros` habrían dejado el tablero de
+producción en un error boundary, no solo sin el panel nuevo.
+
+La pregunta no es «¿agrega o renombra?». Es **¿el código que voy a desplegar
+funciona sin esto?** Si la respuesta es no, va por el Caso C aunque la migración
+no toque ninguna columna existente.
+
+El detalle está en
+[Checklist de despliegue](/empezar/checklist-de-despliegue/#fase-3--el-despliegue).
+:::
 
 ```bash
 gh pr merge --merge

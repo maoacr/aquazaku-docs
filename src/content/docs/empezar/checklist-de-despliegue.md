@@ -244,11 +244,46 @@ tiene los tres casos con sus comandos. El resumen para decidir cuál:
 | ¿Trae migración? | ¿Qué hace? | Orden |
 | --- | --- | --- |
 | No | — | Mergear. Listo |
-| Sí | Solo **agrega** (columna nullable, tabla, índice) | Mergear → migrar |
+| Sí | Agrega algo que el código nuevo **todavía no usa** | Mergear → migrar |
+| Sí | Agrega algo que el código nuevo **necesita para funcionar** | **Migrar → mergear** |
 | Sí | **Renombra** o convierte | **Migrar → mergear** |
 
-El orden del tercer caso está invertido a propósito, y no es preferencia: el
-otro orden tumba clientes, y con eso ventas, retornables y cartera.
+El orden de los dos últimos está invertido a propósito, y no es preferencia: el
+otro orden tumba la planta.
+
+:::danger[«Aditiva» no quiere decir «se puede mergear primero»]
+La primera versión de esta tabla decía que toda migración aditiva se mergea
+antes de migrar. **Está mal**, y la distinción es quién necesita lo que se
+agrega:
+
+- Si la columna nueva es para código que viene **después**, el código viejo la
+  ignora y el orden da igual.
+- Si el código que se está desplegando **la lee**, mergear primero lo deja
+  pidiendo algo que no existe.
+
+Lo encontró M15. La migración `0017` solo INSERTA dos filas en `parametros` —
+aditiva de manual— pero `clientesALlamar()` las lee al arrancar. Desplegar
+`web` antes de migrar habría dado un **500**, y `siPuedeVerlo` solo se traga el
+403 a propósito:
+
+> «esconder un panel porque el backend está roto convierte una falla ruidosa en
+> un tablero que miente por omisión»
+
+O sea que ese 500 sube al error boundary y **se cae el tablero entero**, no solo
+el panel nuevo. Una migración de tres `INSERT` habría dejado a la planta sin
+pantalla de inicio.
+
+La pregunta correcta no es «¿agrega o renombra?». Es: **¿el código que voy a
+desplegar funciona sin esto?**
+:::
+
+Cuando la respuesta es que no, `api` igual se puede mergear antes de migrar
+—nadie llama todavía al endpoint nuevo— pero `web` **no**, porque es quien lo
+llama. El orden que sale de ahí:
+
+1. Mergear `api`
+2. Respaldo y migración
+3. Mergear `web`
 
 **Las migraciones no corren solas.** El `startCommand` de producción está vacío
 a propósito ([ADR-0011](/decisiones/0011-separacion-de-arranques/)): el
