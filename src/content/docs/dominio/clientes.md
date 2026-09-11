@@ -705,8 +705,91 @@ un verbo aparte para «borrar».
 
 ---
 
+### RN-CLI-18 — Un cliente que hace días que no compra se muestra para llamar
+
+**Estado:** ⚠️ Supuesto — los números esperan confirmación (pregunta 48).
+
+Un botellón de 20 L de una casa dura alrededor de una semana. Pasada esa semana
+el cliente no «está por pedir»: **ya se le acabó**, y o llamó a otra planta o
+está aguantando. En los dos casos Aquazaku se enteró tarde.
+
+La fecha de la última venta siempre estuvo en la base. Esto no agrega
+información al sistema: agrega la pregunta que nadie estaba haciendo.
+
+#### Dos franjas, porque son dos conversaciones
+
+| Días sin comprar | Franja | Qué es esa llamada |
+| --- | --- | --- |
+| menos de `dias_recompra_aviso` | — | No aparece |
+| desde `dias_recompra_aviso` | **Aviso** | Una oferta: «¿le mandamos uno?» |
+| desde `dias_recompra_urgente` | **Urgente** | Una recuperación: ya compró en otro lado |
+
+Quien atiende el teléfono no las hace igual, y una lista sola no deja priorizar
+cuando no hay tiempo de llamar a todos.
+
+Los dos umbrales son **parámetros**, no constantes: arrancan en 5 y 8 días y se
+cambian desde **Alertas** en la administración, igual que el aviso de
+vencimiento — la regla general está en
+[RN-STK-11](/dominio/stock/). Un número que alguien va a querer mover no puede
+exigir un despliegue.
+
+:::caution[El aviso tiene que ser MENOR que el urgente]
+Con `aviso >= urgente` no queda ninguna franja intermedia: el panel muestra a
+todos como urgentes, o a nadie. Es un error de configuración que se ve como un
+sistema que dejó de avisar.
+
+Lo sostiene un **trigger** de la migración `0017`, no solo el servicio. La regla
+cruza dos filas de una tabla clave-valor y un `CHECK` solo ve la suya — y va en
+la base porque un `psql` a las once de la noche no pasa por el servicio
+([ADR-0006](/decisiones/0006-invariantes-en-la-base/)).
+
+**Consecuencia práctica**: para mover los dos umbrales hacia arriba hay que
+cambiar primero el urgente. Al revés, el primer `UPDATE` rebota.
+:::
+
+#### Qué cuenta como haber comprado
+
+Solo las ventas **confirmadas de producto**, y cada exclusión tiene su motivo:
+
+| No cuenta | Por qué |
+| --- | --- |
+| Una venta **anulada** | El cliente figuraría como atendido sin haberse llevado nada — y justamente quien tuvo un problema con su pedido es a quien más hay que llamar |
+| Un **recargo por daño** de base | Es una deuda, no agua que se acaba. Cobrarle el daño a alguien lo sacaría de la lista justo cuando más razón hay para llamarlo |
+| Una venta **de mostrador sin cliente** | No hay a quién llamar |
+| Quien **nunca compró** | No es una recompra, es un cliente nuevo. Si entrara, cada alta figuraría como urgente el mismo día de registrarse |
+
+#### El botón de WhatsApp no aparece sobre un fijo
+
+Los teléfonos se guardan como texto libre, y conviven celulares con fijos en el
+mismo cliente. Colombia renumeró en 2022: **los fijos quedaron con diez dígitos
+igual que un celular**, así que ya no se distinguen por largo — solo por el
+primer dígito, que en un celular es `3`.
+
+`wa.me` con un fijo abre WhatsApp y contesta que ese número no existe. Un botón
+que a veces lleva a una pared obliga a comprobar cada vez, y termina siendo un
+botón en el que nadie confía — tampoco donde sí funciona.
+
+El número llega armado desde `api`, igual que `legible` en las direcciones: la
+regla que decide qué es un celular vive de un solo lado. El fijo **se sigue
+mostrando**, porque se puede llamar aunque no se pueda escribir.
+
+:::danger[No se toman «los últimos diez dígitos»]
+Es la tentación obvia para que cualquier número entre, y convierte uno de
+México en uno colombiano que le pertenece a **otra persona**. El mensaje sale
+igual, con el nombre de tu cliente adentro.
+
+Un indicativo que no es el de Colombia se rechaza en vez de recortarse.
+:::
+
+---
+
 ## Preguntas abiertas
 
 - ¿Se cobra depósito o garantía por la base prestada? *(Cerrada — no se cobra;
   ver [RN-BAS-08](/dominio/botellones-y-bases/)).*
 - ¿Puede una dirección quedar sin ruta asignada? (Hoy sí: compra en mostrador.)
+- **48.** ¿A los cuántos días sin comprar hay que llamar a un cliente, y a
+  partir de cuántos es urgente? Hoy están en **5 y 8** como supuesto
+  ([RN-CLI-18](#rn-cli-18--un-cliente-que-hace-días-que-no-compra-se-muestra-para-llamar)).
+  El número correcto depende de cuánto dura un botellón en una casa de la zona,
+  y eso lo sabe quien reparte.
