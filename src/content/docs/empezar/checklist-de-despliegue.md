@@ -152,6 +152,29 @@ Necesita dos condiciones que la base de desarrollo no cumple —estar vacía y
 tener un solo administrador—, así que va contra la base de **tests**, en el
 3002. Está la configuración `api-pruebas` en `.claude/launch.json`.
 
+:::caution[«Vacía» quiere decir RESETEADA, no «recién sembrada»]
+`pnpm db:seed` es idempotente, pero **no borra lo que ya está**. Correrlo sobre
+una base que ya tuvo una pasada de Bruno deja los clientes, las ventas y las
+bases de la corrida anterior, y la siguiente pasada choca contra ellos.
+
+Medido: **94 de 254 peticiones en rojo**, todas por documentos duplicados y
+estados que ya no eran los del arranque. Ninguna tenía que ver con el cambio que
+se estaba probando, y leerlas como «rompí el contrato» cuesta media hora.
+
+CI no lo sufre porque levanta un Postgres nuevo en cada corrida. En tu máquina
+hay que resetear a mano, y **el cómo importa**: está en
+[Exploración de la API](/backend/exploracion-api/), junto con las dos formas de
+hacerlo mal que se reportan como éxito.
+:::
+
+:::tip[La cobertura de rutas no es cobertura de contrato]
+`pnpm bruno:cobertura` dice qué rutas no tienen ninguna petición. Puede marcar
+**100%** y no ejercer la forma que acabás de agregar: cuenta rutas, no cuerpos.
+
+Pasó en M16 — 99/99 rutas cubiertas, y el `telefonos` plural del alta no lo
+tocaba nadie. Si cambiaste la FORMA y no la ruta, el script no te va a avisar.
+:::
+
 ---
 
 ## Fase 1 — El preview
