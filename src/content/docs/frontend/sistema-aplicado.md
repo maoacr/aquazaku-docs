@@ -126,6 +126,37 @@ resuelve con `:has(input:focus-visible)` sobre la ficha, **nunca** apagando la
 regla global — que es la trampa que ya dejó el foco invisible una vez.
 :::
 
+:::danger[Una ficha se estira sola: dos veces, en los dos ejes]
+El `min-height: 44px` es un **mínimo**. Lo que la ficha mida de verdad lo decide
+el contenedor, y por defecto los dos ejes la estiran:
+
+| Eje | Qué la estira | El freno |
+| --- | --- | --- |
+| Ancho | `justify-items: stretch`, el default de un grid | `justify-self: start`, ya está en `.aq-ficha` |
+| Alto | `align-self: stretch`, el default de un ítem de grid | `self-start` **en el contenedor de las fichas** |
+
+Las dos veces medimos el mismo tipo de disparate: una ficha de **1.237 px** de
+ancho para ocho palabras, y una de **186 px** de alto para una que dice «Una
+persona».
+
+El caso del alto es más traicionero porque el estirón viene de **dos niveles
+arriba**. En M16, el paso 1 del alta es un grid de dos columnas, y en la misma
+fila conviven el fieldset del documento —que sí necesita 186 px, tiene el aviso
+de duplicado debajo— y el de «Quién es», que necesita 68. El segundo se estira a
+la altura de la fila, ese estirón baja al `flex` de adentro, y las pastillas
+heredan los 186.
+
+No es solo feo: una ficha de 186 px le da a una opción normal el peso visual de
+una alarma, y **el objetivo táctil deja de coincidir con lo que se ve** — se
+activa tocando muy lejos del texto.
+
+Es la misma familia que el `align-content: start` de `.aq-etiqueta-campo`, y por
+eso los campos de al lado no sufrían lo mismo.
+
+jsdom no hace layout: la suite entera puede estar verde con esto puesto. Se
+encuentra **midiendo en el navegador**, no leyendo el JSX.
+:::
+
 ## Un canal, no cuatro márgenes
 
 Había **tres valores** para la misma distancia: el menú a 12 px del borde, el
@@ -343,6 +374,51 @@ documentación. Son otro lector.
   los dos modos, más el enlace suave. Sin esa fila, el celeste `#8CF0FA` que se
   ve bien en oscuro cruzaba a modo claro —donde da 1,2:1— y no se enteraba nadie
   hasta abrirlo de día.
+
+## Un botón que cambia de `type` cobra dos veces
+
+En un formulario de varios pasos es natural que el primario cambie de papel:
+«Siguiente» mientras faltan pasos, «Registrar» en el último. Escrito como un
+ternario, React **reusa el mismo nodo** y solo le cambia el atributo.
+
+```tsx
+// ❌ Un clic en «Siguiente» del paso 2 registra el cliente
+{paso === 3
+  ? <button type="submit">Registrar cliente</button>
+  : <button type="button" onClick={siguiente}>Siguiente</button>}
+```
+
+La secuencia es esta, y no se ve leyendo el JSX:
+
+1. El clic dispara `onClick` y el estado pasa a 3.
+2. Un clic es un evento **discreto**: React repinta de forma síncrona, todavía
+   dentro del despacho, y le deja al botón `type="submit"`.
+3. El navegador evalúa la **acción por defecto** del clic recién después de
+   despachar el evento — y la mira sobre el botón **como quedó**.
+4. Envía el formulario. `onSubmit` ve `paso === 3` y registra.
+
+Un clic, dos efectos: se saltea el paso 3 y se guarda un cliente sin dirección.
+
+**La regla: ningún botón adentro de un formulario controlado por JavaScript
+lleva acción por defecto.** Todos `type="button"`, y el envío por `Enter` lo
+sigue manejando el `onSubmit` del formulario.
+
+:::danger[jsdom no implementa el envío implícito — el test miente]
+Un caso que hace el clic y espera no ver el alta **pasa igual con el defecto
+puesto**. Pasa por la razón equivocada.
+
+Lo que muerde es asertar el **atributo**:
+
+```tsx
+for (const boton of screen.getAllByRole('button')) {
+  expect(boton, `paso ${paso}: «${boton.textContent}»`).toHaveAttribute('type', 'button')
+}
+```
+
+Verificado por ablación: al volver a `type="submit"`, el test muere y **nombra
+el botón exacto**. Es la misma defensa que ya protegía el alta del mostrador,
+donde un botón sin `type` **cobraba la venta**.
+:::
 
 ## Qué se decidió NO construir
 

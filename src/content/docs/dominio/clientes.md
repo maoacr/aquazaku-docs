@@ -783,6 +783,66 @@ Un indicativo que no es el de Colombia se rechaza en vez de recortarse.
 
 ---
 
+### RN-CLI-19 — El alta captura todo lo que el `pos` no va a poder agregar después
+
+**Estado:** ✅ Confirmada — se deriva de [RN-ACC-02](/dominio/roles-y-permisos/) y [RN-BAS-03](/dominio/botellones-y-bases/).
+
+`POST /clientes` acepta, **en la misma transacción**, el cliente, uno o varios
+teléfonos y una dirección. No es una comodidad de pantalla: es la única puerta
+que tiene el `pos` para cargar esos datos.
+
+| Endpoint | Permiso que pide | ¿Lo tiene el `pos`? |
+| --- | --- | :-: |
+| `POST /clientes` | `clientes:crear` | ✅ |
+| `POST /clientes/:id/telefonos` | `clientes:editar` | ❌ |
+| `POST /clientes/:id/direcciones` | `clientes:editar` | ❌ |
+
+El `pos` es quien atiende el mostrador: puede **crear** clientes, no
+modificarlos. Si el teléfono y la dirección no entran en el alta, no entran
+nunca — y entonces:
+
+- Se registra a alguien que se llevó un botellón sin devolver el vacío
+  (RN-ENV-09) y **no queda a quién llamar**.
+- [RN-BAS-07](/dominio/botellones-y-bases/) le da autonomía al `pos` para
+  prestarle una base a un cliente verificado, pero **una base se presta a una
+  DIRECCIÓN** (RN-BAS-03). Sin esto puede prestar la base y no puede crear la
+  dirección a la que se presta: ese cliente queda sin dónde ir a buscarla.
+
+#### Varios teléfonos, porque no son intercambiables
+
+Un comercial tiene **el celular del dueño y el fijo del local**, y el sistema ya
+distingue uno de otro: el botón de WhatsApp no se dibuja sobre un fijo
+([RN-CLI-18](#rn-cli-18--un-cliente-que-hace-días-que-no-compra-se-muestra-para-llamar)).
+Capturar uno solo tira información que el sistema sabe usar.
+
+`telefono` en singular **sigue existiendo** junto al plural. Ya tenía
+consumidores —la colección de Bruno y el alta del mostrador— y romper un
+contrato en uso para agregar uno nuevo sería cambiarles la puerta sin que lo
+pidieran. `api` los junta.
+
+#### Todo o nada
+
+Un teléfono inválido o una dirección que no ubica **rechazan el alta entera**.
+Con escrituras sueltas, un fallo en la segunda dejaría un cliente a medio cargar
+y quien atiende no sabría qué quedó guardado — que es exactamente el registro
+inútil que esto vino a evitar.
+
+:::danger[Una dirección a medias AVISA, no se descarta]
+`api` exige la **etiqueta** de la dirección —«la casa», «el local»—: es lo que
+distingue una de otra cuando el cliente tiene tres.
+
+La pantalla del alta armaba la dirección **solo si venía la etiqueta**, y si no,
+la tiraba. Quien llenaba vía, placa, municipio y departamento sin ponerle nombre
+daba «Registrar cliente», veía el alta salir bien, y abría la ficha **sin
+dirección**: ocho campos perdidos sin una palabra. Pasó con un cliente real.
+
+Frenar y pedir el nombre es lo único honesto. Poner una etiqueta por defecto
+sería inventarle un nombre a la casa de otra persona, y seguir de largo es el
+defecto.
+:::
+
+---
+
 ## Preguntas abiertas
 
 - ¿Se cobra depósito o garantía por la base prestada? *(Cerrada — no se cobra;
