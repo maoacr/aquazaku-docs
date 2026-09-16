@@ -38,21 +38,24 @@ Lo que tiene que decir:
 
 | Servicio | Estado esperado |
 | --- | --- |
-| `postgresql@16` | `started` |
+| `postgresql@17` | `started` |
 | `mailpit` | `started` |
 
 :::caution[Hay dos Postgres instalados y solo uno sirve]
-`postgresql@17` también aparece en la lista, en estado `error`. **Es el que NO
-se usa.** Las bases de Aquazaku viven en el 16.
+`postgresql@16` también aparece en la lista. **Es el que ya NO se usa.** Desde
+el 16-sep-2026 las bases de Aquazaku viven en el 17, alineado con producción y
+con el CI. El cluster 16 quedó en disco a propósito, como rollback.
 
-Si alguna vez alguien arranca el 17, va a pelear por el puerto 5432 con el 16 y
-la app se va a conectar a una base vacía que parece corrupta. No lo arranques.
+Si alguien arranca el 16, va a pelear por el puerto 5432 con el 17 y el segundo
+en arrancar va a fallar con `could not create any TCP/IP sockets`. Peor: si gana
+el 16, la app se conecta a datos congelados en la fecha de la migración y parece
+que se perdió trabajo. No lo arranques.
 :::
 
 Si Postgres está caído:
 
 ```bash
-brew services start postgresql@16
+brew services start postgresql@17
 ```
 
 ## 2 · ¿Hay migraciones nuevas?
@@ -215,7 +218,7 @@ Liberar un puerto colgado y el resto de la gestión de servicios están en
 
 | Síntoma | Causa más probable |
 | --- | --- |
-| `ECONNREFUSED :5432` | Postgres caído → `brew services start postgresql@16` |
+| `ECONNREFUSED :5432` | Postgres caído → `brew services start postgresql@17` |
 | `/health` dice `faltan: [...]` | Migraciones sin aplicar → paso 2 |
 | Los tests fallan por columnas que no existen | Falta `pnpm db:migrate:test` |
 | `Another next dev server is already running` | Ya está levantado. Usá ese |

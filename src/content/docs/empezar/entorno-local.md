@@ -20,7 +20,7 @@ que quedó bien— está en [Arrancar a trabajar](/empezar/arrancar-a-trabajar/)
 |---|---|---|
 | Node.js | 22 LTS | Runtime de `api/` y `web/` |
 | pnpm | 11.x | Gestor de paquetes de ambos repos |
-| PostgreSQL | 16.x | Base de datos (dev + test) |
+| PostgreSQL | 17.x | Base de datos (dev + test) |
 | Mailpit | 1.30+ | Servidor SMTP falso para probar emails en dev |
 | Bruno CLI (`bru`) | 4.x | Correr la colección de API desde terminal y CI |
 | Docker | opcional | Solo si preferís Postgres en contenedor |
@@ -33,25 +33,56 @@ Si preferís contenedor, corré la misma imagen que usa el CI mapeada a `5432` y
 pará el servicio de brew — el resto de la documentación aplica igual.
 :::
 
-:::caution[Local puede quedar una versión atrás, y está previsto]
+:::note[Las tres corren 17, y esa es la idea]
 Producción corre **Postgres 17** en Supabase ([ADR-0009](/decisiones/0009-donde-corre-aquazaku/)),
-y el CI usa 17 para parecerse a producción — no a tu máquina.
+el CI corre 17, y desde el 16-sep-2026 local también.
 
-Si tenés `postgresql@16` local, no hace falta migrar hoy: la compuerta que
-decide si algo se mergea es el CI, y esa sí corre contra la versión real. Lo que
-**no** puede pasar es lo contrario —CI en 16 y producción en 17— porque un bug
-propio de 17 no se vería hasta estar desplegado.
+Lo que **no** puede pasar nunca es lo contrario —CI por debajo de producción—
+porque un bug propio de la versión de producción no se vería hasta estar
+desplegado. La compuerta que decide si algo se mergea es el CI, así que el CI es
+el que no puede quedarse atrás.
+:::
 
-Para alinearte del todo: `brew install postgresql@17` y apuntá las cadenas de
-conexión a su puerto.
+:::caution[Si venís de `postgresql@16`]
+Los dos clusters pelean por el 5432 y el segundo en arrancar falla con
+`could not create any TCP/IP sockets`. No es que el 17 esté roto: está ocupado
+el puerto.
+
+Migrar con volcado y restauración deja el cluster viejo intacto, así que el
+rollback es volver a prender el 16:
+
+```bash
+pg_dumpall -h localhost -U $(whoami) > volcado-pg16.sql
+brew services stop postgresql@16      # además desactiva su arranque automático
+brew services start postgresql@17
+psql -h localhost -U $(whoami) -d postgres -f volcado-pg16.sql
+```
+
+`pg_dumpall` se lleva los roles, las dos bases, los triggers y los `GRANT` — o
+sea la mitad dura de [ADR-0004](/decisiones/0004-audit-log-inmutable). Un
+`ERROR: role "..." already exists` durante la restauración es esperado: ese rol
+lo creó `initdb` al armar el cluster nuevo.
+
+**Verificá antes de dar por buena la migración**, que es lo único que distingue
+una restauración de una pérdida de datos:
+
+```bash
+psql -h localhost -U aquazaku -d aquazaku_dev -c '\dx'
+psql -h localhost -U aquazaku -d aquazaku_dev -A -c "SELECT privilege_type FROM information_schema.role_table_grants WHERE grantee='aquazaku_app' AND table_name='audit_log';"
+cd api && pnpm test
+```
+
+Esperado: `citext` y `pgcrypto`; **solo `SELECT` e `INSERT`** sobre `audit_log`
+—si aparece `UPDATE` o `DELETE`, la bitácora dejó de ser inmutable y hay que
+frenar—; y la suite en verde.
 :::
 
 ## Instalación (macOS)
 
 ```bash
 # Base de datos + cliente psql
-brew install postgresql@16
-brew services start postgresql@16
+brew install postgresql@17
+brew services start postgresql@17
 
 # Servidor SMTP falso para dev (reemplaza a MailHog, sin mantenimiento desde 2020)
 brew install mailpit
@@ -178,20 +209,20 @@ debuggeando un `ECONNREFUSED` que no era un bug.
 brew services list
 ```
 
-Buscá `postgresql@16` y `mailpit` en `started`.
+Buscá `postgresql@17` y `mailpit` en `started`.
 
 ### Prender, parar, reiniciar
 
 ```bash
-brew services start postgresql@16
+brew services start postgresql@17
 ```
 
 ```bash
-brew services stop postgresql@16
+brew services stop postgresql@17
 ```
 
 ```bash
-brew services restart postgresql@16
+brew services restart postgresql@17
 ```
 
 Lo mismo con `mailpit`. `stop` además desactiva el LaunchAgent: el servicio deja
@@ -203,7 +234,7 @@ de arrancar solo hasta que hagas `start` de nuevo.
 dejar nada corriendo de fondo:
 
 ```bash
-LC_ALL="en_US.UTF-8" /usr/local/opt/postgresql@16/bin/postgres -D /usr/local/var/postgresql@16
+LC_ALL="en_US.UTF-8" /usr/local/opt/postgresql@17/bin/postgres -D /usr/local/var/postgresql@17
 ```
 
 ```bash
