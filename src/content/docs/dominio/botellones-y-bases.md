@@ -408,6 +408,54 @@ de texto de la ficha del cliente.
 Ver [RN-CLI-07](/dominio/clientes/).
 :::
 
+#### El código se verifica antes de cobrar
+
+`api` rechaza la base inexistente, la dada de baja, la dañada y la que figura en
+otra dirección. Siempre lo hizo. Lo que faltaba era **cuándo se entera quien
+atiende**: el rechazo llegaba al cobrar y tumbaba la venta entera —productos,
+medio de pago, descuento— por un dedazo en un campo **opcional** de cuatro
+dígitos, con el cliente enfrente. El costo del error no guardaba ninguna
+relación con su tamaño.
+
+Ahora el campo consulta al salir del foco y adelanta el veredicto:
+
+| Lo que se teclea | Lo que dice el campo |
+| --- | --- |
+| Base en bodega y sana | «Base 0003: en bodega, lista para salir.» |
+| Base prestada | «La base 0001 figura prestada a Mario Crespo (Casa de suegra). Registre el retorno primero.» |
+| Base dañada | «La base 0042 está marcada como dañada.» |
+| Código que no figura | «Ninguna base disponible tiene el código 0913. Puede no existir, o estar dada de baja.» |
+| No se pudo consultar | «No pudimos verificar el código ahora. Puede cobrar igual.» |
+
+**Al salir del foco, no en cada tecla.** Un código de cuatro dígitos pasa por
+tres estados inválidos antes de estar completo. Avisar en cada tecla pintaría
+«no figura» tres veces mientras alguien lo escribe bien — y un aviso que aparece
+cuando no hay problema es un aviso que se aprende a ignorar.
+
+:::caution[Es una pista, no la barrera]
+La validación no se movió. `basePorSticker` y `prestarBaseEn` siguen decidiendo
+dentro de la transacción de la venta, y el aviso puede quedar viejo un instante
+si otro mostrador presta la misma base en el intervalo.
+
+Que la UI muestre el problema antes nunca fue control de acceso
+—[RN-ACC-02](/dominio/roles-y-permisos/)— y esto no lo cambia. Reusa
+`GET /bases`, que ya devuelve el parque activo con su ubicación: no hay endpoint
+nuevo ni permiso nuevo.
+:::
+
+**Inexistente y dada de baja dicen lo mismo, a propósito.** `GET /bases` solo
+devuelve las activas, así que desde la pantalla los dos casos son
+indistinguibles y el mensaje los cubre a ambos en vez de afirmar cuál es. Al
+cobrar, `api` sí los separa: `BASE_NO_ENCONTRADA` contra `BASE_DESCARTADA`.
+
+:::note[«No pudimos verificar» es un estado, no un error tragado]
+Si la consulta falla, decir «no existe» acusaría a un código que puede estar
+perfecto, y decir «disponible» daría un verde falso. Las dos mienten.
+
+La única respuesta honesta es que no se pudo averiguar. Quien cobra decide, y
+`api` valida igual al registrar la venta.
+:::
+
 ---
 
 ### RN-BAS-04 — Una base está en exactamente un lugar
