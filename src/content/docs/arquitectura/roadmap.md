@@ -406,7 +406,7 @@ Ver también [Qué falta preguntar](/empezar/pendientes/) — las cuatro medicio
 | Pregunta | Cómo quedó |
 |---|---|
 | Interpretación de "mobile-first" | **Metodología de UI.** La app móvil del `seller` es post-MVP; se arranca por web y las pantallas se diseñan desde el ancho chico hacia arriba |
-| Stack del proyecto `api/` | [ADR-0001](/decisiones/0001-stack-m0), y ya implementado: Node 22, Fastify 5, Drizzle, Postgres 16, Better-Auth 1.7 |
+| Stack del proyecto `api/` | [ADR-0001](/decisiones/0001-stack-m0), y ya implementado: Node 22, Fastify 5, Drizzle, Postgres 17, Better-Auth 1.7. La ADR dice 16 porque eso se eligió en agosto de 2026; local migró a 17 el 16-sep-2026 para alinearse con producción y CI |
 | Derivas heredadas del paquete `claude-design/` | M0 se construyó desde el dominio y los ADR, no desde los mockups. Las derivas documentadas en el verify del 19-ago-2026 **no se replicaron en el código**; siguen valiendo como advertencia para los módulos que sí usen esos diseños |
 
 ---

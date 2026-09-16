@@ -28,7 +28,7 @@ Esa decisión, cuando se tome, va documentada como
 **M1 — Productos y catálogo: ✅ implementado** (22-ago-2026).
 **M2 — Stock: 🚧 en curso** — las tablas y sus invariantes ya están.
 
-Diez tablas, cuatro migraciones, sobre PostgreSQL 16.
+29 tablas y 18 migraciones aplicadas, sobre PostgreSQL 17.
 
 ### Tablas
 
