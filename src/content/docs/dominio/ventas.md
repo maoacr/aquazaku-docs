@@ -455,9 +455,77 @@ y el sistema avisa al `pos` que el código fue aplicado parcialmente.
 
 ---
 
+### RN-VEN-14 — Una venta se registra con la fecha del día en que ocurrió
+
+**Estado:** ✅ Confirmada — decisión del 17-sep-2026.
+
+La planta vende todo el día y no siempre hay alguien cargando el sistema. Con esas
+ventas pasaba una de dos cosas: se cargaban con la fecha de hoy —y entonces el
+reporte de agosto quedaba corto y el de septiembre inflado— o no se cargaban
+nunca.
+
+El alta acepta `ocurrioEn` en `AAAA-MM-DD`. Ausente significa hoy, que es el caso
+del mostrador.
+
+#### La fecha va a `createdAt`, no a una columna nueva
+
+El contador, los reportes y el panel «a llamar» ya filtran por
+`diaEnLaPlanta(ventas.createdAt)`. Poniendo la fecha real ahí, el reporte de
+agosto incluye la venta de agosto **sin una línea de cambio** en el contador. Una
+columna paralela habría obligado a decidir, en cada consulta del sistema, cuál de
+las dos fechas mira — y a equivocarse en alguna.
+
+#### Manda también sobre vencimientos y vigencias
+
+Una venta del 31 de agosto tiene que poder salir de un lote que venció el 2 de
+septiembre: ese día el producto estaba bueno. Y cobrarse con un código que vencía
+el 31. Evaluar contra el reloj de quien la carga convertiría la carga tardía en un
+rechazo que nadie puede explicar.
+
+#### El stock se descuenta igual
+
+Si la venta nunca se registró, el descuento nunca ocurrió. Hacerlo al cargarla no
+cuenta dos veces: corrige lo que faltaba.
+
+#### El día se ancla al mediodía de la planta
+
+Un día sin hora tiene que volverse un instante. La medianoche queda a un minuto
+del borde y cualquier lectura en otra zona lo corre al día anterior —el error que
+[`dia.ts`](/arquitectura/) existe para evitar—. Al mediodía sobran doce horas para
+cada lado.
+
+La hora no se pide: nadie recuerda si vendió a las 14:20 o a las 15:40 de hace
+tres días, y un campo que se llena con un dato inventado es peor que no tenerlo.
+
+#### Dos guardas
+
+| Guarda | Por qué |
+| --- | --- |
+| No se acepta fecha futura | Una venta que no ocurrió, con el stock descontado, es producto que sale de la bodega por algo que no pasó |
+| Tope de 90 días hacia atrás | Ataja el dedazo que mandaría una venta a un ejercicio ya reportado |
+
+El tope es una **constante**, no un parámetro: una perilla que nadie va a mover es
+una perilla que puede quedar mal puesta.
+
+#### Qué le pasa a RN-CON-02
+
+[RN-CON-02](/dominio/contador/) dice que un reporte de agosto da lo mismo corrido
+en diciembre. Esta regla la matiza: una venta cargada tarde **sí** cambia un
+reporte ya emitido.
+
+Se aceptó a propósito. RN-CON-02 asumía que toda venta se registra el día que
+ocurre, y esa asunción ya era falsa en la operación real: el reporte «estable»
+estaba congelando datos incompletos. Un reporte que refleja lo que de verdad se
+vendió vale más que uno que no se mueve. El tope de 90 días y el registro en la
+bitácora son lo que acota el costo.
+
+---
+
 ## Preguntas abiertas
 
 *Todas las preguntas 🟢 de Ventas quedaron cerradas en la sesión del
 18-ago-2026. Las nuevas reglas son RN-VEN-10 (devoluciones),
 RN-VEN-11 (factura electrónica), RN-VEN-12 (precios segmentados) y
 RN-VEN-13 (códigos de descuento).*
+
+*RN-VEN-14 (ventas con fecha anterior) salió de la sesión del 17-sep-2026.*
