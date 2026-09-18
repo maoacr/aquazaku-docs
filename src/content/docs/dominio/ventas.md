@@ -453,6 +453,28 @@ y el sistema avisa al `pos` que el código fue aplicado parcialmente.
 - El piso es explícito y auditable. Configurarlo requiere decisión humana.
 - Un toggle es silencioso y propenso a olvidarse.
 
+:::note[El piso frena descuentos, no precios escritos a mano]
+[RN-VEN-15](#rn-ven-15--el-precio-se-puede-escribir-a-mano-y-entonces-es-su-propio-piso)
+deja escribir el precio de una línea, y ese número pasa a ser el piso de esa
+línea. No es un agujero en esta regla: el piso existe para que un código **mal
+definido** no deje una venta en cero, y un precio tecleado no es un código mal
+definido — es una afirmación de alguien, con su nombre en la bitácora.
+
+Lo que sí cambia es quién sostiene la promesa. Acá la sostenía un `CHECK`, que
+frena solo. Allá la sostiene una fila de auditoría, que hay que leer.
+:::
+
+:::caution[Hoy el piso está anulando todos los descuentos]
+El seed carga el botellón con `precio_minimo = precio_residencial = 10000`. Con
+el piso igual a la lista, el cálculo de arriba da
+`max(10000 − descuento, 10000) = 10000` **siempre**: todo código descuenta $0 y
+devuelve «aplicado parcialmente».
+
+Es un dato mal cargado, no un bug — se corrige bajando `precio_minimo` en el
+catálogo. Queda anotado acá porque un reporte de promociones que da cero se lee
+como «nadie usó códigos» y no como «los códigos no funcionan».
+:::
+
 ---
 
 ### RN-VEN-14 — Una venta se registra con la fecha del día en que ocurrió
@@ -521,6 +543,87 @@ bitácora son lo que acota el costo.
 
 ---
 
+### RN-VEN-15 — El precio se puede escribir a mano, y entonces es su propio piso
+
+**Estado:** ✅ Confirmada — decisión del 18-sep-2026.
+
+Aquazaku vendió durante años antes de que este software existiera, a precios que
+hoy no están en ninguna tabla: $3.800, $5.500, $9.600. [RN-VEN-14](#rn-ven-14--una-venta-se-registra-con-la-fecha-del-día-en-que-ocurrió)
+ya deja fechar esas ventas hacia atrás, pero se cobrarían con la lista de **hoy**
+— y una venta de agosto por $10.000 que en realidad fue por $3.800 es un reporte
+de agosto inventado, con la autoridad de estar en la base.
+
+Cada producto en el mostrador lleva una casilla **«Cobré otro precio»**. Tildada,
+quien registra escribe el precio por unidad que de verdad cobró, y ese número
+gana sobre el catálogo.
+
+#### El manual pasa a ser el piso de SU línea
+
+La línea se escribe con los cuatro números congelados así:
+
+```
+precio_lista_aplicado  = 3800
+descuento_monto        =    0
+precio_minimo_aplicado = 3800   ← el precio pactado ES el piso de esta línea
+precio_final           = 3800
+precio_manual          = true
+```
+
+Los dos `CHECK` de `lineas_de_venta` se cumplen sin excepciones: `final >= mínimo`
+por igualdad, y `final = lista − descuento` porque el descuento es cero.
+
+**Por qué así y no borrando el piso:** `lineas_respetan_el_piso` es lo único que
+impide una línea negativa. **No existe** un `precio_final >= 0` en la tabla — la
+no-negatividad sale por transitividad de `productos_precios_no_negativos`. Sin el
+piso, un código `monto_fijo` mal cargado escribe una línea en negativo sin que
+nada chille. Ver [RN-VEN-13](#rn-ven-13--códigos-de-descuento-administrativos-con-piso-absoluto).
+
+El piso del catálogo sigue cubriendo a todas las demás líneas.
+
+#### El código de descuento no toca una línea manual
+
+El manual es el precio que **ya se cobró**, no una lista sobre la cual negociar.
+Un descuento encima lo movería a un número que nunca ocurrió. El código sigue
+aplicando a las otras líneas de la misma venta.
+
+#### La bitácora se escribe por ítem y guarda el precio de lista al lado
+
+Una fila `ventas:precio_manual` por venta, con `{ productoId, cantidad,
+precioDeLista, precioCobrado, subtotal }` de cada ítem.
+
+Guarda el precio de lista porque lo que se audita es el **delta**: «se vendió a
+3.800» ya lo dice la venta; «se vendió a 3.800 cuando la lista decía 10.000» es
+lo que alguien puede mirar y preguntar.
+
+Va por **ítem** y no por línea porque FIFO parte un pedido de 120 en una línea
+por lote, y el acto humano fue uno: una casilla y un número. Una bitácora que
+multiplica los hechos es peor que ninguna.
+
+#### Lo puede hacer cualquiera que registre ventas
+
+El permiso es `ventas:crear` — admin, `pos` y `seller` por igual. Fue una
+decisión tomada a sabiendas de que un `seller` puede cobrar $10.000 y registrar
+$3.800; lo que acota el costo es la fila de bitácora, no el permiso.
+
+:::caution[Este es el control, y hay que leerlo]
+A diferencia del piso, que frenaba solo, esta regla no frena nada: registra. Si
+nadie mira `ventas:precio_manual`, el control no existe.
+:::
+
+#### El mostrador solo acepta pesos enteros
+
+La card pinta «$10.000» con separador de miles, así que quien quiere poner tres
+mil ochocientos escribe **«3.800»** — es lo que tiene enfrente. Contra el
+`^\d+(\.\d{1,2})?$` del sistema, «3.5» **pasa** como $3,50 cuando se quería
+$3.500. No falla: registra. Y [RN-VEN-02](#rn-ven-02--una-venta-confirmada-no-se-edita)
+prohíbe editar una venta confirmada.
+
+El campo descarta todo lo que no sea dígito y muestra el separador mientras se
+escribe. Cuesta no poder cargar centavos desde el mostrador, que en pesos
+colombianos no es un caso.
+
+---
+
 ## Preguntas abiertas
 
 *Todas las preguntas 🟢 de Ventas quedaron cerradas en la sesión del
@@ -529,3 +632,7 @@ RN-VEN-11 (factura electrónica), RN-VEN-12 (precios segmentados) y
 RN-VEN-13 (códigos de descuento).*
 
 *RN-VEN-14 (ventas con fecha anterior) salió de la sesión del 17-sep-2026.*
+
+*RN-VEN-15 (precio escrito a mano) salió de la sesión del 18-sep-2026, como la
+otra mitad de RN-VEN-14: fechar la venta hacia atrás sin poder cobrar el precio
+de entonces dejaba el reporte del mes igual de inventado.*
