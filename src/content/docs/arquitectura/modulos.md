@@ -148,10 +148,12 @@ las reglas de negocio de cada módulo, ver [Dominio](/dominio/).
   factura electrónica (emisión post-MVP con Factus).
 - **Roles:** `admin`, `pos`, `seller`, `contador` (consulta).
 - **Depende de:** M0, M1, M2, M5 (y M10 si se modela precio flexible desde el inicio).
-- **Doc de dominio:** [Ventas](/dominio/ventas/) — RN-VEN-01 a 13.
+- **Doc de dominio:** [Ventas](/dominio/ventas/) — RN-VEN-01 a 16.
 - **Estado:** 🔲 pendiente.
 - **Notas:**
-  - Venta confirmada es inmutable (RN-VEN-02). Anular siempre.
+  - Venta confirmada es inmutable (RN-VEN-02). Anular siempre — no hay `PATCH`.
+  - Corregir (RN-VEN-16) NO es editar: anula y registra una nueva, atómico y
+    enlazado, y solo lo hace un admin.
   - Anulación: solo el autor, motivo obligatorio ≥ 10 caracteres (RN-VEN-08).
   - Devolución NO cancela la venta — ajusta inventario y opcionalmente saldo.
 

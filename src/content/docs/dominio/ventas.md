@@ -50,6 +50,16 @@ El costo de un campo editable es que nunca más vas a poder responder
 "¿qué pasó realmente ese día?".
 :::
 
+**Actualización del 18-sep-2026.** La regla sigue intacta y el sistema sigue sin
+tener un `PATCH` de venta: el trigger de la base rechaza cualquier `UPDATE` que
+toque el monto, el cliente o la fecha. Lo que cambió es que "anular y rehacer"
+dejó de ser **dos actos** a cargo del operador y pasó a ser uno solo, atómico y
+con las dos ventas enlazadas — ver
+[RN-VEN-16](#rn-ven-16--corregir-una-venta-es-reemplazarla-no-editarla).
+
+El pedido de "poder corregir la venta" era legítimo; lo que había que negarse a
+hacer era la **edición**, no la corrección.
+
 ---
 
 ### RN-VEN-03 — Anular una venta revierte todos sus efectos
@@ -624,6 +634,64 @@ colombianos no es un caso.
 
 ---
 
+### RN-VEN-16 — Corregir una venta es reemplazarla, no editarla
+
+**Estado:** ✅ Confirmada — sesión del 18-sep-2026.
+
+Un **admin** puede corregir una venta ya registrada: el cliente, las cantidades,
+los productos, el precio por unidad, el medio de pago. Lo hace desde el mismo
+formulario con el que se cobró, precargado con la venta.
+
+Al guardar, el sistema ejecuta **en una sola transacción**:
+
+1. devuelve el producto a sus lotes de origen, como en una anulación;
+2. registra una venta **nueva** con los datos corregidos, que hereda el
+   **instante exacto** de la original;
+3. pasa la original a estado `corregida`, con responsable, fecha y motivo
+   obligatorio, y guarda el **enlace** a la que la reemplaza.
+
+La venta vieja **no se modifica**: su total, sus líneas y sus precios congelados
+quedan exactamente como estaban. Lo único que se le agrega es el hecho de haber
+sido reemplazada.
+
+**Por qué no es una edición.** Porque no hay ningún número que cambie de valor.
+Hay una fila que deja de contar y otra que empieza a contar, y las dos quedan
+escritas. La pregunta "¿qué pasó realmente ese día?" se sigue pudiendo
+responder — ahora además se puede responder "¿y por qué esto se cargó dos
+veces?", que antes no tenía respuesta.
+
+**Por qué un estado propio y no `anulada`.** "Cuántas ventas anulamos este mes"
+es una alarma operativa: mide errores de mostrador y plata devuelta. Si cada
+tipeo corregido la hiciera subir, en un mes nadie la miraría.
+
+**Por qué hereda el instante.** Corregir el lunes una venta del sábado no puede
+mover esa plata al lunes. Si la venta saltara de día —o de mes— arreglar un
+tipeo reescribiría un reporte ya emitido, que es el costo exacto que
+[RN-VEN-02](#rn-ven-02--una-venta-confirmada-no-se-edita) existe para evitar.
+
+**Por qué solo el admin.** `pos` y `seller` anulan lo propio
+([RN-VEN-08](#rn-ven-08--anulación-de-venta-solo-el-autor-comentario-obligatorio)),
+y eso está bien. Pero corregir además **escribe una venta con la fecha de otra**,
+y eso esquiva el tope de 90 días de
+[RN-VEN-14](#rn-ven-14--una-venta-se-registra-con-la-fecha-del-día-en-que-ocurrió).
+Colgarlo de `ventas:anular` convertiría la corrección en una puerta de atrás a
+ese tope. Es una acción propia en la matriz: `ventas:corregir`.
+
+#### Lo que la corrección NO hace
+
+| Caso | Qué pasa | Por qué |
+| --- | --- | --- |
+| Venta con **devoluciones** | Se rechaza | La devolución cuelga de una línea que dejaría de contar: la deuda se descontaría dos veces. Primero se revierte la devolución. |
+| **Recargo por daño** (`dano_base`) | Se rechaza | No tiene productos que rehacer ([RN-BAS-08](/dominio/bases/)). Se anula. |
+| Cambiar el **cliente** de una venta que despachó botellones sin vacío o prestó una base | Se rechaza | El activo quedó a nombre del cliente original y la corrección no lo trae de vuelta: la venta quedaría a nombre de una persona y el envase a cargo de otra. |
+| **Botellones y bases** de la venta corregida | No se re-emiten | Son movimientos **físicos**. El envase salió una vez y sigue afuera; volver a descontarlo del parque inventaría un envase que nunca salió. |
+| Venta ya **anulada** o ya **corregida** | Se rechaza | Lo vigente es la venta que la reemplazó. Se corrige esa. |
+
+Corregir una venta corregida **encadena**: cada una apunta a la anterior, y el
+historial completo se puede recorrer en los dos sentidos.
+
+---
+
 ## Preguntas abiertas
 
 *Todas las preguntas 🟢 de Ventas quedaron cerradas en la sesión del
@@ -636,3 +704,8 @@ RN-VEN-13 (códigos de descuento).*
 *RN-VEN-15 (precio escrito a mano) salió de la sesión del 18-sep-2026, como la
 otra mitad de RN-VEN-14: fechar la venta hacia atrás sin poder cobrar el precio
 de entonces dejaba el reporte del mes igual de inventado.*
+
+*RN-VEN-16 (corregir una venta) salió de la sesión del 18-sep-2026. Es la otra
+mitad de RN-VEN-02: la regla siempre dijo cuál era la salida —anular y
+rehacer— pero el sistema la dejaba en manos del operador, en dos pantallas y
+sin nada que uniera las dos ventas.*

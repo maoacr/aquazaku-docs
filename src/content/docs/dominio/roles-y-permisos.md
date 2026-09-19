@@ -199,10 +199,23 @@ acá se refleja en el código y viceversa.
 | `ventas:crear` | ✅ | ✅ | ✅ | ❌ |
 | `ventas:anular` | ✅ `todo` | 🟡 `propio` + status=pendiente | 🟡 `propio` + status=pendiente | ❌ |
 | `ventas:anular_verificada` | ✅ `todo` (motivo obligatorio) | ❌ | ❌ | ❌ |
+| `ventas:corregir` | ✅ `todo` (motivo obligatorio) | ❌ | ❌ | ❌ |
 | `ventas:verificar_pago` | ✅ `todo` | 🟡 `propio` | 🟡 `propio` | ❌ |
 | `ventas:gestionar_cuentas_pendientes` | ✅ `todo` | ❌ | ❌ | ❌ |
 | `cobros:ver` | ✅ | 🟡 `propio` | 🟡 `propio` | 🟡 `todo` |
 | `cobros:registrar` | ✅ | ✅ | ✅ | ❌ |
+
+:::note[Por qué `ventas:corregir` no se hereda de `ventas:anular`]
+Corregir una venta ([RN-VEN-16](/dominio/ventas/)) hace **dos** cosas: anula una
+venta y registra otra **con la fecha de la primera**. Lo segundo esquiva el tope
+de 90 días de [RN-VEN-14](/dominio/ventas/), que rige para todos cuando se carga
+una venta vieja.
+
+Colgarla de `ventas:anular` —que `pos` y `seller` tienen sobre lo propio—
+convertiría la corrección en una puerta de atrás a ese tope, abierta desde el
+mostrador. Es RN-ACC-02 en su forma menos obvia: la regla no es «cada ruta valida
+su permiso», es «cada **acción** valida el suyo».
+:::
 
 :::note[State machine de ventas — implementado en M2]
 Las nuevas reglas `ventas:anular` (restringida a status pendiente),
