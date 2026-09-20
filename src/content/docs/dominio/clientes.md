@@ -428,7 +428,28 @@ No es inconsistencia, es que cada cosa se reclama distinto:
 plata, deberte quince botellones, tener dos bases sin devolver y un cargo
 pendiente por base dañada. Un solo campo "estado de cuenta" no dice nada útil.
 
-Ver [Botellones y bases](/dominio/botellones-y-bases/).
+#### Cómo se reconstruye el saldo de botellones
+
+`enPoderDelCliente` se reconstruye como `SUM(movimientos_botellon.cantidad)
+WHERE clienteId = ?` — sin importar el tipo (`entrega`, `retorno`, `ajuste`)
+ni el documento origen (venta original, corrección, o anulación). Cada
+evento del libro aporta con su signo; el saldo es la integral.
+
+- **Venta** — inserta filas `tipo='entrega'` (`+entregados`) y/o
+  `tipo='retorno'` (`-recibidos`), vinculadas a la venta por `documentoId`.
+- **Corrección** — la nueva venta puede mover los dos campos e inserta
+  movimientos compensatorios `tipo='ajuste'` con el delta contra la
+  original. Los originales **no se tocan**: la corrección nunca duplica ni
+  resta del original.
+- **Anulación** — inserta movimientos de reversión (ver
+  [RN-ENV-09](/dominio/botellones-y-bases/)) que cancelan el efecto de los
+  originales sin tocarlos.
+
+Es la versión «event sourcing» aplicada al parque del cliente: el libro
+contable es la fuente de verdad, el saldo es derivado.
+
+Ver [Botellones y bases](/dominio/botellones-y-bases/) y
+[RN-VEN-17](/dominio/ventas/#rn-ven-17--botellones-entregados-y-recibidos).
 
 ---
 
