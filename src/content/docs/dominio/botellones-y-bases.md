@@ -256,13 +256,15 @@ la fila del cliente no puede existir sin cliente.
 
 #### Qué se pregunta en el mostrador
 
-**Cuántos se lleva sin devolver el vacío** — un número, no un sí/no. La
-conversación real es *«vendí tres recargas, trajo dos vacíos»*, y eso es **un**
-envase que sale.
+**Cuántos se llevan y cuántos se reciben** — dos números, no un sí/no (ver
+[RN-VEN-17](/dominio/ventas/#rn-ven-17--botellones-entregados-y-recibidos)).
+La conversación real es *«vendí tres recargas, trajo dos vacíos»*, y eso es
+**un** envase que sale y **dos** que vuelven.
 
-El default es cero porque la recarga normal es un intercambio
-([RN-ENV-03](#rn-env-03--una-recarga-intercambia-un-botellón-no-lo-vende)): el
-caso común no cuesta ningún clic y no mueve el parque.
+Los defaults son 1-a-1 sobre la cantidad de botellones del carrito: el caso
+común es el intercambio y no cuesta ningún clic ni mueve el parque. El
+operador los ajusta si el caso no es intercambio (cliente nuevo que compra
+sin traer vacíos, cliente que devuelve más de lo que compra, etc.).
 
 No se le cobra nada por llevárselo. El envase queda registrado en su poder, no
 facturado.
@@ -311,6 +313,25 @@ cliente con su número, o no queda ninguno. Cambiar o quitar teléfonos de un
 cliente que ya existía sigue exigiendo `editar`, así que el `pos` no ganó
 ningún poder nuevo sobre los registros ajenos.
 :::
+
+#### La anulación revierte los activos físicos
+
+La anulación de una venta con botellones o base inserta movimientos de
+reversión automáticos (cambio del 20-sep-2026 — antes el operador tenía que
+hacerlo a mano desde Retornables). Concretamente:
+
+- **`botellonesEntregados > 0`** → `INSERT movimientos_botellon tipo='retorno'`
+  con signo opuesto (cliente devuelve lo que recibió).
+- **`botellonesRecibidos > 0`** → `INSERT movimientos_botellon tipo='entrega'`
+  con signo opuesto (la empresa devuelve al cliente lo que él trajo).
+- **Base prestada** → `UPDATE bases SET direccionId = NULL` + `INSERT
+  movimientos_base tipo='retorno'`, identificados vía `movimientos_base WHERE
+  documentoId = ventaId AND tipo = 'prestamo'`.
+
+La semántica del `tipo` espeja el libro contable para que la auditoría lea de
+forma coherente quién devuelve qué a quién. Ventas `tipo='dano_base'` se
+excluyen: no tienen movimientos origen que revertir. Ver
+[RN-VEN-17](/dominio/ventas/#rn-ven-17--botellones-entregados-y-recibidos).
 
 ## Bases
 
