@@ -664,10 +664,26 @@ veces?", que antes no tenía respuesta.
 es una alarma operativa: mide errores de mostrador y plata devuelta. Si cada
 tipeo corregido la hiciera subir, en un mes nadie la miraría.
 
-**Por qué hereda el instante.** Corregir el lunes una venta del sábado no puede
-mover esa plata al lunes. Si la venta saltara de día —o de mes— arreglar un
-tipeo reescribiría un reporte ya emitido, que es el costo exacto que
+**Por qué hereda el instante — y por qué un admin puede ajustarlo.** Por
+**default** la corrección hereda el instante exacto de la venta original: corregir
+el lunes una venta del sábado no puede mover esa plata al lunes, y arreglar un
+tipeo no puede reescribir un reporte ya emitido, que es el costo exacto que
 [RN-VEN-02](#rn-ven-02--una-venta-confirmada-no-se-edita) existe para evitar.
+
+Pero hay un caso que la regla no quería cubrir: la venta se cargó con la fecha
+equivocada en primer lugar, y la corrección es la única oportunidad de
+encuadrar la plata en el día real del hecho. Por eso la corrección —y **solo**
+la corrección— puede llevar un `ocurrioEn` que pasa el mismo piso de 90 días y
+el mismo rechazo de futuro que [RN-VEN-14](#rn-ven-14--una-venta-se-registra-con-la-fecha-del-día-en-que-ocurrió)
+le pone a una venta nueva. No esquiva el tope: lo hereda.
+
+:::note[El override vive en el INSERT de la sucesora, no en el UPDATE de la original]
+[RN-VEN-02](#rn-ven-02--una-venta-confirmada-no-se-edita) sigue intacta: la fila
+original **no recibe** ningún `UPDATE` sobre `created_at`. Lo que cambia es la
+fila NUEVA —su `created_at` sale de `exigirFechaRegistrable(ocurrioEn)`— y la
+original pasa a `corregida` con el enlace a la sucesora. La inmutabilidad es
+del registro; la corrección es de la relación entre dos.
+:::
 
 **Por qué solo el admin.** `pos` y `seller` anulan lo propio
 ([RN-VEN-08](#rn-ven-08--anulación-de-venta-solo-el-autor-comentario-obligatorio)),
@@ -686,9 +702,23 @@ ese tope. Es una acción propia en la matriz: `ventas:corregir`.
 | Cambiar el **cliente** de una venta que despachó botellones sin vacío o prestó una base | Se rechaza | El activo quedó a nombre del cliente original y la corrección no lo trae de vuelta: la venta quedaría a nombre de una persona y el envase a cargo de otra. |
 | **Botellones y bases** de la venta corregida | No se re-emiten | Son movimientos **físicos**. El envase salió una vez y sigue afuera; volver a descontarlo del parque inventaría un envase que nunca salió. |
 | Venta ya **anulada** o ya **corregida** | Se rechaza | Lo vigente es la venta que la reemplazó. Se corrige esa. |
+| Override de fecha al **futuro** | Se rechaza con 422 `VENTA_EN_EL_FUTURO` | El piso de [RN-VEN-14](/dominio/ventas/) sigue valiendo dentro de la corrección. |
+| Override de fecha a **más de 90 días** | Se rechaza con 422 `VENTA_DEMASIADO_VIEJA` | Mismo piso. Quien crea que hace falta un ajuste más viejo va por el camino contable, no por una venta. |
+| Override de fecha en la **anulación** (`POST /ventas/:id/anulacion`) | No se acepta | Anular no lleva `ocurrioEn`. El override es exclusivo del flujo de corrección. |
 
 Corregir una venta corregida **encadena**: cada una apunta a la anterior, y el
 historial completo se puede recorrer en los dos sentidos.
+
+:::note[RN-VEN-16-AUDIT — el payload lleva las dos fechas]
+La acción `ventas:corregir` registra **ambas fechas** en el payload de la
+bitácora —`ocurrioEnAnterior` y `ocurrioEnNuevo`, ISO 8601 con offset— para
+que se pueda reconstruir qué cambió sin cruzar dos filas de `ventas`. Si la
+corrección no trajo override, ambos campos valen el mismo instante.
+
+La UI de auditoría las muestra hoy con `JSON.stringify` (renderer genérico,
+visualmente ruidoso pero semánticamente correcto). Un renderer específico para
+esta acción queda como follow-up.
+:::
 
 ---
 

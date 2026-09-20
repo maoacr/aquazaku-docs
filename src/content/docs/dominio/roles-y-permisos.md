@@ -215,6 +215,11 @@ Colgarla de `ventas:anular` —que `pos` y `seller` tienen sobre lo propio—
 convertiría la corrección en una puerta de atrás a ese tope, abierta desde el
 mostrador. Es RN-ACC-02 en su forma menos obvia: la regla no es «cada ruta valida
 su permiso», es «cada **acción** valida el suyo».
+
+El override de fecha que RN-VEN-16 introdujo también pasa por el piso de
+RN-VEN-14: `pos` o `seller` que alguna vez tuvieran `ventas:corregir` no
+podrían usarlo como puerta de atrás para mover plata más allá de los 90 días,
+porque el mismo 422 los frenaría.
 :::
 
 :::note[State machine de ventas — implementado en M2]
