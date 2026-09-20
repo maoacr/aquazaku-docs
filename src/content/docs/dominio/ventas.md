@@ -700,7 +700,7 @@ ese tope. Es una acción propia en la matriz: `ventas:corregir`.
 | Venta con **devoluciones** | Se rechaza | La devolución cuelga de una línea que dejaría de contar: la deuda se descontaría dos veces. Primero se revierte la devolución. |
 | **Recargo por daño** (`dano_base`) | Se rechaza | No tiene productos que rehacer ([RN-BAS-08](/dominio/bases/)). Se anula. |
 | Cambiar el **cliente** de una venta que despachó botellones sin vacío o prestó una base | Se rechaza | El activo quedó a nombre del cliente original y la corrección no lo trae de vuelta: la venta quedaría a nombre de una persona y el envase a cargo de otra. |
-| **Botellones y bases** de la venta corregida | No se re-emiten | Son movimientos **físicos**. El envase salió una vez y sigue afuera; volver a descontarlo del parque inventaría un envase que nunca salió. |
+| **Botellones y bases** de la venta corregida | Se permite **mover** los dos campos de botellones (`botellonesEntregados`, `botellonesRecibidos`) y la base **no se toca** | Los movimientos compensatorios `tipo='ajuste'` insertados sobre la nueva venta reflejan el delta contra la original. Los originales quedan intactos (ver [RN-VEN-17](/dominio/ventas/#rn-ven-17--botellones-entregados-y-recibidos) y [RN-ENV-09](/dominio/botellones-y-bases/)). La base sigue siendo un movimiento FÍSICO que no se reescribe — quien corrige la base lo hace desde Retornables, no desde acá. |
 | Venta ya **anulada** o ya **corregida** | Se rechaza | Lo vigente es la venta que la reemplazó. Se corrige esa. |
 | Override de fecha al **futuro** | Se rechaza con 422 `VENTA_EN_EL_FUTURO` | El piso de [RN-VEN-14](/dominio/ventas/) sigue valiendo dentro de la corrección. |
 | Override de fecha a **más de 90 días** | Se rechaza con 422 `VENTA_DEMASIADO_VIEJA` | Mismo piso. Quien crea que hace falta un ajuste más viejo va por el camino contable, no por una venta. |
@@ -709,13 +709,18 @@ ese tope. Es una acción propia en la matriz: `ventas:corregir`.
 Corregir una venta corregida **encadena**: cada una apunta a la anterior, y el
 historial completo se puede recorrer en los dos sentidos.
 
-:::note[RN-VEN-16-AUDIT — el payload lleva las dos fechas]
-La acción `ventas:corregir` registra **ambas fechas** en el payload de la
-bitácora —`ocurrioEnAnterior` y `ocurrioEnNuevo`, ISO 8601 con offset— para
-que se pueda reconstruir qué cambió sin cruzar dos filas de `ventas`. Si la
-corrección no trajo override, ambos campos valen el mismo instante.
+:::note[RN-VEN-16-AUDIT — el payload lleva las dos fechas y los dos campos de botellones]
+La acción `ventas:corregir` registra en el payload de la bitácora:
 
-La UI de auditoría las muestra hoy con `JSON.stringify` (renderer genérico,
+- **Ambas fechas** —`ocurrioEnAnterior` y `ocurrioEnNuevo`, ISO 8601 con offset—
+  para reconstruir qué cambió sin cruzar dos filas de `ventas`. Si la
+  corrección no trajo override, ambos campos valen el mismo instante.
+- **Los dos campos de botellones** —`botellonesEntregados.anterior` /
+  `.nuevo` y `botellonesRecibidos.anterior` / `.nuevo`— para que la auditoría
+  no tenga que sumar los compensatorios `tipo='ajuste'` de
+  `movimientos_botellon` para reconstruir el cambio.
+
+La UI de auditoría los muestra hoy con `JSON.stringify` (renderer genérico,
 visualmente ruidoso pero semánticamente correcto). Un renderer específico para
 esta acción queda como follow-up.
 :::
@@ -739,3 +744,49 @@ de entonces dejaba el reporte del mes igual de inventado.*
 mitad de RN-VEN-02: la regla siempre dijo cuál era la salida —anular y
 rehacer— pero el sistema la dejaba en manos del operador, en dos pantallas y
 sin nada que uniera las dos ventas.*
+
+*RN-VEN-17 (botellones entregados y recibidos) salió de la sesión del 20-sep-2026.
+El campo único `botellonesSinVacio` preguntaba cuántos envases salían SIN
+contrapartida, y por su forma binaria escondía la verdad más común: el cliente
+típico trae varios vacíos y se lleva la misma cantidad de llenos — un
+intercambio que no mueve saldo. Los dos campos explícitos hacen explícito lo
+que el formulario asumía.*
+
+---
+
+### RN-VEN-17 — Botellones entregados y recibidos
+
+**Estado:** ✅ Confirmada — sesión del 20-sep-2026.
+
+Toda venta que incluya líneas de producto con `presentacion='botellon'`
+registra explícitamente dos cantidades en la fila de `ventas`:
+
+- **`botellonesEntregados`** — cuántos botellones se llevan de la planta
+  (cliente recibe de la empresa). Default en el formulario = total de
+  botellones del carrito. Rango válido: `>= 0`.
+- **`botellonesRecibidos`** — cuántos botellones devuelve el cliente en esta
+  transacción. Default en el formulario = `botellonesEntregados` (caso común:
+  intercambio uno a uno). Rango válido: `>= 0`.
+
+Ambos campos son editables: el operador los ajusta cuando el caso no es
+intercambio (cliente nuevo que compra sin traer vacíos, cliente que devuelve
+más de lo que compra, etc.). La validación `BOTELLONES_SIN_RESPALDO` se
+mantiene para `botellonesEntregados > totalBotellonesEnCarrito` — si de verdad
+hacen falta envases sueltos, van por su propio camino en Retornables.
+
+**Movimientos resultantes** (`movimientos_botellon`):
+
+- Si `entregados > 0`: dos filas `tipo='entrega'` con `cantidad=±entregados`
+  (cliente recibe `+entregados`, bodega entrega `-entregados`).
+- Si `recibidos > 0`: dos filas `tipo='retorno'` con `cantidad=±recibidos`
+  (cliente devuelve `-recibidos`, bodega recibe `+recibidos`).
+
+**Corrección** (RN-VEN-16): si la corrección mueve estos dos campos, inserta
+movimientos compensatorios `tipo='ajuste'` con el delta contra la original.
+Los originales quedan intactos.
+
+**Anulación** (ver `RN-ENV-09` en `botellones-y-bases`): la anulación revierte
+TODAS las transacciones de la venta: `entregados` (con `tipo='retorno'`),
+`recibidos` (con `tipo='entrega'`, devolviendo al cliente lo que había
+traído), y la base prestada si la había. Ventas `tipo='dano_base'` se
+excluyen.
