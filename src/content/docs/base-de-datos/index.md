@@ -24,11 +24,18 @@ Esa decisión, cuando se tome, va documentada como
 
 ## Estado actual
 
-**M0 — Auth + RBAC: ✅ implementado** (20-ago-2026).
-**M1 — Productos y catálogo: ✅ implementado** (22-ago-2026).
-**M2 — Stock: 🚧 en curso** — las tablas y sus invariantes ya están.
+**M0 — Auth + RBAC**: ✅ (20-ago-2026).
+**M1 — Productos**: ✅ (22-ago-2026).
+**M2 — Stock**: ✅ (22-ago-2026).
+**M3 — Insumos**, **M4 — Producción**, **M5 — Clientes**, **M6 — Ventas**, **M7 — Retornables**: ✅.
+**M9 — Proveedores**, **M11 — Contador**, **M12 — Alertas**: ✅.
+**M13 — Auditoría**: ✅ (transversal desde M0).
+**M14 — Clientes ubicables**: ✅ (10-sep-2026).
+**M15 — Seguimientos**: ✅ (21-sep-2026).
+**M10 — Precios**: ✅ absorbido por M1 y M6.
+**M8 — Rutas y seller mobile**: ⏸ POST-MVP (diferido).
 
-29 tablas y 18 migraciones aplicadas, sobre PostgreSQL 17.
+30 tablas y 22 migraciones aplicadas, sobre PostgreSQL 17.
 
 ### Tablas
 

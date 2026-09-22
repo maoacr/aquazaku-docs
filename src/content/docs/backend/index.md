@@ -28,14 +28,21 @@ esquema de permisos por rol.
 
 ## Estado actual
 
-**Al 22-ago-2026:**
+**Al 21-sep-2026:**
 
-- **M0 — Auth + RBAC**: ✅ implementado (20-ago-2026)
-- **M1 — Productos y catálogo**: ✅ implementado (22-ago-2026)
-- **M2 — Stock de producto terminado**: ✅ implementado (22-ago-2026)
+- **M0 — Auth + RBAC**: ✅ (20-ago-2026)
+- **M1 — Productos**: ✅ (22-ago-2026)
+- **M2 — Stock**: ✅ (22-ago-2026)
+- **M3 — Insumos**, **M4 — Producción**, **M5 — Clientes**, **M6 — Ventas**, **M7 — Retornables**: ✅
+- **M9 — Proveedores**, **M11 — Contador**, **M12 — Alertas**: ✅
+- **M13 — Auditoría**: ✅ (transversal desde M0)
+- **M14 — Clientes ubicables**: ✅ (10-sep-2026)
+- **M15 — Seguimientos**: ✅ (21-sep-2026)
+- **M10 — Precios**: ✅ absorbido por M1 y M6
+- **M8 — Rutas y seller mobile**: ⏸ POST-MVP (diferido)
 
-**548 tests** en `api/` (32 archivos), verificados de punta a punta contra
-`web/` y la base. Bruno corriendo en CI contra un servidor real.
+**1091 tests** en `api/`, verificados de punta a punta contra `web/` y la
+base. Bruno corriendo en CI contra un servidor real.
 
 Repositorio: [`aquazaku-api`](https://github.com/maoacr/aquazaku-api).
 

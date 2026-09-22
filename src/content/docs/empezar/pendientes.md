@@ -37,16 +37,20 @@ Máximo asignado hasta hoy: **37**. La próxima es la 38.
 
 ---
 
-## 🔴 Bloquean parte de M2 — Stock
+## 🟡 Stock — preguntas que la mejora no bloquea
 
-Ninguna frena el libro de movimientos ni los lotes, pero sí lo que se construye
-encima. Contexto en la
-[spec de M2](/superpowers/specs/2026-08-22-m2-stock-design).
+Eran las preguntas «🔴 Bloquean parte de M2» cuando M2 estaba en curso.
+M2 se entregó el 22-ago-2026 sin necesitarlas — los ajustes puntuales con
+motivo ([RN-STK-02](/dominio/stock/)) alcanzan para hoy, y M12 configuró los
+umbrales de alertas para los que ya tienen número. Quedan acá por si en
+algún momento alguien quiere cerrar el círculo.
 
-| # | Pregunta | Para qué |
+Contexto histórico en la [spec de M2](/superpowers/specs/2026-08-22-m2-stock-design).
+
+| # | Pregunta | Estado |
 | :-: | --- | --- |
-| 30 | **¿Cuál es el stock mínimo de producto terminado que debería disparar alerta?** ¿Uno por producto, o uno solo para todos? | El roadmap pone las alertas en M2, pero ninguna regla define el umbral. Sin el número, M2 entrega la consulta y M12 la usa cuando exista |
-| 31 | **¿Cada cuánto se hace inventario físico?** | Define si el ajuste es excepcional o rutina, y si hace falta una pantalla de conteo o alcanza con el ajuste puntual — [RN-STK-02](/dominio/stock/) |
+| 30 | **¿Cuál es el stock mínimo de producto terminado que debería disparar alerta?** ¿Uno por producto, o uno solo para todos? | Sin definir. M12 mueve los que ya tienen número; este umbral nunca se midió |
+| 31 | **¿Cada cuánto se hace inventario físico?** | Sin definir. El ajuste puntual con motivo funciona ([RN-STK-02](/dominio/stock/)); no hay pantalla de conteo |
 
 ---
 
@@ -139,9 +143,7 @@ sube, además subida de archivos, que hoy el sistema no hace en ningún lado.
 Es un milestone propio. Las preguntas 32 a 35 son lo que hay que responder antes
 de escribir la primera línea.
 
-*(A la fecha de la última sesión de planning quedan **5 mediciones** 🟠 de planta
-—las 4 de producción más la 37 de bolsas— y las 4 preguntas 🟢 de perfil, 32 a
-35. La **36** se cerró el 22-ago-2026: ver [RN-STK-11](/dominio/stock/).)*
+*(A la fecha de hoy quedan **7 preguntas** 🟠 en «Faltan mediciones en planta» —algunas ya no bloquean su módulo, como la **4** (caudal) y la **37** (bolsas por kilo), porque se entregaron con el número vacío y el sistema lo dice con `null`—, las 4 preguntas 🟢 de perfil (32 a 35), y las 6 preguntas 🔵 del contador (40 a 45). La **36** se cerró el 22-ago-2026: ver [RN-STK-11](/dominio/stock/).)*
 
 ---
 
