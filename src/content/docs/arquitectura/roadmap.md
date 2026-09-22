@@ -160,9 +160,10 @@ La **matriz completa celda por celda** está en
 
 ## Módulos del sistema
 
-El sistema se divide en **14 módulos** numerados M0–M13. El número indica el
-orden de construcción sugerido, no prioridad de negocio: M0 es fundación
-porque todo lo demás lo necesita, no porque sea el más visible.
+El sistema se divide en **15 módulos** numerados M0–M15 (M8 diferido a
+post-MVP). El número indica el orden de construcción sugerido, no prioridad de
+negocio: M0 es fundación porque todo lo demás lo necesita, no porque sea el
+más visible.
 
 ### Tabla de módulos
 
@@ -265,15 +266,15 @@ puede arrancar en `design` mientras el anterior está en `apply`, pero no antes.
 
 | Fase | Módulo |
 | --- | --- |
-| ✅ **Terminado** | **M0 — Auth + RBAC** · **M1 — Productos** · **M2 — Stock** · **Fase de diseño** (marca, vidrio, agua, estados, vacíos, voz de usted, accesibilidad) · **M3 — Insumos** · **M4 — Producción** · **M5 — Clientes** · **M6 — Ventas** · **M7 — Retornables** · **M9 — Proveedores** · **M11 — Contador** · **M12 — Alertas** |
+| ✅ **Terminado** | **M0 — Auth + RBAC** · **M1 — Productos** · **M2 — Stock** · **Fase de diseño** (marca, vidrio, agua, estados, vacíos, voz de usted, accesibilidad) · **M3 — Insumos** · **M4 — Producción** · **M5 — Clientes** · **M6 — Ventas** · **M7 — Retornables** · **M9 — Proveedores** · **M11 — Contador** · **M12 — Alertas** · **M15 — Seguimientos** |
 | Design en curso | — |
 | Apply en curso | — |
 
 | Pendiente | — |
 | Diferido (post-MVP) | M8 — Rutas y seller mobile |
 
-**Los trece hitos del MVP están cerrados**, y M14 —lo que pidió la primera demo
-con el cliente— también.
+**Los trece hitos del MVP están cerrados**, M14 —lo que pidió la primera demo
+con el cliente— y M15 también.
 
 ## M14 — Clientes ubicables
 
@@ -313,6 +314,38 @@ Ningún servicio geocodifica `CL 5 # 3-24, Campo de la Cruz` con precisión. El
 mapa se centra en el municipio y **la persona pone el pin**: las coordenadas
 salen de alguien que sabe dónde está la casa. Una ruta calculada sobre una
 posición inventada es peor que ninguna — y esas coordenadas son la base de M8.
+
+---
+
+## M15 — Seguimientos
+
+La lista de clientes a los que hay que llamar (RN-CLI-18) arrancó como una
+sección del tablero. Funcionaba — pero el peso de la tarjeta (días, teléfonos,
+etiqueta, botón de WhatsApp, dos franjas de urgencia) le ganaba al resto y el
+tablero dejaba de leerse como «qué hacer / cómo venimos»: se leía como «llamar
+a Yeimy».
+
+### La mudanza
+
+La lista completa se mudó al módulo **Seguimientos** (`/modulos/seguimientos`),
+visible para los cuatro roles — todos tienen `clientes:ver`, que es lo que pide
+el endpoint. El tablero conserva solo el **recordatorio**: si hay N clientes a
+los que llamar, lo dice como un pendiente más, con la cantidad exacta y un link
+«Ir a Seguimientos →».
+
+### Qué cambió y qué no
+
+| Pieza | Estado |
+| --- | --- |
+| Endpoint `/clientes/a-llamar` | intacto |
+| Componente `ClientesParaLlamar` | intacto, mismos tests |
+| Permisos | intactos (`clientes:ver`) |
+| Render del tablero | saqué la sección, sumé el pendiente |
+| Catálogo de módulos | entrada nueva `seguimientos` |
+
+Es el primer caso del patrón «sección pesada del tablero migra a módulo
+propio». El tablero sigue cumpliendo su rol de vistazo general del negocio; la
+vista dedicada es la lista completa.
 
 ---
 

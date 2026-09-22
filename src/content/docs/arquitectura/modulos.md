@@ -1,6 +1,6 @@
 ---
 title: Catálogo de módulos
-description: Índice rápido de los 14 módulos que componen el sistema Aquazaku, con propósito, roles y dependencias.
+description: Índice rápido de los 15 módulos que componen el sistema Aquazaku, con propósito, roles y dependencias.
 sidebar:
   order: 2
 ---
@@ -241,6 +241,46 @@ las reglas de negocio de cada módulo, ver [Dominio](/dominio/).
   - Es transversal — se implementa como middleware/log de la capa de datos.
   - Con `admin` concentrando todo el poder de corrección, la auditoría es el
     único control real (ver [Roles y permisos](/dominio/roles-y-permisos/)).
+
+## M14 — Clientes ubicables
+
+- **Propósito:** direcciones estructuradas en la nomenclatura colombiana
+  (`CL 45 A # 12 B - 34`), municipio/departamento del DANE con ortografía
+  correcta, pin arrastrable en mapa para coordenadas, y al menos un canal de
+  contacto por cliente (teléfono obligatorio, dirección que **ubique**).
+- **Roles:** `admin`, `pos`, `seller`, `contador` (consulta).
+- **Depende de:** M0, M5.
+- **Doc de dominio:** [Clientes §RN-CLI-08 a §RN-CLI-19](/dominio/clientes/).
+- **Estado:** ✅ **implementado** (post-demo, 10-sep-2026). Salió de la primera
+  demo con el cliente, no estaba en el roadmap.
+- **Notas:**
+  - `direcciones_ubicable`: la base exige **al menos uno** entre estructura,
+    línea libre, indicaciones o coordenadas. Ningún campo de ubicación es
+    obligatorio individualmente.
+  - El pin **lo pone la persona**, no un servicio de geocodificación: las
+    coordenadas son la base de M8.
+  - Municipio y departamento vienen del DANE (33 / 1122), en minúscula. Las
+    veredas —que el DANE no lista— se aceptan igual.
+
+## M15 — Seguimientos
+
+- **Propósito:** vista dedicada con la lista de clientes a los que hay que
+  llamar —días sin comprar, teléfonos con etiqueta, botón de WhatsApp, dos
+  franjas de urgencia. La lista completa salió del tablero; el tablero avisa
+  con un pendiente que cuenta cuántos hay y lleva a la vista.
+- **Roles:** `admin`, `seller`, `pos`, `contador`.
+- **Depende de:** M0, M5.
+- **Doc de dominio:** [Clientes §RN-CLI-18](/dominio/clientes/).
+- **Estado:** ✅ **implementado** (21-sep-2026). Es el primer caso del patrón
+  «sección pesada del tablero migra a módulo propio».
+- **Notas:**
+  - El componente `ClientesParaLlamar`, el endpoint `/clientes/a-llamar` y los
+    permisos (`clientes:ver`) **no cambiaron**. Solo cambió el lugar donde se
+    monta la vista.
+  - El tablero conserva el recordatorio: `N clientes para llamar → Ir a
+    Seguimientos`. Sin él, el tablero pierde un señal clara de «hay alguien a
+    quien llamar» y el módulo queda invisible hasta que alguien lo abra por
+    curiosidad.
 
 ---
 

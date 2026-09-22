@@ -824,6 +824,18 @@ igual, con el nombre de tu cliente adentro.
 Un indicativo que no es el de Colombia se rechaza en vez de recortarse.
 :::
 
+#### Dónde vive la lista
+
+La lista completa —días sin comprar, teléfonos con su etiqueta, botón de
+WhatsApp, dos franjas según la urgencia— vive en el módulo **Seguimientos**
+(`/modulos/seguimientos`). El tablero conserva solo el **recordatorio**: si hay
+N clientes a los que hay que llamar, lo dice como un pendiente con la cantidad
+exacta y un link «Ir a Seguimientos →». Misma regla que cualquier otro pendiente
+del tablero: número sin acción al lado es decoración.
+
+Los cuatro roles tienen `clientes:ver`, que es lo que pide el endpoint
+`/clientes/a-llamar`, así que los cuatro ven el módulo.
+
 ---
 
 ### RN-CLI-19 — El alta captura todo lo que el `pos` no va a poder agregar después
