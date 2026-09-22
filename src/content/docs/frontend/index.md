@@ -17,16 +17,23 @@ Documentación del proyecto `web/`: el panel de administración que usa la ofici
 
 ## Estado actual
 
-**Al 22-ago-2026:**
+**Al 21-sep-2026:**
 
-- **M0 — Auth + RBAC**: ✅ implementado (20-ago-2026)
-- **M1 — Productos y catálogo**: ✅ implementado (22-ago-2026)
-- **M2 — Stock de producto terminado**: ✅ implementado (22-ago-2026)
+- **M0 — Auth + RBAC**: ✅ (20-ago-2026)
+- **M1 — Productos**: ✅ (22-ago-2026)
+- **M2 — Stock**: ✅ (22-ago-2026)
+- **M3 — Insumos**, **M4 — Producción**, **M5 — Clientes**, **M6 — Ventas**, **M7 — Retornables**: ✅
+- **M9 — Proveedores**, **M11 — Contador**, **M12 — Alertas**: ✅
+- **M13 — Auditoría**: ✅ (transversal desde M0)
+- **M14 — Clientes ubicables**: ✅ (10-sep-2026)
+- **M15 — Seguimientos**: ✅ (21-sep-2026)
 - **Fase de diseño**: ✅ aplicada (22-ago-2026) — marca real, vidrio y agua,
   semáforo de estados, vacíos diferenciados, errores sin jerga, voz de usted,
   accesibilidad medida (anillo de foco y objetivos táctiles).
+- **M10 — Precios**: ✅ absorbido por M1 y M6
+- **M8 — Rutas y seller mobile**: ⏸ POST-MVP (diferido)
 
-**434 tests** en `web/`, verificados en el browser contra `api/` real.
+**1258 tests** en `web/`, verificados contra `api/` real.
 
 Repositorio: [`aquazaku-web`](https://github.com/maoacr/aquazaku-web).
 
