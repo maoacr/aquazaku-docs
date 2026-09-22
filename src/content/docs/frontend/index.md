@@ -39,13 +39,25 @@ Repositorio: [`aquazaku-web`](https://github.com/maoacr/aquazaku-web).
 | `/reset-password?token=…` | con token | Destino del link del correo |
 | `/change-password` | con sesión | Primer ingreso forzado (spec §7.2) |
 | `/` | con sesión | Dashboard |
-| `/modulos/productos` | **los cuatro roles** | Catálogo en lectura: código, litros y precios |
-| `/modulos/stock` | **los cuatro roles** | Total, vendible y vencido por producto |
-| `/modulos/stock/[productoId]` | **los cuatro roles** | Lotes en orden FIFO; formularios según permiso |
+| `/modulos/productos` | los cuatro roles | Catálogo en lectura: código, litros y precios |
 | `/modulos/productos/gestion` | `admin` | Alta, precios y activación |
+| `/modulos/stock` | los cuatro roles | Total, vendible y vencido por producto |
+| `/modulos/stock/[productoId]` | los cuatro roles | Lotes en orden FIFO; formularios según permiso |
+| `/modulos/insumos` | `admin`, `pos`, `contador` | Tapas, sellos y bolsas contra su mínimo configurable |
+| `/modulos/produccion` | `admin`, `pos`, `contador` | Cierre diario, tanques y reconciliación |
+| `/modulos/clientes` | los cuatro roles | Padrón, alta y direcciones |
+| `/modulos/clientes/[id]` | los cuatro roles | Ficha con saldo, teléfonos, direcciones y ventas |
+| `/modulos/seguimientos` | los cuatro roles | Clientes atrasados con días, teléfonos y WhatsApp ([RN-CLI-18](/dominio/clientes/)) |
+| `/modulos/ventas` | los cuatro roles | Ventas, recortadas por alcance ([RN-ACC-03](/dominio/roles-y-permisos/)) |
+| `/modulos/retornables` | los cuatro roles | Botellones y bases, con entrega híbrida y daño |
+| `/modulos/retornables/bases/[id]` | los cuatro roles | Historia de una base por `id_sticker` |
+| `/modulos/proveedores` | `admin`, `pos`, `contador` | Padrón y compras |
+| `/modulos/reportes` | `admin`, `contador` | Extracto, cartera por edad y resúmenes mensuales |
+| `/modulos/reportes/exportar` | `admin`, `contador` | Descarga CSV / PDF a elección |
 | `/modulos/usuarios` | `admin` | Alta, roles y estado |
-| `/modulos/auditoria` | `admin` | Bitácora con filtros |
-| `/contador/auditoria` | `contador` | La misma vista, por su propia puerta |
+| `/modulos/usuarios/[id]` | `admin` | Ficha y edición |
+| `/modulos/auditoria` | `admin` | Bitácora con filtros encadenados |
+| `/modulos/alertas` | `admin` | Umbrales configurables ([RN-STK-11](/dominio/stock/), [RN-INS-03](/dominio/insumos/)) |
 
 Todo lo que requiere sesión vive bajo el route group `(app)`, que no agrega
 segmento a la URL. El guard está en su layout: **una pantalla nueva nace
