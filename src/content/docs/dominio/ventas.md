@@ -700,7 +700,7 @@ ese tope. Es una acción propia en la matriz: `ventas:corregir`.
 | Venta con **devoluciones** | Se rechaza | La devolución cuelga de una línea que dejaría de contar: la deuda se descontaría dos veces. Primero se revierte la devolución. |
 | **Recargo por daño** (`dano_base`) | Se rechaza | No tiene productos que rehacer ([RN-BAS-08](/dominio/bases/)). Se anula. |
 | Cambiar el **cliente** de una venta que despachó botellones sin vacío o prestó una base | Se rechaza | El activo quedó a nombre del cliente original y la corrección no lo trae de vuelta: la venta quedaría a nombre de una persona y el envase a cargo de otra. |
-| **Botellones y bases** de la venta corregida | Se permite **mover** los dos campos de botellones (`botellonesEntregados`, `botellonesRecibidos`) y la base **no se toca** | Los movimientos compensatorios `tipo='ajuste'` insertados sobre la nueva venta reflejan el delta contra la original. Los originales quedan intactos (ver [RN-VEN-17](/dominio/ventas/#rn-ven-17--botellones-entregados-y-recibidos) y [RN-ENV-09](/dominio/botellones-y-bases/)). La base sigue siendo un movimiento FÍSICO que no se reescribe — quien corrige la base lo hace desde Retornables, no desde acá. |
+| **Botellones y bases** de la venta corregida | Se permite **mover** los dos campos de botellones (`botellonesEntregados`, `botellonesRecibidos`) y la base **no se toca** | La corrección REVIERTE los movimientos originales de la venta en `movimientos_botellon` (mismo helper que la anulación, ver [RN-ENV-09](/dominio/botellones-y-bases/)) y la venta nueva escribe los suyos. El saldo del cliente refleja **solo la nueva venta**, no la suma de la original y la nueva. La base sigue siendo un movimiento FÍSICO que no se reescribe — quien corrige la base lo hace desde Retornables, no desde acá. |
 | Venta ya **anulada** o ya **corregida** | Se rechaza | Lo vigente es la venta que la reemplazó. Se corrige esa. |
 | Override de fecha al **futuro** | Se rechaza con 422 `VENTA_EN_EL_FUTURO` | El piso de [RN-VEN-14](/dominio/ventas/) sigue valiendo dentro de la corrección. |
 | Override de fecha a **más de 90 días** | Se rechaza con 422 `VENTA_DEMASIADO_VIEJA` | Mismo piso. Quien crea que hace falta un ajuste más viejo va por el camino contable, no por una venta. |
@@ -781,9 +781,13 @@ hacen falta envases sueltos, van por su propio camino en Retornables.
 - Si `recibidos > 0`: dos filas `tipo='retorno'` con `cantidad=±recibidos`
   (cliente devuelve `-recibidos`, bodega recibe `+recibidos`).
 
-**Corrección** (RN-VEN-16): si la corrección mueve estos dos campos, inserta
-movimientos compensatorios `tipo='ajuste'` con el delta contra la original.
-Los originales quedan intactos.
+**Corrección** (RN-VEN-16): si la corrección mueve estos dos campos, los
+movimientos de la venta original se **revierten** en `movimientos_botellon`
+(insertando `tipo='retorno'` y `tipo='entrega'` con signo opuesto, mismo
+helper que la anulación) y la venta nueva escribe los suyos completos. El
+resultado neto es la nueva venta: el cliente termina con el saldo que
+dice su nueva entrega/recepción, no la suma de las dos. Los originales
+quedan en el libro para auditoría, pero no cuentan para el saldo.
 
 **Anulación** (ver `RN-ENV-09` en `botellones-y-bases`): la anulación revierte
 TODAS las transacciones de la venta: `entregados` (con `tipo='retorno'`),

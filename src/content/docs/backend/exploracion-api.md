@@ -29,8 +29,8 @@ cambia una ruta y no toca la colección, se ve en el diff.
 | `05-Stock` | Lotes, ajuste, descarte, el libro y **un `contador` recibiendo 403** |
 | `06-Insumos` | Alta, entrada en unidades y en kilos, la conversión rechazada sin equivalencia, y **un `seller` recibiendo 403** |
 | `07-Produccion` | El cierre del día con sus cuatro escritos, la reposición **sin cantidad**, la reconciliación que no escribe, y **un `pos` que puede anotar pero no ajustar** |
-| `08-Clientes` | El dígito de verificación calculado, el cruce CC/NIT que **advierte sin bloquear**, el crédito rechazado sin verificación, y **un `contador` recibiendo 403** |
-| `09-Ventas` | El precio congelado, el piso que no se perfora, la anulación que devuelve al mismo lote, el cobro que no puede pasarse de la deuda, y **un `contador` recibiendo 403** |
+| `08-Clientes` | El dígito de verificación calculado, el cruce CC/NIT que **advierte sin bloquear**, el crédito rechazado sin verificación, **la desactivación que devuelve bases y botellones al stock físico**, y **un `contador` recibiendo 403** |
+| `09-Ventas` | El precio congelado, el piso que no se perfora, la anulación que devuelve al mismo lote, la corrección que revierte los botellones como la anulación, el cobro que no puede pasarse de la deuda, y **un `contador` recibiendo 403** |
 | `10-Retornables` | La **ley de conservación** del parque, la entrega que escribe dos filas con signo opuesto, la base que se presta a una **dirección**, el daño que genera recargo, **la venta que despacha un envase y lo deja a nombre del cliente**, y **un `seller` que mira y no opera** |
 | `11-Proveedores` | La compra que escribe el documento **y** el inventario juntos, el crédito modelado sin ejercerse, el aviso de vencidas que se apaga al pagar, y **un `pos` que compra pero no da de alta proveedores** |
 | `12-Sesion` | Cierre de sesión y que la credencial deje de servir |

@@ -323,12 +323,34 @@ con las otras tres decisiones ([RN-RUT-05](/dominio/rutas/)).
 
 ### RN-CLI-02 — Un cliente no se borra, se desactiva
 
-**Estado:** 🟡 Supuesto
+**Estado:** 🟢 Confirmada — sesión del 21-sep-2026.
 
 Un cliente con historial nunca se elimina. Se marca como inactivo y deja de
 aparecer en las operaciones nuevas.
 
 **Por qué:** borrarlo rompe el historial de ventas y deja envases sin dueño.
+
+#### Desactivar también devuelve el stock físico
+
+Desactivar no es solo escribir `activo = false`: el cliente suele tener bases
+prestadas y botellones a su nombre, y dejarlos «colgados» de un cliente
+inactivo es stock que nadie puede reclamar. El endpoint `POST /clientes/:id/desactivar`
+hace las dos cosas en una sola transacción:
+
+1. Marca `activo = false` y exige motivo escrito (mínimo 10 caracteres, mismo
+   piso que [RN-VEN-08](/dominio/ventas/#rn-ven-08--anulación-de-venta-solo-el-autor-comentario-obligatorio)).
+2. Devuelve las bases prestadas a sus direcciones a bodega, con una fila
+   `tipo='retorno'` en `movimientos_base` por cada una.
+3. Inserta una transferencia `tipo='retorno'` en `movimientos_botellon` que
+   devuelve los botellones del cliente a la bodega (dos filas con signo
+   opuesto, como toda transferencia).
+4. Audita con `clientes:desactivar` registrando los conteos — los que el
+   modal de web muestra antes de confirmar y los que el cliente ve en el
+   mensaje de éxito.
+
+`PATCH /:id/estado` queda como toggle puro: sirve para **reactivar** un
+cliente ya desactivado y para cambios manuales que no tocan stock. Quien
+necesita desactivar con devolución de stock usa el endpoint nuevo.
 
 ---
 
