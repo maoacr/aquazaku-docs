@@ -420,6 +420,50 @@ el botón exacto**. Es la misma defensa que ya protegía el alta del mostrador,
 donde un botón sin `type` **cobraba la venta**.
 :::
 
+## Un default se DERIVA, no se copia con un efecto
+
+Los dos campos de botellones del mostrador arrancan siguiendo al carrito:
+agregar una recarga pinta 1 y 1, subir a cinco pinta 5 y 5. En el momento que
+quien atiende edita uno, el sistema deja de mandarlos.
+
+Estaba escrito copiando el carrito al estado:
+
+```tsx
+// ❌ React lo marca: `set-state-in-effect`
+useEffect(() => {
+  if (corrigiendo || botellonesDirty) return
+  setEntregados(botellonesEnCarrito)
+  setRecibidos(botellonesEnCarrito)
+}, [botellonesEnCarrito, botellonesDirty, corrigiendo])
+```
+
+El problema no es el estilo. **El estado copiado tiene vida propia**: hay un
+render con el valor viejo antes de que el efecto corra, y a partir de ahí hay
+DOS fuentes de verdad para el mismo número. En un campo que decide cuántos
+botellones salen del parque, eso es exactamente el terreno donde ya apareció un
+doble conteo.
+
+```tsx
+// ✅ en estado vive solo lo que TECLEARON — lo único que no se puede recalcular
+const entregados = corrigiendo || botellonesDirty ? entregadosTecleados : botellonesEnCarrito
+```
+
+:::danger[Al derivar, lo que el efecto tapaba sale a la luz]
+El flag de «me hago cargo» es **uno para los dos campos**. Con el efecto eso
+salía gratis, porque ya había *escrito* los dos valores en el estado.
+
+Derivando, el campo que nadie tocó se queda en su valor inicial. Escribir `3` en
+«Recibidos» con dos botellones en el carrito dejaba «Entregados» en **0** — dos
+botellones saliendo del parque sin quedar a cargo de nadie.
+
+La solución es **congelar los dos** al tocar cualquiera: el que no se editó se
+siembra con lo que estaba mostrando.
+
+Lo atrapó un test que ya existía, en una dirección. Vale escribir también la
+otra, y que **lo congelado sea lo que viaja** en los campos ocultos: «se ve bien
+y manda otra cosa» es el error que ninguna prueba de pantalla ve.
+:::
+
 ## Qué se decidió NO construir
 
 Tan importante como lo anterior, porque evita rehacer la discusión.

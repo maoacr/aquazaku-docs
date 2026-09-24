@@ -794,3 +794,81 @@ TODAS las transacciones de la venta: `entregados` (con `tipo='retorno'`),
 `recibidos` (con `tipo='entrega'`, devolviendo al cliente lo que había
 traído), y la base prestada si la había. Ventas `tipo='dano_base'` se
 excluyen.
+
+---
+
+### RN-VEN-18 — La venta dice a dónde se entrega
+
+**Estado:** ✅ Confirmada el 23-sep-2026.
+
+Una venta con cliente registra **a cuál de sus direcciones va** — siempre que
+el cliente tenga alguna cargada.
+
+#### El problema
+
+La dirección solo aparecía cuando la venta despachaba una **base**, porque el
+préstamo se reclama en una dirección concreta
+([RN-BAS-03](/dominio/botellones-y-bases/)). Una venta de botellones sin base no
+registraba dónde se entregaba.
+
+El resultado es que **el reparto no salía de la venta**: quien arma la ruta
+tenía que abrir el cliente, mirar sus direcciones y adivinar a cuál iba ese
+pedido. Un comercial con tres locales no tiene respuesta a eso.
+
+#### Cuándo se exige, y cuándo no
+
+| Caso | Dirección |
+| --- | --- |
+| Cliente **con** direcciones cargadas | **Obligatoria** — hay que decir a cuál |
+| Cliente **sin** ninguna dirección | No se pide |
+| Venta de mostrador **sin cliente** | No se acepta ninguna |
+| Recargo por base dañada (`tipo='dano_base'`) | No se pide |
+
+La condición es angosta a propósito. Desde
+[RN-CLI-20](/dominio/clientes/#rn-cli-20--un-cliente-se-registra-con-lo-que-quiso-dar)
+un cliente se registra con el nombre nada más, y exigirle dirección lo dejaría
+**sin poder comprar** — lo contrario de lo que ese registro vino a habilitar. El
+día que le carguen una dirección, la regla le empieza a aplicar sola.
+
+El **recargo por daño** queda afuera porque no es una entrega: es el cobro de
+una base rota. Tiene cliente —hay a quién cobrarle— y no va a ningún lado. Y
+muchas veces no *podría* tener dirección: una base se rompe estando en bodega,
+ya devuelta.
+
+#### Los tres barrotes están en la base
+
+Ninguno es TypeScript ([ADR-0006](/decisiones/0006-invariantes-en-la-base/)):
+
+- **Foránea compuesta** `(direccion_id, cliente_id)` → `direcciones (id, cliente_id)`.
+  Con dos foráneas sueltas, la base aceptaría una venta a Rosa entregada en la
+  casa de Pedro, y el error solo se vería el día que el repartidor golpea la
+  puerta equivocada.
+- **CHECK** `ventas_direccion_exige_cliente`: una dirección cuelga de un cliente
+  ([RN-CLI-07](/dominio/clientes/)), así que suelta en una venta anónima es un
+  dato que no le pertenece a nadie.
+- **CONSTRAINT TRIGGER diferido** `ventas_direccion_cuando_el_cliente_tiene`:
+  «tiene direcciones» vive en **otra tabla**, y un CHECK solo ve su propia fila.
+  Va diferido porque el alta de un cliente crea cliente y dirección en la misma
+  transacción — evaluado al vuelo vería un estado a medio armar.
+
+:::caution[Las ventas viejas quedan sin dirección, a propósito]
+La restricción entró como `NOT VALID`. Rellenar hacia atrás sería **inventar**:
+a un cliente con una sola dirección se le podría poner esa, pero a uno con tres
+no hay forma de saber a cuál fue ese pedido.
+
+Una suposición escrita en un registro histórico es indistinguible de un dato
+real. `NOT VALID` dice la verdad: de acá en adelante se exige, y lo viejo queda
+visiblemente sin dirección — que es lo que efectivamente pasó.
+:::
+
+#### No se confunde con la dirección de la base
+
+Son dos campos distintos y suelen coincidir, que es lo que hace fácil
+confundirlos:
+
+- `base.direccionId` dice **dónde se reclama una base prestada**
+  (RN-BAS-03), y solo existe cuando sale una base.
+- `direccionId` dice **a dónde va la venta**, y existe siempre que el cliente
+  tenga direcciones.
+
+Una recarga que se entrega en la casa puede dejar la base en el local.

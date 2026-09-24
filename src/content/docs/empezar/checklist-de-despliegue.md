@@ -119,27 +119,30 @@ El `lint` de `web` **sí** es ESLint de verdad, y ahí vive la regla que hace
 cumplir el patrón BFF: que el browser nunca le hable directo a `api/`
 ([ADR-0002](/decisiones/0002-bff-pattern/)). No te lo saltes.
 
-:::caution[`web-ci` está en rojo, y no lo rompiste vos]
-El portón de cobertura de `web` **nunca** estuvo verde. Medido hoy:
+:::tip[El portón de cobertura ya está verde]
+Durante meses `pnpm test:coverage` terminaba con `exit 1` aunque **todos los
+tests pasaran**: los umbrales se habían puesto como meta y se dejaron como
+portón, con el repo casi vacío.
+
+Desde el 23-sep-2026 se cumplen:
 
 | | Real | Umbral | |
 | --- | :-: | :-: | :-: |
-| Lines | 45.30% | 70% | ❌ |
-| Functions | 40.19% | 70% | ❌ |
-| Branches | 34.92% | 65% | ❌ |
+| Lines | 76.19% | 70% | ✅ |
+| Functions | 72.21% | 70% | ✅ |
+| Branches | 68.72% | 65% | ✅ |
 
-`pnpm test:coverage` termina con `exit 1` aunque **todos los tests pasen**. Los
-umbrales se pusieron como meta y se dejaron como portón.
+Así que «esperar a que CI esté verde» **sí** es una instrucción ejecutable, en
+los dos repos. Si `web-ci` se pone rojo, es por algo que pasó ahora.
+:::
 
-Entonces «esperar a que CI esté verde» hoy no es una instrucción ejecutable para
-`web`. Lo que sí se puede exigir mientras tanto:
+:::caution[Si un caso largo se cae por timeout, mirá el reloj antes que el código]
+Bajo `--coverage` la instrumentación frena cada tecla, y los casos que tipean
+mucho cruzaban los 5 s de fábrica: pasaban solos y fallaban en la corrida con
+cobertura, que es la forma exacta de un flake.
 
-1. Que **los tests pasen** (mirá la lista, no el exit code).
-2. Que `typecheck` y `lint` estén limpios — esos sí son binarios.
-3. Que la cobertura **no baje** respecto de la corrida anterior.
-
-Es deuda conocida, con dueño y con número. Está en
-[Qué falta preguntar](/empezar/pendientes/).
+`vitest.config.mts` lo sube a 30 s. Va en la config y no en el comando para que
+valga en las dos corridas y en CI, y nadie tenga que acordarse del flag.
 :::
 
 ### 0.4 · Bruno, si tocaste un contrato
