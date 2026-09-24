@@ -532,17 +532,22 @@ configura cuando quiera.** El bloqueo de ruta
 
 ### RN-CLI-13 — El documento se exige al registrar, sin excepciones
 
-**Estado:** ✅ Confirmada.
+**Estado:** ⛔ **Reemplazada** el 23-sep-2026 por
+[RN-CLI-20](#rn-cli-20--un-cliente-se-registra-con-lo-que-quiso-dar).
 
-No se registra un cliente sin documento. El `seller` puede tomar el número
-**dictado de viva voz** y la app lo acepta — pero el dato existe desde el
-primer momento, no se rellena después.
+Decía: no se registra un cliente sin documento. El `seller` puede tomar el
+número dictado de viva voz, pero el dato existe desde el primer momento.
 
-**Por qué:** confundir "dato presente" con "dato verificado" lleva a clientes
-registrados sin documento que después nadie sabe a qué número apuntar. Para
-eso existe [RN-CLI-10](#rn-cli-10--el-documento-tiene-estado-de-verificación)
-(estado de verificación) — el documento se exige, la verificación puede
-esperar.
+**Por qué se escribió:** confundir «dato presente» con «dato verificado» lleva
+a clientes registrados sin documento que después nadie sabe a qué número
+apuntar. Para eso existe
+[RN-CLI-10](#rn-cli-10--el-documento-tiene-estado-de-verificación) — el
+documento se exige, la verificación puede esperar.
+
+**Por qué se cayó:** el razonamiento era correcto y la conclusión no aguantó el
+mostrador. Mucha gente no quiere dar el documento, y la regla no los convirtió
+en clientes identificados: los mandó a un **cliente-tacho**. Queda acá porque
+entender por qué existía es lo que impide volver a escribirla.
 
 ---
 
@@ -894,6 +899,98 @@ dirección**: ocho campos perdidos sin una palabra. Pasó con un cliente real.
 Frenar y pedir el nombre es lo único honesto. Poner una etiqueta por defecto
 sería inventarle un nombre a la casa de otra persona, y seguir de largo es el
 defecto.
+:::
+
+---
+
+### RN-CLI-20 — Un cliente se registra con lo que quiso dar
+
+**Estado:** ✅ Confirmada el 23-sep-2026 — reemplaza a
+[RN-CLI-13](#rn-cli-13--el-documento-se-exige-al-registrar-sin-excepciones).
+
+**Ningún campo del registro es bloqueante, salvo el nombre.** Documento,
+teléfono, dirección y tipo de cliente son todos opcionales.
+
+#### El cliente-tacho, que es el problema que esto resuelve
+
+Con el documento obligatorio, quien no lo quería dar no se convertía en un
+cliente identificado: se convertía en una venta colgada de **«POS Aquazaku»**,
+un cliente genérico que la planta creó para poder seguir cobrando.
+
+Eso no es un cliente. Es un tacho, y adentro conviven cientos de personas
+distintas:
+
+| Lo que se pierde en el tacho | Por qué importa |
+| --- | --- |
+| La cartera | No le pertenece a nadie: es la suma de deudas de gente que no se conoce entre sí |
+| El historial | «Cuándo compró por última vez» no tiene respuesta |
+| El teléfono | No hay a quién llamar |
+| El panel de recompra | Lo ve como una persona que compra todos los días, así que **nunca lo muestra** ([RN-CLI-18](#rn-cli-18--un-cliente-que-hace-días-que-no-compra-se-muestra-para-llamar)) |
+
+Registrar a alguien con el nombre y el teléfono que **sí** dio es mejor que eso
+aunque falte el documento. Lo que se pierde —el identificador estable, el aviso
+de cruce CC/NIT— dentro del tacho ya estaba perdido, y encima se perdían las
+otras tres cosas.
+
+:::note[El tacho no desaparece, encuentra su lugar]
+Sigue existiendo para lo que de verdad es: quien no quiere dar **ni el nombre**.
+Ese caso ni siquiera necesita un cliente — `ventas.cliente_id` es nullable desde
+siempre, y una venta de mostrador anónima es exactamente eso.
+:::
+
+#### El nombre es el único piso
+
+`clientes.nombre` es una columna **generada** `NOT NULL`: sale de las partes
+—`primer_nombre` + `apellidos`— o de `nombre_libre`.
+
+No es un capricho del esquema. Un cliente sin nombre **no se puede volver a
+encontrar**: el buscador busca por nombre, apellidos, apodo y documento. Sin
+ninguno de los cuatro, la ficha existe y nadie la va a hallar nunca — que es el
+tacho otra vez, en versión individual.
+
+#### El nombre se acomoda a lo que escribieron
+
+La base guarda el nombre de dos formas y **no acepta mezclas**: partido
+—`primer_nombre` y `apellidos` van juntos o no van
+(`clientes_nombre_partido_completo`)— o libre.
+
+Quien atiende no sabe eso, y no tiene por qué. Escribe «Rosa» porque es lo único
+que le dijeron:
+
+| Lo que escriben | Cómo se guarda |
+| --- | --- |
+| Rosa + Padilla | **Partido** — el mejor dato, deja buscar por apellido |
+| Solo «Rosa» | Nombre libre |
+| Solo los apellidos | Nombre libre |
+| Solo el apodo | Nombre **y** apodo — el buscador mira los dos |
+| Nada | Venta sin cliente |
+
+Exigir la forma partida completa era pedirle a quien registra que **invente un
+apellido**.
+
+#### El documento, cuando viene
+
+Los dos campos van **juntos o ninguno** (`clientes_documento_completo`): un tipo
+sin número no identifica nada, y un número sin tipo no se puede leer —`79123456`
+puede ser una cédula o el NIT de esa misma persona, y no son lo mismo
+([RN-CLI-08](#rn-cli-08--el-documento-es-único-dos-clientes-nunca-lo-comparten)).
+
+Y **verificar exige documento** (`clientes_verificar_exige_documento`):
+verificar significa que alguien lo tuvo a la vista y lo afirma con su nombre
+([RN-CLI-14](#rn-cli-14--cualquiera-de-los-cuatro-roles-operativos-puede-verificar-el-código-de-verificación-queda-auditado)).
+Sobre un cliente sin documento sería una afirmación sobre nada — y arrastra el
+crédito, que exige verificación
+([RN-CLI-15](#rn-cli-15--el-crédito-exige-verificación-sin-estado-no-se-puede-activar)).
+
+:::caution[Ningún botón se apaga]
+La pantalla **no deshabilita** el botón de avanzar. Un botón gris no dice por
+qué está gris: quien atiende lo ve apagado, no sabe qué falta, y **termina
+inventando un número para encenderlo** — que es exactamente el dato basura que
+esta regla vino a evitar.
+
+Lo que falte se dice al apretar, con el nombre del campo. Y el aviso de
+documento duplicado sigue a la vista ofreciendo la ficha de quien ya existe:
+**avisa, no traba**.
 :::
 
 ---

@@ -279,3 +279,116 @@ params:query {   ← nunca adentro del bloque get { }
 Si el resumen dice `Skipped`, mirá el warning: hay un archivo que no se está
 corriendo.
 :::
+
+---
+
+## Cinco formas de romper la colección sin tocar `api/`
+
+El 22-sep-2026 la colección quedó con **42 peticiones rojas**, y `api-ci` con
+ella. Ninguna causa era del sistema. Están todas acá porque las cinco son
+fáciles de repetir.
+
+### 1 · Un cambio de rol es un préstamo
+
+`08-Clientes` terminaba con dos pedidos que entran como `contador` y **nunca
+volvía a admin**. Toda la carpeta `09-Ventas` arrancaba con esa sesión y caía
+con 403 — y detrás, media colección.
+
+Lo notable es que ya existía una petición para exactamente eso, con su
+documentación diciendo *«sin esto, 09-Ventas arrancaría con la sesión del `pos`»*.
+Alguien agregó pedidos **al final** de la carpeta y heredó la deuda sin
+enterarse.
+
+:::danger[El fallo no aparece donde se causó]
+Aparece tres carpetas más abajo, y con un código —403— que apunta al lugar
+equivocado. Quien lo investiga empieza mirando permisos de ventas, que están
+bien.
+
+**Quien pide un rol prestado lo devuelve en la misma carpeta.** Y si agregás un
+pedido al final de una carpeta, fijate qué sesión quedó abierta.
+:::
+
+### 2 · `bru.sendRequest` no es `fetch`
+
+Es configuración de **axios**:
+
+```js
+// ❌ el pedido sale VACÍO y api/ contesta 400 de Zod
+await bru.sendRequest({ url, method: "POST", body: JSON.stringify(datos) });
+
+// ✅
+const r = await bru.sendRequest({ url, method: "POST", data: (datos) });
+r.data.id;   // la respuesta también es `.data`, no `.body`
+```
+
+### 3 · …y tampoco comparte el cookie jar
+
+Los pedidos normales llevan la sesión solos. `sendRequest` **no**: sale sin
+cookie y devuelve 401, el script revienta, y con él todos los pedidos que
+venían después.
+
+La colección guarda la cookie en un `script:post-response` a nivel **colección**
+—no del login— para que siga al rol **actual**: la colección cambia de usuario
+varias veces, y capturarla una sola vez apuntaría a la sesión equivocada desde
+el segundo cambio.
+
+```js
+headers: { "content-type": "application/json", cookie: bru.getVar("cookieSesion") }
+```
+
+### 4 · Un `POST` con `content-type: application/json` y sin cuerpo
+
+Fastify lo rechaza con 400. Si la ruta no lee ningún cuerpo, hay que mandar
+`data: ({})` igual.
+
+### 5 · Escenarios que se pisan
+
+La colección es una narración sobre **estado global**. Un script de preparación
+que compra botellones rompe a `10-Retornables/01-La-bodega-arranca-vacia`, que
+afirma que el parque arranca en cero.
+
+Cuando un pedido necesita ensuciar algo compartido, va **después** de todo lo
+que necesita eso limpio — aunque su carpeta natural esté antes.
+
+:::caution[Y un separador numérico]
+`86_400_000` en un script tira `Unexpected token ILLEGAL`: el sandbox de Bruno
+usa un parser que no los entiende, y el error **no dice en qué línea**.
+:::
+
+---
+
+## Correrla en local sin mentirte
+
+Dos condiciones, y el **orden entre ellas importa**.
+
+### La base se recrea, y el servidor se levanta DESPUÉS
+
+Recrear la base debajo de un servidor vivo deja su pool apuntando a una base que
+ya no existe. Los pedidos fallan por eso y no por el código.
+
+Medido en un mismo commit, cambiando solo el orden: **42, 48 y 134 fallas en
+tres corridas**. Con esos números casi reporto que había roto seis peticiones
+que nunca rompí.
+
+```bash
+# 1. base nueva  2. migrar y sembrar  3. recién ahí, el servidor
+```
+
+La configuración `api-bruno` de `.claude/launch.json` levanta en el 3003 contra
+`aquazaku_bruno`, que **no comparte con vitest**. Antes se usaba la base de
+tests, y eso obligaba a elegir: o se siembra —y el siguiente `vitest run` la
+trunca— o se corre la suite y Bruno se queda sin admin.
+
+### Lo que da verde en tu máquina puede fallar en CI
+
+El caso `13-Reportes/02-El-extracto` comparaba el día de la **planta** (UTC−5)
+contra el día **UTC** del movimiento. Entre las 19:00 de Bogotá y la medianoche
+son días distintos.
+
+**Fallaba cinco horas al día y pasaba diecinueve.** Diez corridas locales
+cayeron fuera de esa ventana; CI la agarró a las 21:37 de la planta.
+
+:::tip[La cobertura de rutas no es cobertura de contrato]
+`pnpm bruno:cobertura` dice qué rutas no tienen ninguna petición. Puede marcar
+**100%** y no ejercer la forma que acabás de agregar: cuenta rutas, no cuerpos.
+:::
