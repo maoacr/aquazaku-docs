@@ -817,17 +817,29 @@ en el código.
 qué puerta se entregó, y en la base de desarrollo eso eran **28 de 30** ventas
 con cliente.
 
-Esas ventas cuentan para **todas** las direcciones activas de su cliente, y la
-fila queda marcada con un **asterisco**: el conteo es del cliente, no de esa
-puerta.
+Esas ventas **no se reparten** entre las direcciones del cliente. La fila viene
+sin dirección, marcada con un **asterisco**, y la columna dice «Asignar una
+dirección» en vez de mostrar una.
+
+:::danger[Lo que se probó y hubo que deshacer]
+La primera versión repartía cada venta vieja entre TODAS las direcciones
+activas del cliente, para no perder su reloj. Mentía de dos formas:
+
+1. Cada fila mostraba una dirección concreta al lado de un conteo que no era de
+   esa puerta. Se leía como «acá se entregó hace 43 días», y eso nadie lo sabe.
+2. Un cliente con dos direcciones y solo ventas viejas aparecía **dos veces**,
+   con el mismo número, reclamando dos puertas distintas.
+
+**O tiene dirección o no la tiene.** Tampoco se infiere cuando el cliente tiene
+UNA sola, donde la deducción sería tentadora y seguiría siendo una dirección que
+nadie registró.
+:::
 
 :::caution[El asterisco cuelga del NÚMERO, no de la dirección]
 Hubo un badge «sin asignar» al lado de la etiqueta de la dirección, y era
-confuso con razón: se leía como «esta dirección no está asignada», que es falso
-— la dirección existe y es del cliente. Lo que no se registró es a cuál de sus
-puertas fue **la venta**. La duda es sobre el conteo, así que la marca vive en
-el conteo.
-:::
+confuso con razón: se leía como «esta dirección no está asignada». Lo que no se
+registró es a cuál de sus puertas fue **la venta**. La duda es sobre el conteo,
+así que la marca vive en el conteo.
 
 Se apaga sola: cada venta nueva registra su dirección
 ([RN-VEN-18](/dominio/ventas/)). Y no se puede «arreglar» con un `UPDATE`: el
@@ -835,13 +847,73 @@ trigger `solo_anulacion_en_ventas` rechaza cualquier cambio que deje la venta en
 `confirmada` (RN-VEN-02). El camino es **corregir la venta**, que crea una nueva
 con la misma fecha y la dirección puesta.
 
+#### El lápiz de la fila, y lo que cuesta
+
+Cada fila ofrece asignarle la dirección a la venta que fijó su reloj. Por
+detrás es una **corrección**, la misma que usa Ventas para editar: se anula la
+vieja y se registra una nueva. El diálogo lo dice antes de que alguien apriete,
+porque quien mañana mire la bitácora va a encontrar una venta anulada y otra
+creada, y tiene que poder reconocer que fue esto y no el error de alguien.
+
+Está medido en `api/src/modules/ventas/__tests__/asignar-direccion.test.ts`, con
+dos lotes de vencimientos distintos para que FEFO tenga de dónde equivocarse:
+
+| Queda idéntico | Por qué se prueba |
+| --- | --- |
+| El stock **por lote** | El total puede cuadrar mientras las unidades vuelven a un lote y salen de otro. El inventario diría la verdad y el lote una mentira |
+| El saldo de **botellones** del cliente | Un `botellonesRecibidos` perdido no es un dato faltante: es el saldo de envases movido sin que nadie lo pidiera |
+| La **fecha** de la venta | Con la de hoy, se arreglaría la dirección y el cliente saldría de esta lista como si hubiera comprado recién |
+| El **total** | Se completó un dato, no se editó una venta |
+
+:::caution[`ocurrioEn` no es opcional en esta corrección]
+`registrarVentaEn` evalúa los lotes contra `ocurrioEn ?? hoy`, y los lotes viven
+30 días ([`DIAS_DE_VENCIMIENTO`](/dominio/stock/)). Una venta de 43 días está
+sobre un lote **vencido**, que `asignarFifo` ya no reparte.
+
+Sin `ocurrioEn`, la corrección rebota con `STOCK_INSUFICIENTE` justo en las
+ventas que esto viene a arreglar. Con la fecha de la venta, FEFO evalúa los
+lotes como se evaluaban ese día y el stock vuelve exactamente a donde estaba.
+:::
+
+#### Tres razones por las que el lápiz no va a funcionar
+
+| Bloqueo | Qué se hace |
+| --- | --- |
+| La venta tiene **devoluciones** | Nada desde acá: corregirla reemplazaría la venta entera y la devolución quedaría colgando de líneas que dejarían de existir |
+| La venta pasó los **90 días** ([RN-VEN-14](/dominio/ventas/)) | Un ajuste contable. El tope no es un obstáculo a sortear: es lo que impide reescribir un trimestre cerrado |
+| El cliente no tiene **direcciones activas** | Cargarle una en su ficha primero |
+
+Los tres se explican con su motivo. Un 422 crudo dejaría a quien aprieta el
+botón sin saber si el problema tiene arreglo.
+
+:::note[El tope de 90 días corre contra el calendario]
+Se mide desde **hoy**, no desde que se cargó la venta. Una venta que hoy tiene
+85 días queda fuera de alcance en cinco. Medido en producción el 25-sep-2026:
+203 ventas sin dirección, **ninguna** fuera de alcance y ninguna bloqueada por
+devoluciones — pero 3 con menos de diez días de margen y 13 más dentro del mes.
+:::
+
 #### Dos franjas, porque son dos conversaciones
 
-| Días sin comprar | Franja | Qué es esa llamada |
+| Días sin recibir | Franja | Qué es esa llamada |
 | --- | --- | --- |
-| menos de `dias_recompra_aviso` | — | No aparece |
+| menos de `dias_recompra_aviso` | **Al día** | Ninguna. Aparece igual, en verde |
 | desde `dias_recompra_aviso` | **Aviso** | Una oferta: «¿le mandamos uno?» |
 | desde `dias_recompra_urgente` | **Urgente** | Una recuperación: ya compró en otro lado |
+
+:::note[El umbral pinta, ya no filtra]
+`dias_recompra_aviso` decidía quién ENTRABA a la lista: por debajo, una
+dirección no existía para nadie, y consultar «¿cuándo compró éste?» exigía
+esperar a que se atrasara.
+
+Ahora entran **todas** las direcciones que alguna vez compraron. Los dos
+parámetros siguen decidiendo los cortes; lo que dejaron de decidir es la
+existencia.
+
+El **tablero** sigue contando solo amarillo + rojo. Si contara la lista entera,
+«182 direcciones para llamar» sería falso y dejaría de significar nada el día
+que de verdad haya doscientas atrasadas.
+:::
 
 Quien atiende el teléfono no las hace igual, y una lista sola no deja priorizar
 cuando no hay tiempo de llamar a todos.
@@ -915,12 +987,13 @@ cantidad exacta y un link «Ir a Seguimientos →». Misma regla que cualquier o
 pendiente del tablero: número sin acción al lado es decoración.
 
 :::note[La urgencia es relleno contra contorno, no dos colores]
-La píldora del número va **rellena** cuando es urgente y **hueca** cuando es
-aviso. Medidos, los dos tonos de fondo contrastan entre sí **1.14:1** en escala
+La píldora del número tiene tres formas: **rellena con anillo** (urgente),
+**hueca con anillo** (aviso) y **sin nada** (al día). Medidos, los dos tonos de fondo contrastan entre sí **1.14:1** en escala
 de grises (1.016:1 en modo claro): quien no separa rojo de ámbar no habría visto
-ninguna diferencia. La palabra «urgente» salió de la pantalla porque era larga y
-le robaba protagonismo al número, pero **sigue en el documento** para el lector
-de pantalla.
+ninguna diferencia, y con tres franjas el problema se agrava: serían tres grises
+iguales. Por eso cada una cambia de **estructura**, no de tinte. La palabra
+salió de la pantalla porque era larga y le robaba protagonismo al número, pero
+**sigue en el documento** para el lector de pantalla.
 :::
 
 Los cuatro roles tienen `clientes:ver`, que es lo que pide el endpoint
