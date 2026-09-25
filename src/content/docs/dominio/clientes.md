@@ -1153,6 +1153,62 @@ documento duplicado sigue a la vista ofreciendo la ficha de quien ya existe:
 
 ---
 
+### RN-CLI-21 — El cliente de mostrador se marca, y queda fuera de Seguimientos
+
+**Estado:** ✅ Confirmada — migración `0024`.
+
+«POS Aquazaku» **no es un cliente**: es el cajón donde caen las ventas a gente
+que no quiso registrarse. La migración `0023` ya lo había llamado por su
+nombre — *un tacho* — cuando quitó el motivo por el que existe
+([RN-CLI-20](#rn-cli-20--un-cliente-se-registra-con-lo-que-quiso-dar)). Pero el
+tacho sigue ahí, con más de doscientas ventas colgando.
+
+Adentro conviven cientos de personas distintas. Su cartera no le pertenece a
+nadie, su historial no predice nada, y **no hay a quién llamar**.
+
+#### Por qué molestaba justo en Seguimientos
+
+Desde que la lista dejó de filtrar por umbral y muestra a todos, el tacho sale
+**primero en los dos canales**: es el que más ventas tiene y las más viejas. El
+lugar que más se mira, ocupado por la única fila que no se puede accionar.
+
+`clientes.es_mostrador` lo saca de la lista. El filtro se aplica sobre las
+fichas, no sobre los grupos de ventas, así que alcanza también a las filas sin
+dirección — que son justo las que el tacho ponía arriba de todo.
+
+:::danger[No se filtra por el nombre]
+En una sola conversación con la operación ese cliente apareció escrito «Pos
+Acuazaku», «Pos Aquazaku» y «POS aquazaku».
+
+Filtrar por texto deja el ruido a **una renombrada de distancia**, y cuando
+vuelva no va a fallar nada: simplemente reaparece, y nadie va a relacionar la
+fila nueva con una regla escrita meses antes.
+
+`parametros` tampoco servía: su `valor` es un `integer` con mínimo y máximo,
+hecho para umbrales. Meterle un uuid deformaría la tabla para todos.
+:::
+
+#### Por qué `es_mostrador` y no `en_seguimientos`
+
+Lo segundo describe **dónde** se usa hoy, y sería una decisión de una pantalla
+metida en el esquema. Lo primero describe **qué es**, y de ahí se deduce todo lo
+demás: que no se le llama, que su cartera no es de nadie, que su historial no
+sirve para predecir. El día que haya que sacarlo también de cartera o de
+reportes, la columna ya explica por qué.
+
+#### El default es `false`, y eso importa
+
+Marcar un cliente como tacho es una decisión rara y deliberada. Con el default
+al revés, un alta mal hecha escondería a un cliente **real** de la lista de
+llamadas — exactamente el fallo silencioso que Seguimientos existe para evitar.
+
+La migración marca el tacho de producción por su id. En desarrollo, en la base
+de tests y en la de Bruno ese `UPDATE` afecta **cero filas** y no falla, que es
+lo que lo hace seguro de versionar — y lo que evita un paso manual que se
+olvida, se tipea mal, y seis meses después nadie puede explicar.
+
+---
+
 ## Preguntas abiertas
 
 - ¿Se cobra depósito o garantía por la base prestada? *(Cerrada — no se cobra;
