@@ -817,17 +817,29 @@ en el código.
 qué puerta se entregó, y en la base de desarrollo eso eran **28 de 30** ventas
 con cliente.
 
-Esas ventas cuentan para **todas** las direcciones activas de su cliente, y la
-fila queda marcada con un **asterisco**: el conteo es del cliente, no de esa
-puerta.
+Esas ventas **no se reparten** entre las direcciones del cliente. La fila viene
+sin dirección, marcada con un **asterisco**, y la columna dice «Asignar una
+dirección» en vez de mostrar una.
+
+:::danger[Lo que se probó y hubo que deshacer]
+La primera versión repartía cada venta vieja entre TODAS las direcciones
+activas del cliente, para no perder su reloj. Mentía de dos formas:
+
+1. Cada fila mostraba una dirección concreta al lado de un conteo que no era de
+   esa puerta. Se leía como «acá se entregó hace 43 días», y eso nadie lo sabe.
+2. Un cliente con dos direcciones y solo ventas viejas aparecía **dos veces**,
+   con el mismo número, reclamando dos puertas distintas.
+
+**O tiene dirección o no la tiene.** Tampoco se infiere cuando el cliente tiene
+UNA sola, donde la deducción sería tentadora y seguiría siendo una dirección que
+nadie registró.
+:::
 
 :::caution[El asterisco cuelga del NÚMERO, no de la dirección]
 Hubo un badge «sin asignar» al lado de la etiqueta de la dirección, y era
-confuso con razón: se leía como «esta dirección no está asignada», que es falso
-— la dirección existe y es del cliente. Lo que no se registró es a cuál de sus
-puertas fue **la venta**. La duda es sobre el conteo, así que la marca vive en
-el conteo.
-:::
+confuso con razón: se leía como «esta dirección no está asignada». Lo que no se
+registró es a cuál de sus puertas fue **la venta**. La duda es sobre el conteo,
+así que la marca vive en el conteo.
 
 Se apaga sola: cada venta nueva registra su dirección
 ([RN-VEN-18](/dominio/ventas/)). Y no se puede «arreglar» con un `UPDATE`: el
@@ -883,11 +895,25 @@ devoluciones — pero 3 con menos de diez días de margen y 13 más dentro del m
 
 #### Dos franjas, porque son dos conversaciones
 
-| Días sin comprar | Franja | Qué es esa llamada |
+| Días sin recibir | Franja | Qué es esa llamada |
 | --- | --- | --- |
-| menos de `dias_recompra_aviso` | — | No aparece |
+| menos de `dias_recompra_aviso` | **Al día** | Ninguna. Aparece igual, en verde |
 | desde `dias_recompra_aviso` | **Aviso** | Una oferta: «¿le mandamos uno?» |
 | desde `dias_recompra_urgente` | **Urgente** | Una recuperación: ya compró en otro lado |
+
+:::note[El umbral pinta, ya no filtra]
+`dias_recompra_aviso` decidía quién ENTRABA a la lista: por debajo, una
+dirección no existía para nadie, y consultar «¿cuándo compró éste?» exigía
+esperar a que se atrasara.
+
+Ahora entran **todas** las direcciones que alguna vez compraron. Los dos
+parámetros siguen decidiendo los cortes; lo que dejaron de decidir es la
+existencia.
+
+El **tablero** sigue contando solo amarillo + rojo. Si contara la lista entera,
+«182 direcciones para llamar» sería falso y dejaría de significar nada el día
+que de verdad haya doscientas atrasadas.
+:::
 
 Quien atiende el teléfono no las hace igual, y una lista sola no deja priorizar
 cuando no hay tiempo de llamar a todos.
@@ -961,12 +987,13 @@ cantidad exacta y un link «Ir a Seguimientos →». Misma regla que cualquier o
 pendiente del tablero: número sin acción al lado es decoración.
 
 :::note[La urgencia es relleno contra contorno, no dos colores]
-La píldora del número va **rellena** cuando es urgente y **hueca** cuando es
-aviso. Medidos, los dos tonos de fondo contrastan entre sí **1.14:1** en escala
+La píldora del número tiene tres formas: **rellena con anillo** (urgente),
+**hueca con anillo** (aviso) y **sin nada** (al día). Medidos, los dos tonos de fondo contrastan entre sí **1.14:1** en escala
 de grises (1.016:1 en modo claro): quien no separa rojo de ámbar no habría visto
-ninguna diferencia. La palabra «urgente» salió de la pantalla porque era larga y
-le robaba protagonismo al número, pero **sigue en el documento** para el lector
-de pantalla.
+ninguna diferencia, y con tres franjas el problema se agrava: serían tres grises
+iguales. Por eso cada una cambia de **estructura**, no de tinte. La palabra
+salió de la pantalla porque era larga y le robaba protagonismo al número, pero
+**sigue en el documento** para el lector de pantalla.
 :::
 
 Los cuatro roles tienen `clientes:ver`, que es lo que pide el endpoint
