@@ -835,6 +835,52 @@ trigger `solo_anulacion_en_ventas` rechaza cualquier cambio que deje la venta en
 `confirmada` (RN-VEN-02). El camino es **corregir la venta**, que crea una nueva
 con la misma fecha y la dirección puesta.
 
+#### El lápiz de la fila, y lo que cuesta
+
+Cada fila ofrece asignarle la dirección a la venta que fijó su reloj. Por
+detrás es una **corrección**, la misma que usa Ventas para editar: se anula la
+vieja y se registra una nueva. El diálogo lo dice antes de que alguien apriete,
+porque quien mañana mire la bitácora va a encontrar una venta anulada y otra
+creada, y tiene que poder reconocer que fue esto y no el error de alguien.
+
+Está medido en `api/src/modules/ventas/__tests__/asignar-direccion.test.ts`, con
+dos lotes de vencimientos distintos para que FEFO tenga de dónde equivocarse:
+
+| Queda idéntico | Por qué se prueba |
+| --- | --- |
+| El stock **por lote** | El total puede cuadrar mientras las unidades vuelven a un lote y salen de otro. El inventario diría la verdad y el lote una mentira |
+| El saldo de **botellones** del cliente | Un `botellonesRecibidos` perdido no es un dato faltante: es el saldo de envases movido sin que nadie lo pidiera |
+| La **fecha** de la venta | Con la de hoy, se arreglaría la dirección y el cliente saldría de esta lista como si hubiera comprado recién |
+| El **total** | Se completó un dato, no se editó una venta |
+
+:::caution[`ocurrioEn` no es opcional en esta corrección]
+`registrarVentaEn` evalúa los lotes contra `ocurrioEn ?? hoy`, y los lotes viven
+30 días ([`DIAS_DE_VENCIMIENTO`](/dominio/stock/)). Una venta de 43 días está
+sobre un lote **vencido**, que `asignarFifo` ya no reparte.
+
+Sin `ocurrioEn`, la corrección rebota con `STOCK_INSUFICIENTE` justo en las
+ventas que esto viene a arreglar. Con la fecha de la venta, FEFO evalúa los
+lotes como se evaluaban ese día y el stock vuelve exactamente a donde estaba.
+:::
+
+#### Tres razones por las que el lápiz no va a funcionar
+
+| Bloqueo | Qué se hace |
+| --- | --- |
+| La venta tiene **devoluciones** | Nada desde acá: corregirla reemplazaría la venta entera y la devolución quedaría colgando de líneas que dejarían de existir |
+| La venta pasó los **90 días** ([RN-VEN-14](/dominio/ventas/)) | Un ajuste contable. El tope no es un obstáculo a sortear: es lo que impide reescribir un trimestre cerrado |
+| El cliente no tiene **direcciones activas** | Cargarle una en su ficha primero |
+
+Los tres se explican con su motivo. Un 422 crudo dejaría a quien aprieta el
+botón sin saber si el problema tiene arreglo.
+
+:::note[El tope de 90 días corre contra el calendario]
+Se mide desde **hoy**, no desde que se cargó la venta. Una venta que hoy tiene
+85 días queda fuera de alcance en cinco. Medido en producción el 25-sep-2026:
+203 ventas sin dirección, **ninguna** fuera de alcance y ninguna bloqueada por
+devoluciones — pero 3 con menos de diez días de margen y 13 más dentro del mes.
+:::
+
 #### Dos franjas, porque son dos conversaciones
 
 | Días sin comprar | Franja | Qué es esa llamada |
