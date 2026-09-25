@@ -264,23 +264,36 @@ las reglas de negocio de cada módulo, ver [Dominio](/dominio/).
 
 ## M15 — Seguimientos
 
-- **Propósito:** vista dedicada con la lista de clientes a los que hay que
-  llamar —días sin comprar, teléfonos con etiqueta, botón de WhatsApp, dos
-  franjas de urgencia. La lista completa salió del tablero; el tablero avisa
-  con un pendiente que cuenta cuántos hay y lleva a la vista.
+- **Propósito:** vista dedicada con la lista de **direcciones** a las que hay
+  que llamar —días sin recibir, dirección, teléfonos con etiqueta, botón de
+  WhatsApp. La lista completa salió del tablero; el tablero avisa con un
+  pendiente que cuenta cuántas hay y lleva a la vista.
 - **Roles:** `admin`, `seller`, `pos`, `contador`.
 - **Depende de:** M0, M5.
 - **Doc de dominio:** [Clientes §RN-CLI-18](/dominio/clientes/).
 - **Estado:** ✅ **implementado** (21-sep-2026). Es el primer caso del patrón
   «sección pesada del tablero migra a módulo propio».
 - **Notas:**
-  - El componente `ClientesParaLlamar`, el endpoint `/clientes/a-llamar` y los
-    permisos (`clientes:ver`) **no cambiaron**. Solo cambió el lugar donde se
-    monta la vista.
-  - El tablero conserva el recordatorio: `N clientes para llamar → Ir a
-    Seguimientos`. Sin él, el tablero pierde un señal clara de «hay alguien a
-    quien llamar» y el módulo queda invisible hasta que alguien lo abra por
-    curiosidad.
+  - **Replanteado el 24-sep-2026.** La fila dejó de ser el cliente y pasó a ser
+    la **dirección**, y la lista se partió en dos canales —botellones y otros
+    productos— con un reloj cada uno. Las dos razones son la misma: la cuenta
+    por cliente y el contador único **escondían filas**. El detalle está en
+    RN-CLI-18.
+  - `GET /clientes/a-llamar` conserva la ruta y los permisos (`clientes:ver`)
+    pero **cambió de forma**: contesta `{ botellones, otros }`.
+  - La vista pasó de tarjetas a **tabla densa con encabezado fijo**: 110 px por
+    tarjeta contra 37 px por fila en escritorio, y con una columna de dirección
+    que antes no existía. Quien la usa venía de un Excel y tenía razón en
+    extrañarlo: para recorrer cuarenta filas eligiendo a quién llamar, una
+    planilla es mejor herramienta que cuarenta tarjetas.
+  - Abajo de 768 px la tabla **se apila** (`.aq-tabla-apilada`) en vez de
+    scrollear en horizontal. Es lo contrario de lo que hace Auditoría con
+    `Th fija`, y a propósito: allá la fila se lee comparándola con la de arriba,
+    acá se lee sola.
+  - El tablero conserva el recordatorio: `N direcciones para llamar → Ir a
+    Seguimientos`, sumando los dos canales. Sin él, el tablero pierde una señal
+    clara de «hay alguien a quien llamar» y el módulo queda invisible hasta que
+    alguien lo abra por curiosidad.
 
 ---
 

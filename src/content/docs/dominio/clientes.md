@@ -753,7 +753,7 @@ un verbo aparte para «borrar».
 
 ---
 
-### RN-CLI-18 — Un cliente que hace días que no compra se muestra para llamar
+### RN-CLI-18 — Una DIRECCIÓN que hace días que no recibe se muestra para llamar
 
 **Estado:** ⚠️ Supuesto — los números esperan confirmación (pregunta 48).
 
@@ -763,6 +763,77 @@ está aguantando. En los dos casos Aquazaku se enteró tarde.
 
 La fecha de la última venta siempre estuvo en la base. Esto no agrega
 información al sistema: agrega la pregunta que nadie estaba haciendo.
+
+#### La unidad es la puerta, no el cliente
+
+El agua no se entrega a un cliente: se entrega a una **dirección**. Un cliente
+con casa y local tiene dos relojes independientes.
+
+La primera versión contaba por cliente y mostraba el más RECIENTE de los dos.
+Con eso, un local podía llevar veinte días seco **escondido detrás de una casa
+que pidió ayer** — y el error no se veía, porque la lista se leía perfecta y le
+faltaba una fila.
+
+Hoy cada dirección **activa** saca su propia cuenta, así que un cliente con dos
+direcciones aparece **dos veces**. Consecuencias:
+
+| Caso | Qué pasa |
+| --- | --- |
+| Dirección **desactivada** | No aparece: ya no se entrega ahí |
+| Venta a una dirección desactivada | No cuenta para las direcciones vivas — darle su reloj a otra puerta sería inventar una entrega |
+| Cliente **sin ninguna dirección cargada** | Aparece igual, con «Sin dirección cargada». Desaparecer sería esconder trabajo: el trabajo es cargarle la dirección |
+
+#### Dos canales, porque son dos cadencias
+
+Un botellón de 20 L se acaba en una semana. Una paca de 80 bolsas de 100 ml no
+se consume con ese reloj. Un contador solo los mezclaba y no servía para
+ninguno: **el botellón de hace tres días tapaba la paca de hace veinte**.
+
+La lista tiene dos pestañas, y **cada una cuenta solo sus propias ventas**:
+
+| Pestaña | Qué ventas cuenta |
+| --- | --- |
+| **Recarga de botellones** | Las que incluyeron al menos una línea con `presentacion = 'botellon'` |
+| **Otros productos** | Las que incluyeron al menos una línea que **no** es botellón |
+
+Una venta **mixta** cae en las dos: el cliente se llevó de las dos cosas y las
+dos se le van a acabar. Así que un mismo cliente puede estar al día en
+botellones y atrasado en pacas, y aparecer en las dos listas. No es una
+inconsistencia: son dos preguntas distintas.
+
+:::note[Se pregunta por lo que NO es botellón, a propósito]
+El corte es `presentacion <> 'botellon'` y no `= 'paca'`. El día que entre una
+presentación nueva cae en «Otros» sin que nadie se acuerde de tocar el módulo.
+:::
+
+Los dos canales **comparten** `dias_recompra_aviso` / `dias_recompra_urgente`.
+Es un supuesto abierto: si la operación confirma que la paca tiene otra
+cadencia, la respuesta es un segundo par de parámetros — no un número escrito
+en el código.
+
+#### Las ventas anteriores a la migración 0022
+
+`ventas.direccion_id` nació en la migración `0022`. Todo lo anterior no dice a
+qué puerta se entregó, y en la base de desarrollo eso eran **28 de 30** ventas
+con cliente.
+
+Esas ventas cuentan para **todas** las direcciones activas de su cliente, y la
+fila queda marcada con un **asterisco**: el conteo es del cliente, no de esa
+puerta.
+
+:::caution[El asterisco cuelga del NÚMERO, no de la dirección]
+Hubo un badge «sin asignar» al lado de la etiqueta de la dirección, y era
+confuso con razón: se leía como «esta dirección no está asignada», que es falso
+— la dirección existe y es del cliente. Lo que no se registró es a cuál de sus
+puertas fue **la venta**. La duda es sobre el conteo, así que la marca vive en
+el conteo.
+:::
+
+Se apaga sola: cada venta nueva registra su dirección
+([RN-VEN-18](/dominio/ventas/)). Y no se puede «arreglar» con un `UPDATE`: el
+trigger `solo_anulacion_en_ventas` rechaza cualquier cambio que deje la venta en
+`confirmada` (RN-VEN-02). El camino es **corregir la venta**, que crea una nueva
+con la misma fecha y la dirección puesta.
 
 #### Dos franjas, porque son dos conversaciones
 
@@ -831,12 +902,26 @@ Un indicativo que no es el de Colombia se rechaza en vez de recortarse.
 
 #### Dónde vive la lista
 
-La lista completa —días sin comprar, teléfonos con su etiqueta, botón de
-WhatsApp, dos franjas según la urgencia— vive en el módulo **Seguimientos**
-(`/modulos/seguimientos`). El tablero conserva solo el **recordatorio**: si hay
-N clientes a los que hay que llamar, lo dice como un pendiente con la cantidad
-exacta y un link «Ir a Seguimientos →». Misma regla que cualquier otro pendiente
-del tablero: número sin acción al lado es decoración.
+La lista completa vive en el módulo **Seguimientos**
+(`/modulos/seguimientos`), como una **tabla densa** con el encabezado fijo: días,
+cliente, dirección y teléfonos. La pestaña activa viaja en la URL (`?canal=otros`)
+y no en estado de cliente, así que la pantalla sigue siendo Server Component y el
+link se puede compartir. Abajo de 768 px la tabla **se apila** en vez de
+scrollear en horizontal — cuarenta llamadas no se hacen barriendo de lado.
+
+El tablero conserva solo el **recordatorio**: si hay N **direcciones** a las que
+hay que llamar —sumando los dos canales— lo dice como un pendiente con la
+cantidad exacta y un link «Ir a Seguimientos →». Misma regla que cualquier otro
+pendiente del tablero: número sin acción al lado es decoración.
+
+:::note[La urgencia es relleno contra contorno, no dos colores]
+La píldora del número va **rellena** cuando es urgente y **hueca** cuando es
+aviso. Medidos, los dos tonos de fondo contrastan entre sí **1.14:1** en escala
+de grises (1.016:1 en modo claro): quien no separa rojo de ámbar no habría visto
+ninguna diferencia. La palabra «urgente» salió de la pantalla porque era larga y
+le robaba protagonismo al número, pero **sigue en el documento** para el lector
+de pantalla.
+:::
 
 Los cuatro roles tienen `clientes:ver`, que es lo que pide el endpoint
 `/clientes/a-llamar`, así que los cuatro ven el módulo.
