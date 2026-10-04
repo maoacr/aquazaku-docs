@@ -872,3 +872,108 @@ confundirlos:
   tenga direcciones.
 
 Una recarga que se entrega en la casa puede dejar la base en el local.
+
+---
+
+### RN-VEN-19 — El orden del listado se desempata con el primer registro
+
+**Estado:** ✅ Confirmada el 3-oct-2026.
+
+Las ventas se listan **de la más reciente a la más vieja**, y cuando dos caen en
+el mismo instante el desempate es el orden en que **entraron al sistema**.
+
+#### El problema
+
+La ficha del cliente promete ese orden por escrito y no lo estaba cumpliendo. Se
+suman dos cosas:
+
+1. [RN-VEN-14](#rn-ven-14--una-venta-se-registra-con-la-fecha-del-día-en-que-ocurrió)
+   deja fechar una venta hacia atrás, y al hacerlo la ancla al **mediodía** de la
+   planta. Dos ventas cargadas con la misma fecha pasada quedan con el mismo
+   instante al microsegundo.
+2. El listado ordenaba por esa fecha y nada más. Sobre filas empatadas, un
+   `ORDER BY` **no define ningún orden**.
+
+Lo que lo hace grave es que no falla de forma estable: se pone de acuerdo con el
+plan que elija Postgres, y cambia de opinión cuando la tabla crece. Medido, el
+mismo dato devolvía dos listas distintas — en un caso la venta recién cargada
+aparecía **debajo** de las viejas del mismo día; en el otro, una corrección
+saltaba al **tope**.
+
+Y con el corte de 100 filas encima, un orden indefinido no solo desordena: una
+fila empatada en el borde del corte puede aparecer **dos veces o ninguna** entre
+dos recargas de la misma pantalla.
+
+#### Dónde dolía de verdad
+
+No era un problema de presentación. El mismo orden es el que **imputa los
+pagos**: con dos ventas a crédito del mismo día empatadas, cuál queda saldada y
+cuál queda debiendo lo decidía el plan de la consulta, y podía cambiar entre dos
+corridas del mismo reporte.
+
+Por eso el desempate se aplica en los cinco lugares donde el orden significa
+algo: el listado de ventas, la lista de Seguimientos, la cartera por edad, el
+extracto y la imputación de cobros.
+
+#### Qué guarda, exactamente
+
+`primer_registro_en` es el instante en que el hecho entró al sistema por
+**primera vez**. Las dos fechas contestan preguntas distintas y no se mezclan:
+
+| Columna | Contesta | Quién la mira |
+| --- | --- | --- |
+| `created_at` | ¿cuándo **compró**? | Las pantallas y los reportes |
+| `primer_registro_en` | ¿cuándo **entró al sistema**? | Solo el desempate del orden |
+
+Fechar una venta hacia atrás nunca toca la segunda: su trabajo es justamente
+conservar lo que el anclaje al mediodía borra.
+
+#### La corrección la hereda, y ahí está toda la regla
+
+Corregir una venta es reemplazarla
+([RN-VEN-16](#rn-ven-16--corregir-una-venta-es-reemplazarla-no-editarla)), y la
+venta nueva **hereda** el primer registro de la que reemplaza, igual que ya
+heredaba la fecha de compra.
+
+Sin esa herencia, arreglar un tipeo movería la venta de lugar: la lista pasaría a
+contar el orden en que alguien corrigió cosas en vez del orden en que el cliente
+compró.
+
+La herencia no depende de que alguien se acuerde. El tipo que describe un
+reemplazo declara el campo **obligatorio**, así que el compilador rechaza un
+reemplazo que lo omita.
+
+:::note[Por qué no se llama `registradoEn`]
+Ese nombre haría par con `registrado_por` y mentiría. `registrado_por` es quien
+hizo **esta** fila —en una corrección, quien corrigió— mientras que esta columna
+es de la venta **vieja**. Dos campos con nombres hermanos que hablan de ventas
+distintas es una trampa esperando a alguien.
+:::
+
+#### El relleno hacia atrás salió de la bitácora, no de una suposición
+
+Para las filas que ya existían, poner la hora de la migración las habría dejado
+**todas empatadas entre sí**: cambiar un empate por otro peor.
+
+El instante real de registro de las ventas históricas ya estaba escrito en el
+audit log ([ADR-0004](/decisiones/0004-audit-log-inmutable/)), que guarda una
+fila por venta creada o corregida. Es dato medido, no inventado. Las ventas que
+nunca pasaron por la API —semilla y carga directa— se quedan con su fecha de
+compra, y al no estar empatadas alcanza.
+
+:::caution[El primer relleno fechaba mal las ventas corregidas]
+La fila de auditoría de una corrección nombra la venta **nueva**, no la que
+reemplazó. Así que una venta nacida en el mostrador y corregida después quedaba
+con la hora en que alguien arregló el tipeo — justo lo que la columna promete no
+ser.
+
+La historia completa igual estaba escrita, repartida: el primer registro vive en
+la fila de creación de la venta **original**, y a la original se llega siguiendo
+la cadena de correcciones hacia atrás. Una segunda corrección recorre esa cadena
+y se queda con el instante más viejo de todos sus eslabones.
+
+Solo mueve fechas hacia **atrás**, y eso la acota a su objetivo: el defecto
+siempre guardó un instante posterior al que correspondía, así que corregirlo es
+siempre adelantar. Una fila a la que la cadena le proponga algo más nuevo no está
+mal fechada, y se la deja en paz. Por lo mismo es idempotente.
+:::
