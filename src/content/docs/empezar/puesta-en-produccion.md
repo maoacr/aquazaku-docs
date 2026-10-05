@@ -17,7 +17,7 @@ paso: es una migración.
 | Pieza | Dónde corre | Se despliega con |
 | --- | --- | --- |
 | `web` | Vercel | push a `main` |
-| `api` | **pendiente** — Railway o Fly | push a `main` |
+| `api` | Railway | push a `main` |
 | Postgres | Supabase | migraciones |
 | Correo | Resend | — |
 | DNS | Cloudflare (dominio en Namecheap) | — |
@@ -338,10 +338,50 @@ Producción se migra a mano, con `pnpm db:migrate:prod`, que anuncia a qué base
 va antes de tocarla.
 :::
 
+:::caution[La migración va ANTES del merge, no después]
+El código se despliega **solo**: Railway levanta una versión nueva con cada push
+a `main`. La migración, en cambio, es a mano. Entre las dos hay una ventana, y
+el orden decide de qué lado cae.
+
+Migrar primero no rompe nada: el código viejo no conoce la columna nueva, y los
+`DEFAULT` llenan las filas que se escriban mientras tanto. Al revés sí: el código
+nuevo consulta una columna que todavía no existe, y el módulo entero contesta
+error hasta que alguien se acuerde de migrar.
+
+Pasó, y conviene que quede escrito. El PR que agregó `primer_registro_en`
+(RN-VEN-19) se mergeó a las 22:49 UTC; Railway desplegó enseguida y la migración
+corrió **seis horas después**. En ese rato, toda consulta de ventas en producción
+fue contra una base sin la columna. Era de madrugada y nadie lo reportó, que es
+suerte y no diseño.
+
+El orden seguro, entonces:
+
+1. `pnpm db:migrate:prod` con el PR todavía sin mergear.
+2. Mergear a `main` y dejar que el deploy salga.
+
+Vale para toda migración que **agregue** algo. Una que borre una columna va al
+revés —primero el código que deja de usarla, después el `DROP`— por la misma
+razón mirada desde el otro lado.
+:::
+
 Staging sí migra al arrancar, y está bien: es descartable, y **si su schema
 quedó mal, no debería levantar**. `db:sync-preview` además verifica que la
 inmutabilidad del `audit_log` aterrizó en el schema `preview` — confiar en que
 un `sed` sobre las migraciones dejó los permisos correctos no es verificarlo.
+
+:::caution[Que no levante no avisa a nadie]
+Que staging aborte es lo correcto, pero el deploy fallido no manda ninguna
+señal: Railway deja el servicio marcado «Online» sirviendo la versión anterior,
+y el tablero del proyecto sigue en verde.
+
+Medido el 4-oct-2026: el último deploy exitoso de staging era de **24 días
+antes**, y los diez merges posteriores habían fallado todos en el healthcheck.
+Nadie se había enterado, porque producción andaba bien.
+
+Así que staging se mira **a propósito**, y lo más barato es mirarlo cuando se
+mergea: si el deploy de staging quedó rojo, lo que está probando cualquiera en
+ese entorno es código viejo.
+:::
 
 :::caution[El `CMD` del Dockerfile es la red]
 El contenedor sabe qué correr por sí solo. Si el `startCommand` de un servicio
