@@ -317,10 +317,36 @@ que uno que no levanta.
 
 ### El comando de arranque
 
-| Servicio | `startCommand` en Railway |
-| --- | --- |
-| **Producción** | *(vacío — usa el `CMD` del Dockerfile: `pnpm start`)* |
-| **Staging / preview** | `pnpm db:sync-preview && pnpm db:seed && pnpm start` |
+Ninguno de los dos servicios tiene `startCommand`: los dos arrancan con el
+`CMD` del Dockerfile, que es `pnpm start` y nada más. Lo que los diferencia es
+que staging tiene además un **pre-deploy command**, que corre antes.
+
+| Servicio | `startCommand` | Pre-deploy command |
+| --- | --- | --- |
+| **Producción** | *(vacío — `CMD` del Dockerfile)* | — |
+| **Staging / preview** | *(vacío — `CMD` del Dockerfile)* | `pnpm db:sync-preview && pnpm db:seed` |
+
+:::tip[Por qué un pre-deploy y no un `&&` en el arranque]
+Staging tuvo esa cadena encadenada al arranque —`db:migrate && db:seed &&
+start`— y **estuvo 26 días sin desplegar sin que nadie se enterara**. Le faltaba
+`SEED_ADMIN_PASSWORD`: el seed cortaba con `exitCode = 1`, el `&&` se rompía, y
+`pnpm start` nunca corría. Nueve merges seguidos fallaron igual.
+
+Lo que lo hizo invisible no fue la falla sino el **síntoma**: cuatro minutos y
+medio de healthcheck agotándose, sin una línea que dijera qué se había roto. El
+mismo silencio que ya había costado el incidente de arriba.
+
+El pre-deploy no evita que un fallo aborte el deploy —si el comando sale con
+error, el despliegue no avanza—, pero **le pone nombre**: Railway lo muestra
+como etapa propia, con su output. Y desacopla el arranque del servidor de la
+cadena de mantenimiento, así que desaparece la clase de falla «el proceso se
+colgó a mitad de la cadena y nada llegó a escuchar nunca».
+
+Corre en un contenedor **separado** del de la aplicación: lo que escriba en el
+filesystem no persiste, y los volúmenes no se montan. Para migrar y sembrar da
+igual —escriben en la base—, pero conviene saberlo antes de poner ahí algo que
+genere archivos.
+:::
 
 :::danger[Producción NO migra al arrancar]
 Durante un día el `startCommand` de producción fue
@@ -364,10 +390,19 @@ revés —primero el código que deja de usarla, después el `DROP`— por la mi
 razón mirada desde el otro lado.
 :::
 
-Staging sí migra al arrancar, y está bien: es descartable, y **si su schema
-quedó mal, no debería levantar**. `db:sync-preview` además verifica que la
-inmutabilidad del `audit_log` aterrizó en el schema `preview` — confiar en que
-un `sed` sobre las migraciones dejó los permisos correctos no es verificarlo.
+Staging sí se migra solo, en su pre-deploy, y está bien: es descartable, y **si
+su schema quedó mal, no debería levantar**. `db:sync-preview` además verifica
+que la inmutabilidad del `audit_log` aterrizó en el schema `preview` — confiar
+en que un `sed` sobre las migraciones dejó los permisos correctos no es
+verificarlo.
+
+Que eso corra importa más de lo que parece: durante meses el comando de staging
+fue `db:migrate` pelado, sin el `sync-`, así que esa verificación **no se hizo
+nunca**. Un deploy sano hoy termina con la línea que lo dice:
+
+```
+✓ audit_log en "preview" es append-only para aquazaku_app.
+```
 
 :::caution[Que no levante no avisa a nadie]
 Que staging aborte es lo correcto, pero el deploy fallido no manda ninguna
