@@ -55,14 +55,22 @@ Hay tres cosas que hacen que este sistema no sea "un punto de venta más":
 
 ## Piezas del sistema
 
-Cada pieza vive en su propio proyecto dentro del folder `aquazaku/`:
+Cada pieza vive en su propio repo git dentro del folder `aquazaku/`, que es el
+paraguas del workspace y no versiona código:
 
 | Proyecto | Estado | Qué es |
 | --- | --- | --- |
 | `docs/` | ✅ activo | Esta documentación (Astro Starlight) |
-| `api/` | 🔲 pendiente | Backend y API del sistema |
-| `web/` | 🔲 pendiente | Panel de administración |
-| `mobile/` | 🔲 pendiente | App para vendedores |
+| `api/` | ✅ en producción | Backend y API HTTP/JSON (Fastify + Drizzle + Postgres + Better-Auth) en `api.aquazaku.com` |
+| `web/` | ✅ en producción | Admin + POS responsivo (Next.js App Router, actuando de BFF hacia `api/`) en `app.aquazaku.com` |
+| `mobile/` | 🔲 POST-MVP | App del seller. Todavía no existe |
+
+Además, la raíz tiene dos carpetas que **no** son repos propios:
+`claude-design/` (mockups y tokens de referencia) y `despliegue/`
+(docker-compose, init de Postgres y respaldos).
+
+El detalle de contratos y reglas de dependencia entre proyectos está en
+[Arquitectura general](/arquitectura/roadmap/#arquitectura-general).
 
 :::note[Documentación viva]
 Esta tabla se actualiza cuando se agrega un proyecto. Si un proyecto existe en el
