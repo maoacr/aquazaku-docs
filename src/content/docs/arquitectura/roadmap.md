@@ -34,14 +34,14 @@ Referencia: memoria `architecture/aquazaku-golden-rules`.
 
 ### 2. Mobile-first como metodología de UI, no como plataforma
 
-> **Working assumption** (pendiente de confirmación por el usuario): "mobile
-> first" se interpreta como **metodología de diseño UI** — responsive,
+> **Resuelto al implementar M0** (ver [Decisiones abiertas](#decisiones-abiertas)):
+> "mobile first" se interpreta como **metodología de diseño UI** — responsive,
 > touch targets accesibles, sticky bottom CTAs — aplicada a TODA superficie.
 > **NO** se interpreta como prioridad de plataforma: la prioridad sigue siendo
 > web Admin + POS primero (decisión `estrategia/mvp-scope-web-first`).
 >
-> Si al final es prioridad de plataforma, el roadmap se ajusta, no se
-> reescribe — el orden fundación → operacionales → soporte no cambia.
+> Dejó de ser un supuesto construyéndolo: los hitos del MVP salieron todos por
+> web, y la app del seller sigue diferida a M8.
 
 **Por qué:** las dos lecturas son coherentes mientras no haya app móvil. La
 metodología mobile-first ya se aplica a la web responsiva del POS (mostrador)
@@ -114,8 +114,8 @@ Referencia: memoria `aquazaku/arquitectura/estrategia-repos`.
 | Proyecto | Rol | Contrato hacia afuera | Estado |
 | --- | --- | --- | --- |
 | `docs/` | Documentación técnica | Sirve páginas estáticas (Astro Starlight). | ✅ activo |
-| `api/` | Backend | Expone **HTTP/JSON**. Autentica, valida reglas, registra auditoría. | ✅ `api.aquazaku.com` · 1091 tests |
-| `web/` | Admin + POS | Server-rendered responsiva. Consume `api/` **solo desde el servidor**. | ✅ `app.aquazaku.com` · 521 tests |
+| `api/` | Backend | Expone **HTTP/JSON**. Autentica, valida reglas, registra auditoría. | ✅ `api.aquazaku.com` · `api-ci` verde en cada merge a `main` |
+| `web/` | Admin + POS | Server-rendered responsiva. Consume `api/` **solo desde el servidor**. | ✅ `app.aquazaku.com` · `web-ci` verde en cada merge a `main` |
 | `mobile/` | App seller | React Native o equivalente. Consume `api/`. | 🔲 POST-MVP |
 
 **Reglas de dependencia:**
@@ -160,8 +160,9 @@ La **matriz completa celda por celda** está en
 
 ## Módulos del sistema
 
-El sistema se divide en **15 módulos** numerados M0–M15 (M8 diferido a
-post-MVP). El número indica el orden de construcción sugerido, no prioridad de
+El sistema se divide en **16 módulos** numerados M0–M15 (M8 diferido a
+post-MVP). M14 y M15 no estaban en el plan original: salieron de ver el sistema
+en manos de quien lo usa. El número indica el orden de construcción sugerido, no prioridad de
 negocio: M0 es fundación porque todo lo demás lo necesita, no porque sea el
 más visible.
 
@@ -169,7 +170,7 @@ más visible.
 
 | # | Módulo | Propósito (una línea) | Roles que lo usan | Depende de | Estado |
 | :-: | --- | --- | --- | --- | --- |
-| M0 | **Auth + RBAC** | Identidad, login, permisos por rol y alcance | Todos | — | ✅ diseñado |
+| M0 | **Auth + RBAC** | Identidad, login, permisos por rol y alcance | Todos | — | ✅ terminado |
 | M1 | **Productos y catálogo** | Qué se vende: pacas 600ml/300ml, botellones con sus unidades y conversiones | `admin`, `pos`, `seller`, `contador` | M0 | ✅ terminado |
 | M2 | **Stock de producto terminado** | Lotes, vencimiento 30d, FIFO, bloqueo de vencidos | `admin`, `pos`, `seller`, `contador` | M0, M1 | ✅ terminado |
 | — | **Fase de diseño** | Sistema de diseño aplicado: marca real, vidrio y agua, semáforo de estados, vacíos, errores sin jerga, voz de usted, accesibilidad medida | — | M2 | ✅ terminada |
@@ -184,6 +185,8 @@ más visible.
 | M11 | **Contador** | Panel solo lectura: extracto de los cinco movimientos de plata, cartera por edad, resumen mensual, CSV con columnas a elección, PDF por impresión del navegador | `contador`, `admin` | M0, M5, M6, M7, M9, M10 | ✅ terminado |
 | M12 | **Alertas** | Umbrales configurables en `parametros`, con sus límites en la base y cada cambio auditado con el valor anterior | `admin` (configura), `pos` (ve los avisos) | M0, M2, M3, M4 | ✅ terminado |
 | M13 | **Auditoría** | Quién hizo qué cuándo; transversal — todo módulo registra | `admin` (consulta) | M0 + transversal | ✅ entregado en M0 |
+| M14 | **Clientes ubicables** | Dirección en nomenclatura colombiana, municipio del DANE, pin que pone la persona, y al menos un teléfono | `admin`, `pos`, `seller`, `contador` | M0, M5 | ✅ terminado |
+| M15 | **Seguimientos** | La lista de direcciones a las que hay que llamar, con su propio módulo; el tablero solo avisa cuántas hay | `admin`, `seller`, `pos`, `contador` | M0, M5 | ✅ terminado |
 
 ### Reglas del orden
 
@@ -232,7 +235,7 @@ recuerda; el detalle vive en los docs de dominio y en engram.
 | Convención | Referencia |
 | --- | --- |
 | **Reglas con ID `RN-XXX-##`** — área + correlativo, estado explícito (✅ / 🟡 / 🔴) | `aquazaku/dominio/convencion-reglas` |
-| **Mobile-first como metodología UI** — touch targets ≥ 44px, sticky bottom CTAs, responsive de entrada | `architecture/aquazaku-golden-rules` (working assumption) |
+| **Mobile-first como metodología UI** — touch targets ≥ 44px, sticky bottom CTAs, responsive de entrada | `architecture/aquazaku-golden-rules` |
 | **Datos en bandas, no falsa precisión** — "entre 3 y 5 días", nunca "4,3" | [RN-PRD-15](/dominio/produccion/) |
 | **Acción irreversible con motivo obligatorio** — anulaciones, ajustes, descartes: texto ≥ 10 caracteres | `aquazaku/dominio/convencion-reglas` + claude-design `reglas-como-tests` |
 | **El saldo calculado manda, la lectura visual reconcilia** — patrón inventario contable vs conteo físico | [RN-PRD-14](/dominio/produccion/) |
@@ -262,7 +265,7 @@ puede arrancar en `design` mientras el anterior está en `apply`, pero no antes.
 
 ## Estado actual
 
-**Hoy, 28-ago-2026:**
+**Al 11-oct-2026:**
 
 | Fase | Módulo |
 | --- | --- |
@@ -411,14 +414,20 @@ cómo lo **implementa**. El SDD de cada módulo traduce esas reglas en código.
 
 ## Decisiones abiertas
 
-Preguntas que siguen sin resolverse y que pueden frenar la spec de algún módulo.
+No queda ninguna que frene la spec de un módulo. Los hitos del MVP están
+cerrados y M8 es la única pieza diferida, a propósito.
 
-1. **Nombre del módulo de retornables** — `entrega` (como aparece en
-   `claude-design/`) o `retornables` (como aparece en el modelo de datos y en
-   el dominio). Coexisten hoy; hay que unificar antes de la spec de **M7**.
+Lo que sigue abierto son las [preguntas a Aquazaku](/empezar/pendientes/) —las
+mediciones 🟠 que hay que ir a tomar en la planta, las 🟢 del módulo de perfil y
+las 🔵 del contador—. Ninguna frena código en curso: los módulos que dependían
+de un número se entregaron **con el número vacío y diciéndolo**, en vez de
+estimarlo.
 
-Ver también [Qué falta preguntar](/empezar/pendientes/) — las cuatro mediciones
-🟠 que requieren ir a la planta.
+### Resuelta al construir M7 (26-ago-2026)
+
+| Pregunta | Cómo quedó |
+|---|---|
+| Nombre del módulo de retornables: ¿`entrega` o `retornables`? | **`retornables`**, en los dos repos. Se decidió construyéndolo, no discutiéndolo; `entrega` quedó como el nombre de los mockups de `claude-design/` |
 
 ### Resueltas al diseñar M3 (22-ago-2026)
 
