@@ -627,8 +627,22 @@ automático** — es visibilidad para una decisión manual.
 
 ### RN-BAS-09 — Una sola clase de base, sin SKU
 
-**Estado:** ✅ Confirmada — cerrá la pregunta #25 de
-[Qué falta preguntar](/empezar/pendientes/).
+**Estado:** ⛔ **Derogada el 11-oct-2026** — reemplazada por
+[RN-BAS-14](#rn-bas-14--dos-tipos-de-base-un-solo-espacio-de-ids). Aquazaku
+compró un segundo tipo de base.
+
+:::danger[El texto se conserva, el estado cambia]
+Esta regla **fue verdad** y dejó de serlo porque el negocio cambió, no porque
+estuviera mal escrita. Su texto queda intacto: otras reglas la citan por número,
+y reescribirla en su lugar dejaría esas citas apuntando a lo contrario de lo que
+quien las escribió asumió — en silencio.
+
+Lo que vale hoy está en
+[RN-BAS-14](#rn-bas-14--dos-tipos-de-base-un-solo-espacio-de-ids). Lo de abajo
+es el registro de lo que se decidió el 18-ago-2026, no una instrucción.
+
+Ver [cómo se deroga una regla](/convenciones/como-documentar/#cuando-una-regla-confirmada-deja-de-ser-verdad).
+:::
 
 Todas las bases de Aquazaku son **iguales**. No hay tipos, modelos, ni SKUs
 distintos. Esto simplifica:
@@ -639,6 +653,13 @@ distintos. Esto simplifica:
   análisis.
 - **Evolución**: si en el futuro apareciera un segundo modelo, hay que volver a
   esta conversación — no es un toggle.
+
+:::note[Y apareció]
+Ese último punto se cumplió el 11-oct-2026, menos de dos meses después. La
+conversación se tuvo antes de tocar una línea de código, que era exactamente lo
+que pedía. El resultado es
+[RN-BAS-14](#rn-bas-14--dos-tipos-de-base-un-solo-espacio-de-ids).
+:::
 
 ---
 
@@ -665,11 +686,15 @@ dejaría de proteger nada.
 `P20U_600ML` codifica **en qué se diferencia** ese producto: presentación,
 unidades y contenido. Se lee sin conocer la convención.
 
-Con las bases eso es imposible, y no por una limitación técnica:
-[RN-BAS-09](#rn-bas-09--una-sola-clase-de-base-sin-sku) dice que hay una sola
-clase de base. **Todas son idénticas.** No existe atributo que codificar, así
-que el número no puede significar nada más que «la siguiente» — copiar el
+Con las bases eso es imposible, y no por una limitación técnica. Cuando se
+escribió esto había una sola clase de base: no existía atributo que codificar,
+así que el número no podía significar nada más que «la siguiente» — copiar el
 patrón de productos habría generado el mismo string para las cuarenta.
+
+Desde [RN-BAS-14](#rn-bas-14--dos-tipos-de-base-un-solo-espacio-de-ids) hay dos
+tipos, y **la conclusión no cambia**: el número sigue sin codificar nada. Ahora
+por otra razón — el tipo vive en una columna, y meterlo también en el sticker
+daría dos fuentes para el mismo dato.
 :::
 
 #### Comprar bases
@@ -683,11 +708,11 @@ sin saber cuántas cargó ni desde qué número seguir, y con los stickers ya
 impresos el hueco quedaría en la caja y no en la pantalla.
 
 :::note[El consecutivo NO gobierna la entrega]
-Solo gobierna el **alta**. Al prestar, el operario elige cualquier base que esté
-en la bodega y sana — la que tenga en la mano. El sistema nunca exige orden al
-entregar, y no tendría por qué: todas las bases son idénticas
-([RN-BAS-09](#rn-bas-09--una-sola-clase-de-base-sin-sku)), así que cuál sale
-primero no cambia nada.
+Solo gobierna el **registro**. Al prestar, el operario elige cualquier base que
+esté en la bodega, sana y **del tipo que el cliente necesita** — la que tenga en
+la mano. El sistema nunca exige orden al entregar: entre bases del mismo tipo
+cuál sale primero no cambia nada
+([RN-BAS-14](#rn-bas-14--dos-tipos-de-base-un-solo-espacio-de-ids)).
 :::
 
 ### Quién es dueño del número
@@ -849,6 +874,119 @@ prestaron 8.»* Quien lo lee tiene que decidir **cuántas pedir**, y sin esos do
 datos tendría que ir a buscarlos a otra pantalla antes de poder hacerlo.
 
 Si alcanzan, no hay cartel. El sistema no felicita.
+
+---
+
+### RN-BAS-14 — Dos tipos de base, un solo espacio de IDs
+
+**Estado:** ✅ Confirmada — por Aquazaku, 11-oct-2026. Reemplaza a
+[RN-BAS-09](#rn-bas-09--una-sola-clase-de-base-sin-sku).
+
+Aquazaku compró un segundo tipo de base. Desde hoy hay **dos**:
+
+| Tipo | Qué es |
+| --- | --- |
+| `estructura` | La estructura metálica. Es la única que existía hasta el 11-oct-2026 |
+| `dispensador` | Entrega agua fría y caliente al usuario |
+
+Las dos **se prestan y no se venden**, sin costo y sin depósito, exactamente
+igual ([RN-BAS-02](#rn-bas-02--la-base-se-presta-nunca-se-vende)). El tipo no
+cambia cómo se entrega: cambia qué se tiene, cuánto vale reponerlo y cuándo hay
+que comprar más.
+
+#### El tipo se declara al registrar la base, no al prestarla
+
+Una base **existe en el sistema antes de que un cliente la vea**: entra al
+parque por compra y espera en la bodega. El tipo se declara ahí, en los **tres
+caminos** por los que nace una base —el registro de a una, la compra directa, y
+la línea de una compra a proveedor—. Ninguno queda afuera: el que quedara
+seguiría creando bases sin tipo.
+
+**Por qué no al entregarla**, que es lo primero que uno piensa:
+
+- **El dato ya se conoce antes.** La factura del proveedor dice cuántos
+  dispensadores entraron. Preguntarlo al entregar es volver a derivar de la
+  memoria del operario un hecho que ya estaba documentado.
+- **Sin tipo en bodega, el aviso de compra queda ciego.** Se puede tener veinte
+  estructuras libres y cero dispensadores, y
+  [RN-BAS-13](#rn-bas-13--aviso-de-compra-antes-de-quedarse-sin-bases) diría que
+  alcanza. Es el fracaso exacto que esa regla existe para evitar.
+- **El error sería irreversible.** El tipo acompaña a la base **hasta su
+  descarte** (abajo). Un clic equivocado en el formulario de entrega declara una
+  estructura metálica como dispensador para siempre, y solo se descubre yendo a
+  mirarla.
+
+**Al entregar, el sistema muestra el tipo; no lo pregunta.** El operario tipea
+el `id_sticker` que tiene en la mano y la pantalla responde *«0913 —
+dispensador»*. Deja de ser una declaración y pasa a ser una verificación contra
+el objeto físico.
+
+#### El tipo no cambia nunca
+
+Una base es del tipo con el que se registró **hasta que se descarta**. No hay
+conversión: una estructura metálica no se vuelve dispensador porque nadie le
+instala un sistema de refrigeración en el camino. Son dos objetos distintos.
+
+En la base de datos el tipo es **obligatorio y sin valor por omisión**. Un
+`default 'estructura'` convertiría en estructura toda base mal registrada —
+justo el error que esta regla ordena el flujo para evitar—. Si no se declara, el
+registro falla.
+
+:::caution[Si el tipo se cargó mal, hay que poder corregirlo]
+«No cambia nunca» es la regla del negocio, no una excusa para no tener salida al
+error humano. Una base mal tipeada el día del registro es un dato equivocado,
+no un objeto que cambió de naturaleza.
+
+La corrección la hace `admin`, queda en la bitácora con el valor anterior —el
+mismo criterio que los umbrales de M12— y es distinta de una conversión, que no
+existe. **Sin esa salida, la única forma de arreglarlo sería descartar la base y
+perder su historial.**
+:::
+
+#### Un solo espacio de IDs
+
+El `id_sticker` sigue siendo **único entre todas las bases**, sin importar el
+tipo. No hay dos listas arrancando en `0001`.
+
+El consecutivo sale del **máximo de todas las bases** y nunca se recicla, igual
+que antes ([RN-BAS-10](#rn-bas-10--sticker-pegado-con-id-es-el-método-actual-de-identificación)).
+Si el parque llega a `0040` y entran tres dispensadores, son `0041`, `0042` y
+`0043`.
+
+**El ID no codifica el tipo**, y eso se decidió a propósito:
+
+- Un prefijo o un rango reservado —los dispensadores del `9000` en adelante—
+  sería un segundo lugar donde vive el tipo, y el día que discrepe con la
+  columna nadie sabría cuál manda.
+- El número **identifica**; el tipo **describe**. Son dos trabajos distintos y
+  el sticker solo puede hacer el primero: ya está pegado y el tipo se consulta
+  en pantalla.
+
+:::note[No hay un bolsillo de «IDs disponibles»]
+Un ID no existe hasta que existe la base. Al registrar la compra el sistema
+toma los siguientes consecutivos y devuelve los números para mandar a imprimir
+los stickers.
+
+Nadie puede tomarlos mientras tanto porque ya son filas en la tabla — es más
+fuerte que reservar un rango, porque no hay nada que reservar ni que liberar si
+la compra se cae.
+:::
+
+#### Una factura con los dos tipos son dos líneas
+
+Una línea de compra compra **exactamente una cosa** y lleva su propio costo
+unitario ([RN-PRO-05](/dominio/proveedores/)). Diez estructuras y cinco
+dispensadores en la misma factura son **dos líneas**, cada una con su costo.
+
+No es una limitación: es lo que hace que el sistema sepa qué costó un
+dispensador de verdad, en vez de un promedio entre dos objetos que no se
+parecen.
+
+#### Las bases que ya existían son `estructura`
+
+Las bases cargadas antes del 11-oct-2026 quedan `estructura` en la migración.
+**No es un supuesto**: cuando se registraron, el dispensador no existía como
+producto de Aquazaku.
 
 ---
 
