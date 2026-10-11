@@ -496,6 +496,38 @@ acción y rango de fechas. Detalles en
 [ADR-0001](/decisiones/0001-stack-m0) y
 [spec de M0](/superpowers/specs/2026-08-19-auth-rbac-design).
 
+Desde el **10-oct-2026**, cada una de estas acciones escribe su fila **dentro de
+la transacción que hace el cambio**, como decidió
+[ADR-0007](/decisiones/0007-auditoria-bloqueante/): si la bitácora no se puede
+escribir, la acción no ocurre. Lo vigila un guardián estructural
+(`audit/__tests__/auditoria-transaccional.test.ts`) que falla cuando alguien
+escribe la próxima acción sensible del lado equivocado.
+
+:::note[Qué alcanza «cambios de precio» y «ajustes de stock» — 10-oct-2026]
+Las dos frases de esta regla se podían leer de dos maneras, y Aquazaku decidió
+cuál vale:
+
+| La regla dice | Alcanza a | No alcanza a |
+| --- | --- | --- |
+| «cambios de precio» | el **catálogo**: la lista con la que se vende a todo el mundo | cobrar distinto en una venta suelta, que es una decisión de mostrador |
+| «ajustes de stock» | el **producto terminado** y los insumos, que se cuentan | el ajuste del parque de **botellones**, que corrige un conteo de envases |
+
+Dos acciones más quedaron del lado no bloqueante por la misma decisión: crear o
+desactivar un **código de descuento**, y la **reposición de agua** de la red —que
+además no tiene cantidad que auditar, porque no hay medidor
+([RN-PRD-11](/dominio/produccion/))—.
+
+Y una se agregó: **corregir una venta** es sensible, porque anula y reemplaza.
+Es una anulación con otro nombre, y las anulaciones ya estaban en la lista.
+
+**Por qué queda escrito acá y no solo en el código:** quien lee «cambios de
+precio» sin esta aclaración concluye lo contrario de lo que se decidió. El
+criterio fue uno solo: sensible significa que si la bitácora falla, **la persona
+ve un error y no pasó nada**. Donde ese costo se paga de buena gana —porque el
+rastro vale más que la disponibilidad— la acción es sensible; donde frenaría el
+mostrador sin que haya plata ni activos en juego, no.
+:::
+
 ---
 
 ### RN-ACC-05 — Un usuario no se borra, se desactiva
