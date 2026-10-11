@@ -111,7 +111,10 @@ estado con los cuatro canales del sistema.
 
 ## Qué falta
 
-El tanque se sincroniza hoy con la producción y los ajustes. **Todavía no con
-las reducciones por ventas**, porque las ventas son M6 y no existen. Cuando M6
-entre, el saldo del agua no cambia —el agua sale al envasar, no al vender— pero
-sí va a poder aparecer un gráfico de rotación que hoy no tendría datos.
+El tanque se sincroniza con la producción y los ajustes, y así se queda: **el
+agua sale al envasar, no al vender**, así que una venta no mueve el saldo. M6
+entró y el tanque no cambió — era lo previsto.
+
+Lo que M6 sí habilitó y **todavía no se construyó** es el gráfico de rotación:
+cuánto de lo envasado se vende, y en cuánto tiempo. Antes no tenía datos con
+qué dibujarse; ahora los tiene.
