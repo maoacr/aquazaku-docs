@@ -1,6 +1,6 @@
 ---
 title: Catálogo de módulos
-description: Índice rápido de los 15 módulos que componen el sistema Aquazaku, con propósito, roles y dependencias.
+description: Índice rápido de los 16 módulos que componen el sistema Aquazaku, con propósito, roles y dependencias.
 sidebar:
   order: 2
 ---
@@ -98,7 +98,8 @@ las reglas de negocio de cada módulo, ver [Dominio](/dominio/).
 - **Doc de dominio:** [Insumos](/dominio/insumos/) — RN-INS-01 a 04 (todas ✅
   confirmadas el 22-ago-2026).
 - **Spec de diseño:** [`/superpowers/specs/2026-08-22-m3-insumos-design.md`](/superpowers/specs/2026-08-22-m3-insumos-design)
-- **Estado:** 🟡 spec y dominio listos — pendiente codificar.
+- **Estado:** ✅ **implementado**. El código vive en `api/src/modules/insumos`
+  desde el 26-ago-2026, con su pantalla en `web/`.
 - **Notas:**
   - Las bolsas se compran por kilo y se guardan por unidad
     ([RN-INS-02](/dominio/insumos/)). La conversión la hace el sistema al
@@ -120,7 +121,8 @@ las reglas de negocio de cada módulo, ver [Dominio](/dominio/).
 - **Roles:** `admin`, `pos`.
 - **Depende de:** M0, M1, M2, M3.
 - **Doc de dominio:** [Producción y agua](/dominio/produccion/) — RN-PRD-01 a 24.
-- **Estado:** 🔲 pendiente.
+- **Estado:** ✅ **implementado**. El código vive en `api/src/modules/produccion`
+  desde el 26-ago-2026, con su pantalla en `web/`.
 - **Notas:**
   - Tanques separados: 13.000 L cruda + 2 × 2000 L procesada.
   - Procesamiento rinde 70% (configurable).
@@ -135,7 +137,9 @@ las reglas de negocio de cada módulo, ver [Dominio](/dominio/).
 - **Roles:** `admin`, `pos`, `seller`, `contador` (consulta).
 - **Depende de:** M0.
 - **Doc de dominio:** [Clientes](/dominio/clientes/) — RN-CLI-08, RN-CLI-12, RN-CLI-15, RN-CLI-16.
-- **Estado:** 🔲 pendiente.
+- **Estado:** ✅ **implementado**. El código vive en `api/src/modules/clientes`
+  desde el 26-ago-2026, con su pantalla en `web/`. M14 lo extendió después con
+  direcciones y contacto.
 - **Notas:**
   - Documento único por persona (RN-CLI-08).
   - Verificación como declaración personal, no consulta externa.
@@ -149,7 +153,8 @@ las reglas de negocio de cada módulo, ver [Dominio](/dominio/).
 - **Roles:** `admin`, `pos`, `seller`, `contador` (consulta).
 - **Depende de:** M0, M1, M2, M5 (y M10 si se modela precio flexible desde el inicio).
 - **Doc de dominio:** [Ventas](/dominio/ventas/) — RN-VEN-01 a 16.
-- **Estado:** 🔲 pendiente.
+- **Estado:** ✅ **implementado**. El código vive en `api/src/modules/ventas`
+  desde el 26-ago-2026, con su pantalla en `web/`.
 - **Notas:**
   - Venta confirmada es inmutable (RN-VEN-02). Anular siempre — no hay `PATCH`.
   - Corregir (RN-VEN-16) NO es editar: anula y registra una nueva, atómico y
@@ -165,9 +170,11 @@ las reglas de negocio de cada módulo, ver [Dominio](/dominio/).
 - **Roles:** `admin`, `pos`, `contador` (consulta).
 - **Depende de:** M0, M5.
 - **Doc de dominio:** [Botellones y bases](/dominio/botellones-y-bases/) — RN-ENV-* y RN-BAS-*.
-- **Estado:** 🔲 pendiente.
-- **Nombre pendiente:** ¿`retornables` o `entrega`? Coexisten en el repo;
-  unificar antes de la spec.
+- **Estado:** ✅ **implementado**. El código vive en `api/src/modules/retornables`
+  desde el 26-ago-2026, con su pantalla en `web/`.
+- **El nombre se resolvió construyéndolo:** es `retornables` en los dos repos
+  —`api/src/modules/retornables` y `web/src/app/(app)/modulos/retornables`—.
+  `entrega` quedó como nombre de los mockups de `claude-design/`.
 
 ## M8 — Rutas y seller mobile ⏸ POST-MVP
 
@@ -189,8 +196,9 @@ las reglas de negocio de cada módulo, ver [Dominio](/dominio/).
   pagar completo.
 - **Roles:** `admin`, `pos` (registra), `contador` (consulta).
 - **Depende de:** M0, M3.
-- **Doc de dominio:** [Proveedores](/dominio/proveedores/) — RN-PRO-* (a documentar).
-- **Estado:** 🔲 pendiente.
+- **Doc de dominio:** [Proveedores](/dominio/proveedores/) — RN-PRO-01 a 07.
+- **Estado:** ✅ **implementado**. El código vive en `api/src/modules/proveedores`
+  desde el 28-ago-2026, con su pantalla en `web/`.
 
 ## M10 — Precios y promociones
 
@@ -200,7 +208,9 @@ las reglas de negocio de cada módulo, ver [Dominio](/dominio/).
 - **Roles:** `admin`, `pos`, `seller`, `contador` (consulta).
 - **Depende de:** M0, M1.
 - **Doc de dominio:** [Ventas §RN-VEN-12 y §RN-VEN-13](/dominio/ventas/) — precio segmentado y códigos.
-- **Estado:** 🔲 pendiente.
+- **Estado:** ✅ **entregado dentro de M1 y M6** — nunca tuvo módulo propio. El
+  precio vive en el producto (M1) y el piso y los códigos de descuento se
+  validan al vender (M6).
 - **Notas:**
   - Piso absoluto se valida en servidor, no en UI (RN-ACC-02).
   - Cambios de lista NO reescriben ventas históricas (RN-VEN-04).
@@ -211,8 +221,9 @@ las reglas de negocio de cada módulo, ver [Dominio](/dominio/).
   facturas sin emitir, ventas por concepto, descargas CSV/PDF.
 - **Roles:** `contador`, `admin`.
 - **Depende de:** M0 + datos reales de M5, M6, M7, M9, M10.
-- **Doc de dominio:** *(a documentar)*.
-- **Estado:** 🔲 pendiente.
+- **Doc de dominio:** [Contador](/dominio/contador/) — RN-CON-01 a 09.
+- **Estado:** ✅ **implementado**. El código vive en `api/src/modules/contador`
+  desde el 30-ago-2026, con su pantalla en `web/`.
 - **Notas:**
   - NO hereda permisos del `admin`.
   - Cada descarga queda en el log de auditoría (RN-ACC-04).
@@ -225,7 +236,8 @@ las reglas de negocio de cada módulo, ver [Dominio](/dominio/).
 - **Roles:** `admin` (configura umbrales), `pos` (consume y dispara).
 - **Depende de:** M0, M2, M3, M4.
 - **Doc de dominio:** *(a documentar)* — referencia: RN-PRD-17.
-- **Estado:** 🔲 pendiente.
+- **Estado:** ✅ **implementado**. El código vive en `api/src/modules/alertas`
+  desde el 6-sep-2026, y los umbrales se configuran desde la administración.
 
 ## M13 — Auditoría
 
@@ -236,7 +248,9 @@ las reglas de negocio de cada módulo, ver [Dominio](/dominio/).
 - **Roles:** `admin` (consulta).
 - **Depende de:** M0 + transversal a todos los módulos.
 - **Doc de dominio:** [Roles y permisos §RN-ACC-04](/dominio/roles-y-permisos/).
-- **Estado:** 🔲 pendiente.
+- **Estado:** ✅ **entregado dentro de M0** — `api/src/modules/audit` desde el
+  20-ago-2026. Es transversal: cada módulo escribe su fila dentro de la misma
+  transacción que hace el cambio ([ADR-0007](/decisiones/0007-auditoria-bloqueante)).
 - **Notas:**
   - Es transversal — se implementa como middleware/log de la capa de datos.
   - Con `admin` concentrando todo el poder de corrección, la auditoría es el
