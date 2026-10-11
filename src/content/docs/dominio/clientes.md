@@ -1030,7 +1030,7 @@ nunca — y entonces:
 
 Un comercial tiene **el celular del dueño y el fijo del local**, y el sistema ya
 distingue uno de otro: el botón de WhatsApp no se dibuja sobre un fijo
-([RN-CLI-18](#rn-cli-18--un-cliente-que-hace-días-que-no-compra-se-muestra-para-llamar)).
+([RN-CLI-18](#rn-cli-18--una-dirección-que-hace-días-que-no-recibe-se-muestra-para-llamar)).
 Capturar uno solo tira información que el sistema sabe usar.
 
 `telefono` en singular **sigue existiendo** junto al plural. Ya tenía
@@ -1083,7 +1083,7 @@ distintas:
 | La cartera | No le pertenece a nadie: es la suma de deudas de gente que no se conoce entre sí |
 | El historial | «Cuándo compró por última vez» no tiene respuesta |
 | El teléfono | No hay a quién llamar |
-| El panel de recompra | Lo ve como una persona que compra todos los días, así que **nunca lo muestra** ([RN-CLI-18](#rn-cli-18--un-cliente-que-hace-días-que-no-compra-se-muestra-para-llamar)) |
+| El panel de recompra | Lo ve como una persona que compra todos los días, así que **nunca lo muestra** ([RN-CLI-18](#rn-cli-18--una-dirección-que-hace-días-que-no-recibe-se-muestra-para-llamar)) |
 
 Registrar a alguien con el nombre y el teléfono que **sí** dio es mejor que eso
 aunque falte el documento. Lo que se pierde —el identificador estable, el aviso
@@ -1216,6 +1216,6 @@ olvida, se tipea mal, y seis meses después nadie puede explicar.
 - ¿Puede una dirección quedar sin ruta asignada? (Hoy sí: compra en mostrador.)
 - **48.** ¿A los cuántos días sin comprar hay que llamar a un cliente, y a
   partir de cuántos es urgente? Hoy están en **5 y 8** como supuesto
-  ([RN-CLI-18](#rn-cli-18--un-cliente-que-hace-días-que-no-compra-se-muestra-para-llamar)).
+  ([RN-CLI-18](#rn-cli-18--una-dirección-que-hace-días-que-no-recibe-se-muestra-para-llamar)).
   El número correcto depende de cuánto dura un botellón en una casa de la zona,
   y eso lo sabe quien reparte.
