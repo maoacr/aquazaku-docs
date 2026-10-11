@@ -598,8 +598,9 @@ base = {
 
 1. `pos` o `admin` registra el estado `danada` con motivo y timestamp.
 2. El sistema crea automáticamente una **venta con `tipo = "DANO_BASE"`** y
-   `motivo = "..."` por el valor de reposición de la base (configurable por
-   SKU/tipo, hoy un solo valor único).
+   `motivo = "..."` por el valor de reposición de la base, que **depende del
+   tipo** ([RN-BAS-14](#rn-bas-14--dos-tipos-de-base-un-solo-espacio-de-ids)):
+   reponer un dispensador no cuesta lo que reponer una estructura metálica.
 3. La venta se registra con el medio de pago que se acuerde con el cliente
    (contado o crédito si está habilitado y verificado).
 4. El cargo va al `cliente.cargos_pendientes` (4° saldo de
@@ -621,6 +622,17 @@ Medio de pago:
 Si un mismo cliente daña muchas bases, el sistema debe exponer al `admin` el
 historial de cargos para que DECIDA si inactiva al cliente. **No es castigo
 automático** — es visibilidad para una decisión manual.
+:::
+
+:::caution[Dos tipos, dos valores de reposición, y ninguno acordado]
+La [pregunta 39](/empezar/pendientes/) —*¿cuánto cuesta reponer una base?*—
+estaba abierta cuando había un solo tipo. Ahora necesita **dos respuestas**, y
+la del dispensador es la que más pesa: es el activo caro.
+
+Hoy el monto viaja explícito en cada recargo —quien lo registra lo escribe— así
+que la mecánica funciona. Lo que no hay es nada que impida **cobrar un
+dispensador como si fuera una estructura**. Con un solo tipo ese error no
+existía.
 :::
 
 ---
@@ -827,9 +839,10 @@ combinación es válida después.
 ### RN-BAS-13 — Aviso de compra antes de quedarse sin bases
 
 **Estado:** ✅ Confirmada (27-ago-2026). Demora del proveedor: **7 días**.
+Desde el 11-oct-2026 el cálculo corre **por tipo de base**.
 
-Avisa cuando las bases **libres y sanas** son menos que las que se prestaron en
-los últimos 7 días.
+Avisa cuando las bases **libres y sanas de un tipo** son menos que las que se
+prestaron **de ese tipo** en los últimos 7 días.
 
 :::danger[Cero es tarde]
 El aviso de stock del agua dispara en cero, y está bien: la planta produce
@@ -866,12 +879,20 @@ que **no se inventó**: si el número no está, se pide o se deriva, no se elige
   decir. Un aviso que suena el primer día se aprende a ignorar.
 - **Cero libres avisa siempre**, sin importar el ritmo: no se puede prestar lo
   que no hay, y ahí el aviso no depende de ninguna estimación.
+- **Un parque por tipo, no uno solo.** Sumar los dos tipos en un número haría
+  que veinte estructuras libres tapen que no queda ningún dispensador. El aviso
+  callaría justo cuando hace falta, que es la falla que esta regla ataca —
+  [RN-BAS-14](#rn-bas-14--dos-tipos-de-base-un-solo-espacio-de-ids).
 
 #### Qué muestra
 
-Los **dos números**, no el veredicto. *«Quedan 3 bases. En los últimos 7 días se
-prestaron 8.»* Quien lo lee tiene que decidir **cuántas pedir**, y sin esos dos
-datos tendría que ir a buscarlos a otra pantalla antes de poder hacerlo.
+Los **dos números**, no el veredicto, y **con el tipo**. *«Quedan 3
+dispensadores. En los últimos 7 días se prestaron 8.»* Quien lo lee tiene que
+decidir **cuántos pedir**, y sin esos dos datos tendría que ir a buscarlos a
+otra pantalla antes de poder hacerlo.
+
+Sin el tipo en el cartel el número no alcanza para pedir: no se le compra lo
+mismo a la misma persona.
 
 Si alcanzan, no hay cartel. El sistema no felicita.
 
@@ -995,3 +1016,10 @@ producto de Aquazaku.
 (Las preguntas 🟡 de Retornables #23, #24, #25, #26, #27 quedaron todas
 cerradas en la sesión del 18-ago-2026. Los nuevos RN son BAS-08, BAS-09,
 BAS-10, BAS-11, BAS-12.)
+
+La compra del dispensador abrió dos, las dos en
+[Qué falta preguntar](/empezar/pendientes/): el **valor de reposición de cada
+tipo** (la 39, que ahora necesita dos respuestas) y si la **demora del
+proveedor** es la misma para un dispensador que para una estructura metálica
+(la 48). La segunda le entra directo al umbral de
+[RN-BAS-13](#rn-bas-13--aviso-de-compra-antes-de-quedarse-sin-bases).
