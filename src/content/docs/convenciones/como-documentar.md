@@ -49,6 +49,35 @@ Asumimos que un cliente pertenece a una sola ruta. Falta confirmar con Aquazaku.
 :::
 ```
 
+## Cuando una regla confirmada deja de ser verdad
+
+Pasa, y no es un error de redacción: el negocio cambia. Aquazaku compró un
+segundo tipo de base y [RN-BAS-09](/dominio/botellones-y-bases/) —«una sola
+clase de base», ✅ Confirmada— dejó de describir la realidad.
+
+**La regla no se reescribe en su lugar. Se deroga y se reemplaza.**
+
+1. El **texto original queda intacto**.
+2. El **estado** pasa a `⛔ Derogada el DD-mmm-AAAA`, con el link a la que la
+   reemplaza.
+3. Un bloque arriba avisa que lo de abajo es **registro, no instrucción**.
+4. La regla nueva toma **el siguiente número libre** — nunca el de la derogada.
+5. Las **citas** a la vieja se repuntan a la nueva, una por una.
+
+**Por qué no se reescribe:** el número es un identificador estable y otras
+reglas lo citan. RN-BAS-09 estaba citada dos veces desde RN-BAS-10 como
+fundamento de un razonamiento. Cambiarle el contenido dejaría esas dos citas
+apuntando a lo contrario de lo que quien las escribió asumió, **en silencio** —
+el mismo daño que reciclar el número de una pregunta cerrada.
+
+Y el paso 4 por lo mismo: un número derogado tampoco se recicla.
+
+:::tip[Derogar no es corregir]
+Si la regla **estaba mal escrita** —decía algo que nunca fue cierto—, eso se
+corrige en su lugar y listo. Derogar es para cuando **era verdad y dejó de
+serlo**: ahí hay dos hechos, uno vigente y uno histórico, y los dos importan.
+:::
+
 ## El vocabulario es el del negocio, no el de quien escribe
 
 Esta es la regla más importante de la página, y la más fácil de romper sin darse

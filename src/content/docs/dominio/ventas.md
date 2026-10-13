@@ -698,7 +698,7 @@ ese tope. Es una acción propia en la matriz: `ventas:corregir`.
 | Caso | Qué pasa | Por qué |
 | --- | --- | --- |
 | Venta con **devoluciones** | Se rechaza | La devolución cuelga de una línea que dejaría de contar: la deuda se descontaría dos veces. Primero se revierte la devolución. |
-| **Recargo por daño** (`dano_base`) | Se rechaza | No tiene productos que rehacer ([RN-BAS-08](/dominio/bases/)). Se anula. |
+| **Recargo por daño** (`dano_base`) | Se rechaza | No tiene productos que rehacer ([RN-BAS-08](/dominio/botellones-y-bases/#rn-bas-08--daño-a-la-base--recargo-automático-al-cliente-en-cualquier-momento-del-ciclo)). Se anula. |
 | Cambiar el **cliente** de una venta que despachó botellones sin vacío o prestó una base | Se rechaza | El activo quedó a nombre del cliente original y la corrección no lo trae de vuelta: la venta quedaría a nombre de una persona y el envase a cargo de otra. |
 | **Botellones y bases** de la venta corregida | Se permite **mover** los dos campos de botellones (`botellonesEntregados`, `botellonesRecibidos`) y la base **no se toca** | La corrección REVIERTE los movimientos originales de la venta en `movimientos_botellon` (mismo helper que la anulación, ver [RN-ENV-09](/dominio/botellones-y-bases/)) y la venta nueva escribe los suyos. El saldo del cliente refleja **solo la nueva venta**, no la suma de la original y la nueva. La base sigue siendo un movimiento FÍSICO que no se reescribe — quien corrige la base lo hace desde Retornables, no desde acá. |
 | Venta ya **anulada** o ya **corregida** | Se rechaza | Lo vigente es la venta que la reemplazó. Se corrige esa. |

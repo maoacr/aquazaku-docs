@@ -32,7 +32,7 @@ Reusar el número de una pregunta cerrada rompe esa cita en silencio — apunta 
 otra cosa y nadie se entera. **Una pregunta nueva toma el siguiente libre, aunque
 queden huecos.**
 
-Máximo asignado hasta hoy: **37**. La próxima es la 38.
+Máximo asignado hasta hoy: **48**. La próxima es la 49.
 :::
 
 ---
@@ -64,8 +64,9 @@ No son decisiones: son números que hay que ir a tomar.
 | 5 | **Tiempo de llenado de un tanque de 2.000 L** → de ahí sale el caudal real. | [RN-PRD-18](/dominio/produccion/) — es la forma práctica de contestar la 4: se cronometra una vez con el tanque vacío |
 | 6 | **Litros que consume lavar un botellón.** | [RN-PRD-05](/dominio/produccion/) — **bloquea registrar lavados, no el cierre**. Un cierre con lavados y sin esta medición se rechaza con `SIN_LITROS_DE_LAVADO` y un mensaje que dice qué medir. Aceptarlo con cero sería peor: un término del balance quedaría en cero para siempre y el agua no cuadraría nunca |
 | 7 | **Consumo diario promedio en litros.** *Se autocalcula a las semanas de registrar cierres de producción — un estimado inicial alcanza.* | [RN-PRD-13](/dominio/produccion/) |
-| 39 | **¿Cuánto cuesta reponer una base?** [RN-BAS-08](/dominio/botellones-y-bases/) habla del «valor de reposición, configurable por SKU/tipo, hoy un solo valor único» — pero **no dice cuál es**. | Sin un número acordado, hoy el monto viaja explícito en cada recargo: quien lo registra lo escribe. Eso funciona y queda auditado, pero permite que dos daños iguales se cobren distinto. Poner una constante plausible habría sido inventarlo — el mismo error que estimar el caudal. Cuando exista el módulo de configuración (M12), el número pasa a ser el **default** de ese campo, no su reemplazo |
+| 39 | **¿Cuánto cuesta reponer una base — de cada tipo?** [RN-BAS-08](/dominio/botellones-y-bases/) dice que el valor depende del tipo desde que existe el dispensador ([RN-BAS-14](/dominio/botellones-y-bases/)), y **no dice cuál es ninguno de los dos**. El del dispensador es el que pesa: es el activo caro. | Sin un número acordado, hoy el monto viaja explícito en cada recargo: quien lo registra lo escribe. Eso funciona y queda auditado, pero permite que dos daños iguales se cobren distinto. Poner una constante plausible habría sido inventarlo — el mismo error que estimar el caudal. Cuando exista el módulo de configuración (M12), el número pasa a ser el **default** de ese campo, no su reemplazo |
 | 38 | **¿Un cliente puede pagar por adelantado?** Hoy el sistema **rechaza** un cobro mayor que la deuda, con el número real. | Aceptarlo dejaría una deuda negativa —un saldo a favor— y **ningún módulo sabe gastarlo**: no hay forma de aplicarlo a una venta futura ni de devolverlo. Rechazar es reversible; aceptar en silencio no, porque para cuando se note ya hay saldos negativos en la base. Si los adelantos existen, se abre y se define cómo se consumen |
+| 48 | **¿La demora del proveedor es la misma para un dispensador que para una estructura metálica?** Hoy hay un solo `dias_entrega_bases` = 7. | [RN-BAS-13](/dominio/botellones-y-bases/) calcula el aviso de compra con esa demora, y desde [RN-BAS-14](/dominio/botellones-y-bases/) lo hace **por tipo**. Si el dispensador tarda tres semanas y el umbral sigue en 7 días, el aviso del activo caro llega tarde por diseño — y es el que no se puede improvisar comprando en la ferretería de la esquina |
 | 37 | **Cuántas bolsas trae un kilo** — por separado para la de 600 ml y la de 300 ml. El grosor varía entre lotes, así que conviene pesar varias veces y promediar. | [RN-INS-02](/dominio/insumos/) — **ya no bloquea el módulo**: M3 se entregó con la medición vacía. El sistema rechaza la compra en kilos diciendo qué medir, y acepta unidades. El número se carga desde la pantalla de Insumos, sin tocar código |
 
 ---
@@ -143,7 +144,7 @@ sube, además subida de archivos, que hoy el sistema no hace en ningún lado.
 Es un milestone propio. Las preguntas 32 a 35 son lo que hay que responder antes
 de escribir la primera línea.
 
-*(A la fecha de hoy quedan **7 preguntas** 🟠 en «Faltan mediciones en planta» —algunas ya no bloquean su módulo, como la **4** (caudal) y la **37** (bolsas por kilo), porque se entregaron con el número vacío y el sistema lo dice con `null`—, las 4 preguntas 🟢 de perfil (32 a 35), y las 6 preguntas 🔵 del contador (40 a 45). La **36** se cerró el 22-ago-2026: ver [RN-STK-11](/dominio/stock/).)*
+*(A la fecha de hoy quedan **8 preguntas** 🟠 en «Faltan mediciones en planta» —algunas ya no bloquean su módulo, como la **4** (caudal) y la **37** (bolsas por kilo), porque se entregaron con el número vacío y el sistema lo dice con `null`—, las 4 preguntas 🟢 de perfil (32 a 35), y las 6 preguntas 🔵 del contador (40 a 45). La **36** se cerró el 22-ago-2026: ver [RN-STK-11](/dominio/stock/).)*
 
 ---
 
