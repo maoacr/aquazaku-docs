@@ -273,9 +273,55 @@ tiene los tres casos con sus comandos. El resumen para decidir cuál:
 | Sí | Agrega algo que el código nuevo **todavía no usa** | Mergear → migrar |
 | Sí | Agrega algo que el código nuevo **necesita para funcionar** | **Migrar → mergear** |
 | Sí | **Renombra** o convierte | **Migrar → mergear** |
+| Sí | **Rompe el código viejo** — una columna `NOT NULL` sin default, un `CHECK` nuevo | **Migrar → mergear**, y lo más pegado posible |
 
-El orden de los dos últimos está invertido a propósito, y no es preferencia: el
+El orden de los tres últimos está invertido a propósito, y no es preferencia: el
 otro orden tumba la planta.
+
+:::caution[La quinta fila: la migración que rompe lo que YA está corriendo]
+Las primeras cuatro preguntan qué necesita el código **nuevo**. Esta pregunta
+otra cosa: **¿el código viejo sobrevive al schema nuevo?**
+
+Una columna `NOT NULL` sin valor por omisión dice que no. El `INSERT` que el
+código desplegado viene haciendo —sin esa columna, porque todavía no la
+conoce— pasa a ser rechazado por la base.
+
+Pasó el 13-oct-2026 con la `0027`, la del tipo de base. Medido:
+
+```
+INSERT INTO bases (id_sticker) VALUES ('9999');
+ERROR:  null value in column "tipo" of relation "bases" violates not-null constraint
+```
+
+Entre migrar y que el deploy termine, **registrar una base estaba roto en
+producción**. No se degradaba: daba error.
+
+Sigue siendo `migrar → mergear` —el orden inverso rompe más y por más tiempo—
+pero con una diferencia de ejecución: **los dos pasos van juntos**, no «migro
+hoy y mergeo cuando pueda». Y si la ventana no puede ser corta, la migración se
+parte en dos: primero la columna nullable, se despliega el código que la llena,
+y una segunda migración la pone `NOT NULL` después.
+:::
+
+:::danger[Antes de migrar: ¿el archivo está en TU árbol?]
+La regla «migrar → mergear» se puede cumplir al pie de la letra y fallar igual.
+
+El 13-oct se corrió `pnpm db:migrate:prod` con el árbol todavía en el `main`
+viejo, **sin el archivo `0027`**. El comando dijo `✓ migraciones aplicadas` y era
+verdad: aplicó las que tenía. Producción quedó con el código nuevo y el schema
+sin la columna.
+
+**Migrar desde un árbol que no tiene la migración no es migrar**, y nada avisa.
+Antes de correr el comando:
+
+```bash
+git -C ~/code/aquazaku/api log --oneline -1        # ¿estás donde creés?
+ls ~/code/aquazaku/api/src/db/migrations | tail -3 # ¿está el archivo?
+```
+
+Y después del deploy, `/health` lo confirma — desde el 14-oct-2026 se corrige
+solo en hasta quince minutos, sin reiniciar nada.
+:::
 
 :::danger[«Aditiva» no quiere decir «se puede mergear primero»]
 La primera versión de esta tabla decía que toda migración aditiva se mergea
