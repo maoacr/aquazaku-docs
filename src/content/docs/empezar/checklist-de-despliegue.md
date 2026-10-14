@@ -333,12 +333,15 @@ curl -s https://api.aquazaku.com/health
 Si aparece `"esquema":"pendientes"` con una lista en `faltan`, el código
 desplegado le está pidiendo a la base algo que no tiene.
 
-:::caution[`faltan` se calcula UNA VEZ, al arrancar el proceso]
-Y por eso **sigue apareciendo después de migrar bien**, hasta que alguien
-reinicie el servicio. El proceso vio el schema viejo al nacer y repite eso
-mientras viva.
+:::note[`faltan` tarda hasta quince minutos en corregirse]
+Se revisa en cada latido **mientras no esté al día**, así que después de migrar
+puede seguir apareciendo un rato. Una vez al día no se vuelve a revisar: para
+ese proceso `al-dia` es terminal. Detalle y el porqué en
+[Desplegar, paso a paso](/empezar/desplegar-paso-a-paso/).
 
-Para saber si la migración entró sin esperar, preguntale a la base:
+Hasta el 13-oct-2026 se calculaba **una sola vez al arrancar** y seguía
+apareciendo hasta que alguien reiniciara el servicio. Si estás leyendo esto en
+un despliegue y no querés esperar, preguntale a la base:
 
 ```sql
 select column_name from information_schema.columns
