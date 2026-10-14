@@ -98,10 +98,31 @@ cd ~/code/aquazaku/api
 DATABASE_MIGRATION_URL='<cadena de Supabase>' pnpm db:migrate
 ```
 
-## Caso C — Con migración que RENOMBRA o CONVIERTE
+## Caso C — Con migración que RENOMBRA, CONVIERTE o rompe el código viejo
 
 Acá el orden se invierte, y no es una preferencia: es que el otro orden rompe la
 planta.
+
+:::note[Una migración ADITIVA puede caer acá, y es la trampa]
+El caso obvio es un rename. El que no se ve venir es una columna **`NOT NULL`
+sin valor por omisión**: agrega y nada más —aditiva de manual— pero el `INSERT`
+que el código desplegado viene haciendo deja de ser válido.
+
+Pasó el 13-oct-2026 con la `0027`. Medido:
+
+```
+INSERT INTO bases (id_sticker) VALUES ('9999');
+ERROR:  null value in column "tipo" of relation "bases" violates not-null constraint
+```
+
+La prueba de si estás en el Caso C no es «¿renombra?». Es **«¿el código que
+está corriendo ahora sobrevive a este schema?»**. Si la respuesta es no, seguí
+leyendo esta sección aunque tu migración solo agregue.
+
+Y si la ventana entre migrar y desplegar no puede ser corta, la migración se
+parte en dos: primero la columna nullable, se despliega el código que la llena,
+y una segunda la pone `NOT NULL` después.
+:::
 
 Una migración que renombra `nombre` a `nombre_libre` deja al código viejo y al
 nuevo incompatibles **en direcciones opuestas**. Medido:
