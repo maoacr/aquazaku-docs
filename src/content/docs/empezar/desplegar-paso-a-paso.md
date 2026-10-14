@@ -251,26 +251,34 @@ Mientras aparezca `faltan`, el código desplegado está pidiéndole a la base al
 que no tiene. `status` sigue diciendo `ok` porque el **servidor** está sano —
 lo que está mal es el schema, y por eso se reporta aparte.
 
-:::caution[`faltan` se calcula UNA VEZ, al arrancar el proceso]
-Y por eso **sigue apareciendo después de migrar**, aunque la migración haya
-entrado bien. El proceso vio el schema viejo al nacer y repite eso hasta que
-alguien lo reinicie:
+:::note[`faltan` se corrige solo, en hasta quince minutos]
+Antes se calculaba **una sola vez al arrancar**, con este argumento: «las
+migraciones no se aplican solas mientras el proceso vive, y si alguien las
+corre, el redeploy vuelve a revisar». Es cierto para el caso normal y
+**justamente falso durante un despliegue**, que es cuando uno mira este campo.
 
-> «Se revisa una vez al arrancar: el esquema no cambia mientras el proceso vive.»
-> — `src/lib/latido.ts`
+Nos pasó el 13-oct-2026: `faltan` siguió apareciendo media hora después de que
+la migración hubiera entrado bien, y no había forma de confirmar la corrección
+sin reiniciar el servicio. Reiniciar producción para poder leer un indicador es
+exactamente lo que un indicador debería evitar.
 
-Es cierto para el caso normal —las migraciones no se aplican solas— pero
-justamente falso durante un despliegue, que es cuando uno mira este campo.
+**Desde entonces se revisa en cada latido —cada quince minutos— mientras no esté
+al día.** Y una vez al día no se vuelve a revisar nunca: para un proceso dado
+las migraciones esperadas son fijas (el journal viaja dentro de la imagen) y las
+aplicadas solo crecen, así que `al-dia` es un estado terminal. El costo cuando
+todo está bien es **una** consulta, la del arranque.
 
-Para saber si entró **sin esperar**, preguntale a la base:
+Cuando se resuelve, el log lo dice: `el esquema quedó al día`. Sin ese aviso el
+log muestra cuándo empezó el problema y nunca cuándo terminó.
+
+Si no querés esperar los quince minutos, preguntale a la base:
 
 ```sql
 select column_name from information_schema.columns
 where table_schema = 'public' and table_name = '<la tabla que cambió>';
 ```
 
-Y para que `/health` deje de mentir, reiniciar el servicio en Railway. Es
-cosmético: la app ya está funcionando contra el schema nuevo.
+Reiniciar el servicio en Railway también lo refresca, pero ya no hace falta.
 :::
 
 Y la comprobación que ninguna consola reemplaza: entrá a
