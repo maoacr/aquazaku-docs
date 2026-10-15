@@ -120,6 +120,15 @@ combustible no están en ninguna tabla — ver
 Un reporte de «gastos» hecho con lo que hay hoy sería **falso**, no incompleto.
 Cerrar esto es una decisión de negocio antes que una tabla.
 
+**Contexto:** Aquazaku hoy **no declara** (montos por debajo del umbral de
+régimen simplificado), pero se está preparando todo para declarar en
+**régimen simplificado** del ET cuando llegue el momento. El sistema tiene que
+registrar limpio desde ya, sin esperar a la declaración.
+
+**Avance:** las 10 decisiones que hay que tomar están listadas. Ver el
+[estado y roadmap](/empezar/pregunta-47/) y el
+[borrador para la reunión con la contadora](/empezar/pregunta-47-reunion-contadora/).
+
 ## Módulo pendiente: Mi perfil
 
 No es una pregunta suelta, así que va aparte.
