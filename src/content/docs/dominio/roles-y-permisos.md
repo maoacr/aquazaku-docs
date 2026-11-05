@@ -239,8 +239,22 @@ para que cuando llegue M2 estén listas.
 | `clientes:ver` | ✅ | ✅ | ✅ | 🟡 `todo` |
 | `clientes:crear` | ✅ | ✅ | ✅ | ❌ |
 | `clientes:verificar_documento` | ✅ | ✅ | ✅ | ❌ |
+| `clientes:ocultar_seguimiento` | ✅ | ✅ | ✅ | ❌ |
 | `clientes:editar` | ✅ | ❌ | ❌ | ❌ |
 | `clientes:habilitar_credito` | ✅ | ❌ | ❌ | ❌ |
+
+`clientes:ocultar_seguimiento` saca una fila de la lista de seguimientos a mano
+— RN-CLI-18. **No borra al cliente ni toca un dato suyo**: solo decide a quién
+no hay que llamar, y una venta nueva devuelve la fila a la lista por su cuenta.
+
+Es una acción propia y no `clientes:editar` aunque las dos escriban. `editar`
+cambia los datos de la ficha; esta no toca ninguno. Separarlas deja que la
+bitácora conteste «quién sacó a este cliente de la lista» sin mezclarlo con las
+correcciones de nombre y teléfono, que son casi todo `clientes:editar`.
+
+La tienen los tres roles operativos porque quien recorre la lista marcando es
+quien sabe que el local cerró o que el cliente se mudó. `contador` queda afuera
+por lo mismo que en todo lo demás: es de solo lectura.
 
 ### Stock de producto
 
