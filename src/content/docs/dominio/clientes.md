@@ -499,6 +499,26 @@ No es un detalle de UI: cambia el esquema de la base de datos, el flujo de visit
 del `seller` y la asignación de clientes a rutas.
 :::
 
+#### Dar de baja una dirección devuelve su base al parque
+
+Un cliente con dos locales devuelve el equipo de uno y pide que esa dirección
+salga de su perfil. La baja:
+
+1. Marca la dirección como inactiva — **no la borra**: el historial de las bases
+   que estuvieron ahí la necesita en pie para poder decir en qué puerta estuvo
+   cada una ([RN-BAS-05](/dominio/botellones-y-bases/)).
+2. Devuelve al parque las bases prestadas ahí, con su movimiento de retorno, y
+   quedan disponibles para prestar.
+3. Exige motivo, porque mueve un activo.
+
+**Siempre vuelven al parque.** Reubicar una base en otra dirección del mismo
+cliente es un préstamo nuevo y se hace apretando «prestar»: si la baja intentara
+adivinar el destino, resolvería con una suposición el único momento en que el
+operador tiene la base en la mano.
+
+Los botellones no se tocan: son fungibles y se cuentan por cliente, no por
+dirección ([RN-ENV-04](/dominio/botellones-y-bases/)).
+
 ---
 
 ## Crédito
