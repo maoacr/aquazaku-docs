@@ -516,6 +516,13 @@ exactamente una ubicación.
 **Por qué:** una base que figura en dos lugares —o en ninguno— es un bug de
 inventario que se descubre cuando vas a reclamarla y no está.
 
+**«En ninguno» tenía un camino real:** dar de baja la dirección donde estaba
+prestada. La base se quedaba apuntando a una puerta inactiva, así que no estaba
+en bodega —`disponibilidadDeBases` cuenta las que no tienen dirección— ni en una
+dirección a la que se pudiera ir a reclamarla. Hoy la baja de la dirección la
+retorna al parque en la misma transacción
+([RN-CLI-07](/dominio/clientes/)).
+
 ---
 
 ### RN-BAS-05 — Toda base tiene historial completo
