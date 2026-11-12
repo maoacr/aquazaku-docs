@@ -340,7 +340,7 @@ las reglas de negocio de cada módulo, ver [Dominio](/dominio/).
   [Roles y permisos](/dominio/roles-y-permisos/) para el por qué).
 - **Depende de:** M0. Nada más — y es deliberado: no depende de M11 ni del rol
   `contador`, ni de ninguna norma tributaria.
-- **Doc de dominio:** [Gastos y tesorería](/dominio/gastos/) — RN-GAS-01 a 10.
+- **Doc de dominio:** [Gastos y tesorería](/dominio/gastos/) — RN-GAS-01 a 11.
 - **Estado:** 🚧 **tramo 1 en construcción** (12-nov-2026). El código vive en
   `api/src/modules/gastos`, con su pantalla en `web/`.
 - **Notas:**
@@ -365,6 +365,10 @@ las reglas de negocio de cada módulo, ver [Dominio](/dominio/).
     y los filtros son el caso más claro: [RN-INS-04](/dominio/insumos/) dice que
     son gasto y no inventario, y hasta ahora eso era cierto porque no había
     dónde registrarlos.
+  - **La compra a proveedor descuenta de una cuenta** (RN-GAS-11). M9 movía el
+    inventario pero no tocaba ninguna caja: el saldo del sistema quedaba por
+    encima de la plata real por todo lo comprado. Ahora el pago sale en el mismo
+    acto, y si la cuenta no alcanza se cae la compra entera.
   - **Tramo 2 (pendiente):** traslados entre cajas y arqueo. Los cuatro tipos de
     movimiento que usan están declarados en el enum desde el primer día, con sus
     `CHECK` y su índice único, para que el tramo 2 sea puramente aditivo.

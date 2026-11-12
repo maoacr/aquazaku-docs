@@ -1,6 +1,6 @@
 ---
 title: Gastos y tesorería
-description: Dónde vive la plata de Aquazaku, cómo sale, y qué hace que las cuentas cuadren.
+description: Dónde vive la plata de Aquazaku, cómo entra, cómo sale, y qué hace que las cuentas cuadren.
 sidebar:
   order: 11
 ---
@@ -176,6 +176,10 @@ Es la regla de `lineas_compra_una_sola_cosa` generalizada. Y al no existir el
 valor en el enum, **el doble conteo no se evita con disciplina: no hay dónde
 escribirlo.**
 
+**Pero eso dejaba un hueco al revés**, y lo cierra [RN-GAS-11](#rn-gas-11--la-compra-a-proveedor-descuenta-de-una-cuenta):
+si la compra no se podía registrar como gasto y tampoco tocaba ninguna caja,
+entonces la plata que se le paga al proveedor no salía de ningún lado.
+
 :::tip[Esto es lo que desbloquea el módulo]
 De los once tipos de gasto del negocio, dos ya se podían registrar (insumos y
 bases/botellones, por M9) y **ocho no tenían dónde entrar**: no existía la
@@ -236,6 +240,44 @@ día y recién ahí la plata está en la caja.
 cuenta documentos (base devengo), el otro cuenta plata (base caja). Ninguno es
 el otro, y eso no es un defecto a corregir: son las dos preguntas que hay que
 poder contestar por separado.
+
+---
+
+### RN-GAS-11 — La compra a proveedor descuenta de una cuenta
+
+**Estado:** ✅ Confirmada (12-nov-2026).
+
+Registrar una compra en [Proveedores](/dominio/proveedores/) escribe el
+documento, mueve el inventario **y saca la plata de una cuenta**, todo en la
+misma transacción. Lo de contado paga al registrarse; lo de crédito paga el día
+que se marca pagada.
+
+**Por qué:** hasta acá M9 movía el inventario y congelaba el costo, pero no
+tocaba ninguna caja. La plata salía del cajón de verdad y el saldo del sistema
+seguía igual, así que el módulo mostraba **más plata de la que hay**, por el
+total de lo comprado a proveedores, y ningún movimiento lo explicaba.
+
+Es el mismo argumento por el que la compra ya movía el inventario: separar el
+documento del efecto deja que alguien registre uno y se olvide del otro.
+
+:::caution[Si la cuenta no tiene saldo, la compra entera se cae]
+Mercadería incluida. Registrar lo que entró sin poder pagarlo deja un inventario
+que el dinero no explica — y el faltante aparecería después, en un arqueo, sin
+nada que lo ate a esa compra.
+:::
+
+**El pago NO lleva categoría de gasto.** Un egreso tiene `tipo_de_egreso` **o**
+`compra_relacionada`, exactamente uno, y lo garantiza un `CHECK`.
+
+**Por qué:** qué se compró ya está escrito en las líneas, con cantidad y costo
+unitario. Un tipo `pago_a_proveedor` sería una segunda clasificación del mismo
+hecho, y las dos podrían decir cosas distintas. Además, como el desplegable de
+gastos solo ofrece tipos, el pago de una compra **no se puede registrar
+«suelto»**: RN-GAS-07 sigue valiendo y la única puerta es la compra misma.
+
+**Una compra se paga una sola vez.** Un índice único parcial lo impide, y
+excluye los anulados: si el pago se cargó en la cuenta equivocada, se anula y se
+rehace.
 
 ---
 
