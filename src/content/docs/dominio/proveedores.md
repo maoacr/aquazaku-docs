@@ -25,6 +25,15 @@ Una compra que suma producto terminado al stock de bodega es, casi seguro, un
 error de registro.
 :::
 
+:::tip[La compra también mueve PLATA — RN-GAS-11]
+Desde M17, registrar una compra descuenta su total de una cuenta de dinero
+—caja o banco— en la misma transacción que mueve el inventario. Lo de contado
+paga al registrarse; lo de crédito, el día que se marca pagada.
+
+Si la cuenta no tiene saldo, **la compra entera se rechaza**, mercadería
+incluida. Ver [Gastos y tesorería](/dominio/gastos/).
+:::
+
 ### RN-PRO-01 — Un proveedor no se borra, se desactiva
 
 **Estado:** ✅ Confirmada (27-ago-2026).
