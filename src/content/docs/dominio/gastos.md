@@ -129,9 +129,30 @@ explicar el descuadre dentro de tres meses.
 
 **Estado:** ✅ Confirmada (12-nov-2026).
 
-`tipo_de_egreso` contesta **qué se pagó**: `recibo_publico`, `arriendo`,
-`nomina`, `software`, `servicio`, `repuesto`, `mantenimiento`, `litografia`,
-`impuesto`, `equipo`, `mueble`, `transporte`, `comision_bancaria`, `otro`.
+`tipo_de_egreso` contesta **qué se pagó**, y cada valor nombra **un** hecho:
+
+| Grupo | Valores |
+| --- | --- |
+| Servicios públicos | `energia`, `acueducto`, `gas`, `internet` |
+| Todos los meses | `arriendo`, `nomina` |
+| La operación | `transporte`, `servicio`, `mantenimiento`, `repuesto` |
+| Administración | `software`, `litografia`, `impuesto`, `comision_bancaria` |
+| Compras y equipo | `equipo`, `mueble`, `otro` |
+
+:::note[Un servicio público por empresa que factura]
+Nacieron como un solo `recibo_publico`, y era el único valor del enum que
+agrupaba cosas distintas: cuatro empresas, cuatro facturas, cuatro ritmos. Con
+él, la pregunta que de verdad se hace —**«¿cuánto se me va en luz?»**— no se
+podía contestar: el reporte por tipo devolvía un total y nada más.
+
+Lo encontró Aquazaku abriendo el modal, no un test: eligió «Recibo público» y no
+tuvo dónde decir cuál. El `internet` salió de `software`, donde estaba por
+descarte: hosting y licencias se contratan y se dan de baja, y el internet del
+local es un servicio fijo que se compara con la luz y el agua.
+
+Los grupos de la tabla son **de pantalla**: ordenan el desplegable y no viajan
+ni se guardan. Un grupo mal elegido se corrige editando una lista.
+:::
 
 Si eso es **costo, gasto o activo fijo** vive aparte, en `clasificacion`, que
 **nace en `NULL`**.
