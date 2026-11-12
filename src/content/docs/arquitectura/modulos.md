@@ -1,6 +1,6 @@
 ---
 title: Catálogo de módulos
-description: Índice rápido de los 17 módulos que componen el sistema Aquazaku, con propósito, roles y dependencias.
+description: Índice rápido de los 18 módulos que componen el sistema Aquazaku, con propósito, roles y dependencias.
 sidebar:
   order: 2
 ---
@@ -309,7 +309,27 @@ las reglas de negocio de cada módulo, ver [Dominio](/dominio/).
     clara de «hay alguien a quien llamar» y el módulo queda invisible hasta que
     alguien lo abra por curiosidad.
 
-## M16 — Gastos y tesorería
+## M16 — Alta de cliente en pasos
+
+- **Propósito:** el alta de un cliente como un recorrido —documento primero,
+  después teléfonos, después dirección— en una sola transacción.
+- **Roles:** `admin`, `pos`.
+- **Depende de:** M0, M5, M14.
+- **Doc de dominio:** [Clientes §RN-CLI-19](/dominio/clientes/).
+- **Estado:** ✅ **implementado**. El código vive en
+  `web/src/components/clientes/alta-en-pasos.tsx` y en `api/src/modules/clientes`.
+- **Notas:**
+  - `POST /clientes` acepta el cliente, sus teléfonos y una dirección **en la
+    misma transacción**: es la única puerta que tiene el `pos` para cargar esos
+    datos, porque no tiene permiso sobre los endpoints sueltos (RN-CLI-19).
+  - **Este catálogo lo tenía sin registrar.** Estaba documentado en
+    [cómo verificar](/convenciones/como-verificar/), en el
+    [checklist de despliegue](/empezar/checklist-de-despliegue/) y en el sistema
+    de diseño, pero no acá — y por eso el módulo siguiente casi nace con el
+    mismo número. El catálogo es el lugar donde se reserva un número; si un
+    módulo no pasa por acá, el número queda libre para que alguien lo repita.
+
+## M17 — Gastos y tesorería
 
 - **Propósito:** registrar **todo** el dinero que entra y sale del negocio y que
   no es una venta ni una compra de mercadería: recibos públicos, arriendo,
@@ -366,7 +386,7 @@ M9 ◀── M0, M3
 M11 ◀── M0 + datos de M5, M6, M7, M9, M10
 M12 ◀── M0, M2, M3, M4
 M13 ◀── M0 (transversal)
-M16 ◀── M0 (autónomo: no depende de M11 ni del rol contador)
+M17 ◀── M0 (autónomo: no depende de M11 ni del rol contador)
 ```
 
 Para el orden exacto de construcción y los criterios de cadencia, ver el
