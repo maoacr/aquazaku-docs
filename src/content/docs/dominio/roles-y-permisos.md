@@ -344,6 +344,37 @@ proveedor está `activo`. Es una validación de la capa de servicio
 (chequea ambos antes de confirmar la recepción).
 :::
 
+### Gastos y tesorería
+
+| Permiso | `admin` | `seller` | `pos` | `contador` |
+| --- | :-: | :-: | :-: | :-: |
+| `gastos:ver` | ✅ `todo` | ❌ | ❌ | ❌ |
+| `gastos:crear` | ✅ `todo` | ❌ | ❌ | ❌ |
+| `gastos:anular` | ✅ `todo` | ❌ | ❌ | ❌ |
+| `cuentas:ver` | ✅ `todo` | ❌ | ❌ | ❌ |
+| `cuentas:crear` | ✅ `todo` | ❌ | ❌ | ❌ |
+| `cuentas:editar` | ✅ `todo` | ❌ | ❌ | ❌ |
+| `cuentas:desactivar` | ✅ `todo` | ❌ | ❌ | ❌ |
+
+:::caution[Solo `admin`, y es una decisión — no un olvido]
+Un movimiento de dinero **no tiene contraparte física que lo delate**. Un insumo
+mal cargado se descubre en el conteo del estante; un gasto mal cargado solo se
+descubre conciliando.
+
+Mientras el único control sea [la bitácora](/decisiones/0004-audit-log-inmutable/),
+quien puede mover plata es quien ya responde por ella. El `contador` tampoco lo
+ve todavía: su panel es M11 y se alimenta de documentos, no del libro de caja
+([RN-GAS-10](/dominio/gastos/)). Darle lectura es una celda de esta tabla el día
+que se decida.
+:::
+
+:::note[`gastos:crear` cubre el libro entero]
+Egreso, ingreso y saldo inicial comparten el permiso porque comparten quién los
+registra. Lo que los distingue en la bitácora es `operacion` en el payload —
+igual que `compras:crear` separa la compra de su pago. El día que un ingreso
+necesite otro permiso, ahí se parte el recurso.
+:::
+
 ### Rutas
 
 | Permiso | `admin` | `seller` | `pos` | `contador` |

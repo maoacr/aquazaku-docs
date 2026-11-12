@@ -1,6 +1,6 @@
 ---
 title: Catálogo de módulos
-description: Índice rápido de los 16 módulos que componen el sistema Aquazaku, con propósito, roles y dependencias.
+description: Índice rápido de los 17 módulos que componen el sistema Aquazaku, con propósito, roles y dependencias.
 sidebar:
   order: 2
 ---
@@ -309,6 +309,46 @@ las reglas de negocio de cada módulo, ver [Dominio](/dominio/).
     clara de «hay alguien a quien llamar» y el módulo queda invisible hasta que
     alguien lo abra por curiosidad.
 
+## M16 — Gastos y tesorería
+
+- **Propósito:** registrar **todo** el dinero que entra y sale del negocio y que
+  no es una venta ni una compra de mercadería: recibos públicos, arriendo,
+  nómina, software, servicios, repuestos, mantenimiento, litografía, impuestos,
+  equipos, muebles, transporte y comisiones bancarias. Con las cuentas donde esa
+  plata vive —caja menor, caja mayor y N cuentas bancarias— y su saldo.
+- **Roles:** `admin` únicamente (ver
+  [Roles y permisos](/dominio/roles-y-permisos/) para el por qué).
+- **Depende de:** M0. Nada más — y es deliberado: no depende de M11 ni del rol
+  `contador`, ni de ninguna norma tributaria.
+- **Doc de dominio:** [Gastos y tesorería](/dominio/gastos/) — RN-GAS-01 a 10.
+- **Estado:** 🚧 **tramo 1 en construcción** (12-nov-2026). El código vive en
+  `api/src/modules/gastos`, con su pantalla en `web/`.
+- **Notas:**
+  - **Un solo libro.** `movimientos_de_dinero` es la única forma de mover plata.
+    No hay tabla de gastos ni de ingresos: un gasto no tiene líneas —si moviera
+    inventario sería una compra— así que una tabla aparte solo agregaría una
+    segunda copia del monto. Es la ley de conservación de los botellones
+    aplicada al dinero.
+  - **El saldo se deriva**, por [ADR-0008](/decisiones/0008-saldo-derivado-o-materializado/):
+    nadie se pelea por el último peso de la caja. El sobregiro lo frena un
+    `FOR UPDATE` sobre la cuenta, que serializa sin materializar nada.
+  - **El signo es columna generada.** Anular pone el efecto en cero, así que el
+    movimiento sale del saldo por aritmética — sin escribir en ninguna otra
+    tabla y sin poder quedar a medias.
+  - **El doble conteo con M9 es imposible por construcción**: el enum de tipos de
+    gasto no incluye insumos, bases ni botellones (RN-GAS-07). No se evita con
+    disciplina — no hay dónde escribirlo.
+  - **El tipo registra el hecho, no la clasificación contable.** `clasificacion`
+    existe y nace en `NULL`: registrar el hueco en vez de inventar la respuesta
+    de una contadora es lo que permite construir el módulo hoy (RN-GAS-06).
+  - Desbloquea los **ocho tipos de gasto que no tenían dónde entrar**. El cloro
+    y los filtros son el caso más claro: [RN-INS-04](/dominio/insumos/) dice que
+    son gasto y no inventario, y hasta ahora eso era cierto porque no había
+    dónde registrarlos.
+  - **Tramo 2 (pendiente):** traslados entre cajas y arqueo. Los cuatro tipos de
+    movimiento que usan están declarados en el enum desde el primer día, con sus
+    `CHECK` y su índice único, para que el tramo 2 sea puramente aditivo.
+
 ---
 
 ## Resumen de dependencias
@@ -326,6 +366,7 @@ M9 ◀── M0, M3
 M11 ◀── M0 + datos de M5, M6, M7, M9, M10
 M12 ◀── M0, M2, M3, M4
 M13 ◀── M0 (transversal)
+M16 ◀── M0 (autónomo: no depende de M11 ni del rol contador)
 ```
 
 Para el orden exacto de construcción y los criterios de cadencia, ver el
